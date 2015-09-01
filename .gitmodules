@@ -1,0 +1,3 @@
+[submodule "lua-astar"]
+	path = lua-astar
+	url = git@github.com:GloryFish/lua-astar.git
