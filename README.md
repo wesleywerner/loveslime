@@ -20,11 +20,11 @@ It is inspired by the SLUDGE game engine.
 
 * Animated backgrounds.
 * Actors.
+* Pathfinding movement. Read an image mask that is converted into the walkable map.
 
 _TODO_
 
 * Actor animations. Certain animation keys like "Walk East" and "Walk West" are automatically used for movement. Custom actions can be triggered via `AnimateActor ("jump", [repeat count], [callback])` (pseudocode).
-* Pathfinding movement. Read an image mask that is converted into the walkable map.
 * Hotspots. Define regions that fires a callback on click.
 * Cursors. Set with a mode like "pointer", "look", "take". The mode is passed to hotspot or actor callbacks.
 
