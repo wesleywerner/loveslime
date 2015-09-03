@@ -9,14 +9,16 @@ function love.load()
     local background2 = love.graphics.newImage("background2.png")
     local mask = love.graphics.newImage("mask.png")
     local scientist = love.graphics.newImage("scientist.png")
-    local walkzone = love.graphics.newImage("walkzone3.png")
+    local walkzone = love.graphics.newImage("walkzone2.png")
     
     slime.background(background, 0, 0, 2)
     slime.background(background2, 0, 0, 1)
     slime.layer(background, mask, 0, 0, 62)
     slime.walkable(walkzone)
 
-    slime.actor("ego", scientist, 40, 60)
+    local ego = slime.actor("ego", scientist, 40, 60)
+    ego.movedelay = 0.05
+    
     slime.actor("scientist", scientist, 68, 57)
     
 end
