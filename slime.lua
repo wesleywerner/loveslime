@@ -139,7 +139,7 @@ function slime.drawActor (actor)
     love.graphics.draw(actor.image, actor.x - actor.hotspotX, actor.y - actor.hotspotY)
 end
 
-function slime.moveActor (name, x, y)
+function slime.moveActor (name, x, y, callback)
 
     -- Move an actor to point xy using A Star path finding
     
@@ -160,6 +160,7 @@ function slime.moveActor (name, x, y)
             slime.log("no actor path found")
         else
             actor.path = path:getNodes()
+            actor.callback = callback
             slime.log("move " .. name .. " to " .. x .. " : " .. y)
         end
     end
@@ -186,6 +187,10 @@ function slime.moveActorOnPath (actor, dt)
         local point = table.remove(actor.path)
         if (point) then
             actor.x, actor.y = point.location.x, point.location.y
+        else
+            if (actor.callback) then
+                actor.callback()
+            end
         end
     end
 end
