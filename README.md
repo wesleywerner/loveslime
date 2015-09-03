@@ -14,6 +14,20 @@ The name is an acronym for SLUDGE to LÖVE Inspired Mimicry Enrichment.
 
 It is inspired by the SLUDGE game engine.
 
+# ROADMAP
+
+**Version 0.1**
+
+* Animated backgrounds.
+* Actors.
+
+_TODO_
+
+* Actor animations. Certain animation keys like "Walk East" and "Walk West" are automatically used for movement. Custom actions can be triggered via `AnimateActor ("jump", [repeat count], [callback])` (pseudocode).
+* Pathfinding movement. Read an image mask that is converted into the walkable map.
+* Hotspots. Define regions that fires a callback on click.
+* Cursors. Set with a mode like "pointer", "look", "take". The mode is passed to hotspot or actor callbacks.
+
 # LICENSE
 
 This program is free software: you can redistribute it and/or modify
