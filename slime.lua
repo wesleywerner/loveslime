@@ -131,6 +131,8 @@ function slime.actor (name, image, x, y, hotspotx, hotspoty)
     else
         slime.actors[name] = newActor
     end
+    
+    return newActor
 end
 
 function slime.drawActor (actor)
@@ -163,8 +165,24 @@ function slime.moveActor (name, x, y)
     end
 end
 
-function slime.moveActorOnPath (actor)
+function slime.moveActorOnPath (actor, dt)
     if (actor.path) then
+        -- Check if the actor's speed is set to delay movement.
+        -- If no speed is set, we move on every update.
+        if (actor.movedelay) then
+            -- start a new move delay counter
+            if (not actor.movedelaydelta) then
+                actor.movedelaydelta = actor.movedelay
+            end
+            actor.movedelaydelta = actor.movedelaydelta - dt
+            -- the delay has not yet passed
+            if (actor.movedelaydelta > 0) then
+                return
+            end
+            -- the delay has passed. Reset it and continue.
+            actor.movedelaydelta = actor.movedelay
+        end
+        
         local point = table.remove(actor.path)
         if (point) then
             actor.x, actor.y = point.location.x, point.location.y
@@ -235,7 +253,7 @@ function slime.update (dt)
     slime.updateBackground(dt)
     
     for iactor, actor in pairs(slime.actors) do
-        slime.moveActorOnPath (actor)
+        slime.moveActorOnPath (actor, dt)
     end
 
 end
