@@ -6,6 +6,8 @@
 --   
 -- SLIME is a point-and-click adventure game library for LÖVE.
 
+require 'map'
+
 local slime = {}
 
 slime.counters = {}
@@ -16,6 +18,8 @@ function slime.reset ()
     slime.backgrounds = {}
     slime.actors = {}
     slime.layers = {}
+    slime.debug.log = {}
+    slime.astar = nil
 end
 
 --                       _      
@@ -46,6 +50,12 @@ function slime.background (image, x, y, delay)
         slime.counters["background index"] = 1
         slime.counters["background delay"] = delay
     end
+end
+
+function slime.walkable (mask)
+    slime.handler = SlimeMapHandler()
+    slime.handler:convert(mask)
+    slime.astar = AStar(slime.handler)
 end
 
 function slime.updateBackground (dt)
@@ -127,14 +137,38 @@ function slime.drawActor (actor)
     love.graphics.draw(actor.image, actor.x - actor.hotspotX, actor.y - actor.hotspotY)
 end
 
-function slime.moveActor (name, xdelta, ydelta)
+function slime.moveActor (name, x, y)
 
-    -- Move the first actor with "name" by the given delta
+    -- Move an actor to point xy using A Star path finding
     
+    if (slime.astar == nil) then 
+        slime.log("No walkable area defined")
+        return 
+    end
+        
     local actor = slime.actors[name]
-    if (actor ~= nil) then
-        actor.x = actor.x + xdelta
-        actor.y = actor.y + ydelta
+
+    if (actor == nil) then
+        slime.log("No actor named " .. name)
+    else
+        local start = { x = actor.x, y = actor.y }
+        local goal = { x = x, y = y }
+        local path = slime.astar:findPath(goal, start)
+        if (path == nil) then
+            slime.log("no actor path found")
+        else
+            actor.path = path:getNodes()
+            slime.log("move " .. name .. " to " .. x .. " : " .. y)
+        end
+    end
+end
+
+function slime.moveActorOnPath (actor)
+    if (actor.path) then
+        local point = table.remove(actor.path)
+        if (point) then
+            actor.x, actor.y = point.location.x, point.location.y
+        end
     end
 end
 
@@ -199,6 +233,10 @@ end
 function slime.update (dt)
 
     slime.updateBackground(dt)
+    
+    for iactor, actor in pairs(slime.actors) do
+        slime.moveActorOnPath (actor)
+    end
 
 end
 
@@ -244,8 +282,13 @@ end
 --                           |___/ 
 -- Provides helpful debug information while building your game.
 
-slime.debug = { ["enabled"] = true }
+slime.debug = { ["enabled"] = true, ["log"] = {} }
 
+function slime.log (text)
+    -- add a debug log entry
+    table.insert(slime.debug.log, text)
+    if (#slime.debug.log > 10) then table.remove(slime.debug.log, 1) end
+end
 
 slime.debugdraw = function ( )
 
@@ -284,6 +327,14 @@ slime.debugdraw = function ( )
     
     -- print info of everything under the pointer
     -- TODO
+    
+    -- log texts
+    for i, n in pairs(slime.debug.log) do
+        love.graphics.setColor(0, 0, 0, 128)
+        love.graphics.print(n, 11, 21 + (10 * i))
+        love.graphics.setColor(0, 255, 0, 128)
+        love.graphics.print(n, 10, 20 + (10 * i))
+    end
 
     -- restore the original colour
     love.graphics.setColor(r, g, b, a)

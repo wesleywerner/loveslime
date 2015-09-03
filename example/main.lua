@@ -9,12 +9,14 @@ function love.load()
     local background2 = love.graphics.newImage("background2.png")
     local mask = love.graphics.newImage("mask.png")
     local scientist = love.graphics.newImage("scientist.png")
+    local walkzone = love.graphics.newImage("walkzone3.png")
     
     slime.background(background, 0, 0, 2)
     slime.background(background2, 0, 0, 1)
     slime.layer(background, mask, 0, 0, 62)
+    slime.walkable(walkzone)
 
-    slime.actor("ego", scientist, 28, 61)
+    slime.actor("ego", scientist, 40, 60)
     slime.actor("scientist", scientist, 68, 57)
     
 end
@@ -34,30 +36,6 @@ function love.draw()
 end
 
 function love.update(dt)
-    if love.keyboard.isDown("left") then
-        slime.moveActor("ego", -20 * dt, 0)
-    end
-    if love.keyboard.isDown("right") then
-        slime.moveActor("ego", 20 * dt, 0)
-    end
-    if love.keyboard.isDown("up") then
-        slime.moveActor("ego", 0, -20 * dt)
-    end
-    if love.keyboard.isDown("down") then
-        slime.moveActor("ego", 0, 20 * dt)
-    end
-    if love.keyboard.isDown("a") then
-        slime.moveActor("scientist", -20 * dt, 0)
-    end
-    if love.keyboard.isDown("d") then
-        slime.moveActor("scientist", 20 * dt, 0)
-    end
-    if love.keyboard.isDown("w") then
-        slime.moveActor("scientist", 0, -20 * dt)
-    end
-    if love.keyboard.isDown("s") then
-        slime.moveActor("scientist", 0, 20 * dt)
-    end
     
     slime.update (dt)
 
@@ -69,5 +47,17 @@ function love.keypressed( key, isrepeat )
     end
     if key == "r" then
         slime.reset()
+    end
+    if key == "tab" then
+        slime.debug.enabled = not slime.debug.enabled and true or false
+    end
+end
+
+function love.mousepressed(x, y, button)
+    if button == "l" then
+        -- Adjust for scale
+        x = math.floor(x / 4)
+        y = math.floor(y / 4)
+        slime.moveActor("ego", x, y)
     end
 end
