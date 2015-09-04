@@ -19,8 +19,6 @@ function love.load()
     local ego = slime.actor("ego", scientist, 40, 60)
     ego.movedelay = 0.05
     
-    slime.actor("scientist", scientist, 68, 57)
-    
 end
 
 function love.draw()
