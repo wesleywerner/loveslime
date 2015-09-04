@@ -1,3 +1,6 @@
 [submodule "lua-astar"]
 	path = lua-astar
 	url = git@github.com:GloryFish/lua-astar.git
+[submodule "anim8"]
+	path = anim8
+	url = git@github.com:kikito/anim8.git
