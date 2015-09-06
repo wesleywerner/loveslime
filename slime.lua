@@ -65,7 +65,7 @@ end
 
 slime.backgrounds = {}
 
-function slime.background (image, x, y, delay)
+function slime.background (image, delay)
 
     -- Add a background to the stage, drawn at x, y for the given delay
     -- before drawing the next available background.
@@ -73,8 +73,6 @@ function slime.background (image, x, y, delay)
     
     newBackground = {
         ["image"] = image,
-        ["x"] = x,
-        ["y"] = y,
         ["delay"] = delay
         }
     table.insert(slime.backgrounds, newBackground)
@@ -408,11 +406,9 @@ end
 
 slime.layers = {}
 
-function slime.layer (source, mask, x, y, baseline)
+function slime.layer (source, mask, baseline)
     local newLayer = { 
         ["image"] = slime:createLayer(source, mask),
-        ["x"] = x,
-        ["y"] = y,
         ["baseline"] = baseline
         }
     table.insert(slime.layers, newLayer)
@@ -473,7 +469,7 @@ function slime.draw ( )
     -- Background
     local bg = slime.backgrounds[slime.counters["background index"]]
     if (bg) then
-        love.graphics.draw(bg.image, bg.x, bg.y)
+        love.graphics.draw(bg.image, 0, 0)
     end
 
     -- Layers
@@ -486,7 +482,7 @@ function slime.draw ( )
                 slime.drawActor(actor)
             end
         end
-        love.graphics.draw(layer.image, layer.x, layer.y)
+        love.graphics.draw(layer.image, 0, 0)
         maxBaseline = layer.baseline
     end
 
