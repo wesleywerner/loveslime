@@ -5,13 +5,9 @@ function love.load()
     -- nearest image interpolation
     love.graphics.setDefaultFilter("nearest", "nearest", 1)
     
-    local background = love.graphics.newImage("background.png")
-    local layermask = love.graphics.newImage("layer-mask.png")
-    local walkzone = love.graphics.newImage("walk-door-open-mask.png")
-    
-    slime.background(background)
-    slime.layer(background, layermask, 50)
-    slime.walkable(walkzone)
+    slime.background("background.png")
+    slime.layer("background.png", "layer-mask.png", 50)
+    slime.floor("walk-door-open-mask.png")
 
     local ego = slime.actor("ego", 70, 50)
     ego.movedelay = 0.05

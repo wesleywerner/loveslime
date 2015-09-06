@@ -65,16 +65,19 @@ end
 
 slime.backgrounds = {}
 
-function slime.background (image, delay)
+function slime.background (backgroundfilename, delay)
 
     -- Add a background to the stage, drawn at x, y for the given delay
     -- before drawing the next available background.
     -- If no delay is given, the background will draw forever.
     
+    local image = love.graphics.newImage(backgroundfilename)
+    
     newBackground = {
         ["image"] = image,
         ["delay"] = delay
         }
+    
     table.insert(slime.backgrounds, newBackground)
     
     -- default to the first background
@@ -84,9 +87,11 @@ function slime.background (image, delay)
     end
 end
 
-function slime.walkable (mask)
+-- Set the floor mask that determines walkable areas.
+function slime.floor (floorfilename)
     slime.handler = SlimeMapHandler()
-    slime.handler:convert(mask)
+    floorimage = love.graphics.newImage(floorfilename)
+    slime.handler:convert(floorimage)
     slime.astar = AStar(slime.handler)
 end
 
@@ -406,16 +411,22 @@ end
 
 slime.layers = {}
 
-function slime.layer (source, mask, baseline)
+function slime.layer (backgroundfilename, maskfilename, baseline)
+
+    local source = love.graphics.newImage(backgroundfilename)
+    local mask = love.graphics.newImage(maskfilename)
+    
     local newLayer = { 
         ["image"] = slime:createLayer(source, mask),
         ["baseline"] = baseline
         }
+    
     table.insert(slime.layers, newLayer)
     
-    -- order the layers by their baselines.
-    -- this is important for when we draw the layers
+    -- Order the layers by their baselines.
+    -- This is important for when we draw the layers.
     table.sort(slime.layers, function (a, b) return a.baseline < b.baseline end )
+    
 end
 
 function slime:createLayer (source, mask)
