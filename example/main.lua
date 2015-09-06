@@ -19,8 +19,14 @@ function love.load()
     slime.idleAnimation (ego,
                         "green-monster.png",
                         12, 12,         -- tile width & height
-                        {'3-2', 1},     -- frames
-                        {3, 0.2}        -- delays
+                        {'11-10', 1},   -- south
+                        {3, 0.2},       -- delays
+                        {'3-2', 1},     -- west
+                        {3, 0.2},       -- delays
+                        {18, 1},        -- north
+                        1,              -- delays
+                        nil,            -- east
+                        nil             -- (auto flipped from west)
                         )
 
     slime.walkAnimation (ego,
@@ -32,8 +38,8 @@ function love.load()
                         0.2,            -- delays
                         {'18-21', 1},   -- north
                         0.2,            -- delays
-                        {'3-6', 1},     -- east
-                        0.2             -- delays
+                        nil,            -- east
+                        nil             -- (auto flipped from west)
                         )
 
 
