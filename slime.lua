@@ -9,7 +9,7 @@
 local slime = {
   _VERSION     = 'slime v0.1',
   _DESCRIPTION = 'A point-and-click adventure game library for LÖVE',
-  _URL         = 'http://wesleywerner.github.io/love2dslime/',
+  _URL         = 'https://github.com/wesleywerner/loveslime',
   _LICENSE     = [[
     MIT LICENSE
 
