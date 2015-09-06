@@ -201,7 +201,14 @@ function slime.prefabAnimation (prefix, actor, tileset, w, h, south, southd, wes
     slime.addAnimation (actor, prefix .. " south", tileset, w, h, south, southd)
     slime.addAnimation (actor, prefix .. " west", tileset, w, h, west or south, westd or southd)
     slime.addAnimation (actor, prefix .. " north", tileset, w, h, north or south, northd or southd)
-    slime.addAnimation (actor, prefix .. " east", tileset, w, h, east or south, eastd or southd)
+
+    -- if the east animations is empty, flip the west animation if there is one
+    if (not east and west) then
+        local eastAnim = slime.addAnimation (actor, prefix .. " east", tileset, w, h, east or west, eastd or westd)
+        eastAnim:flipH()
+    else
+        slime.addAnimation (actor, prefix .. " east", tileset, w, h, east or south, eastd or southd)
+    end
 end
 
 -- Create a custom animation.
@@ -234,6 +241,8 @@ function slime.addAnimation (actor, key, tileset, w, h, frames, delays)
         actor.anim = actor.animations[key]
     end
     
+    return animation
+    
 end
 
 function slime.drawActor (actor)
@@ -262,16 +271,24 @@ function slime.moveActor (name, x, y, callback)
     if (actor == nil) then
         slime.log("No actor named " .. name)
     else
+        -- Our path runs backwards so we can pop the points off the stack
         local start = { x = actor.x, y = actor.y }
         local goal = { x = x, y = y }
+        
+        -- Calculate a path
         local path = slime.astar:findPath(goal, start)
         if (path == nil) then
             slime.log("no actor path found")
         else
             actor.path = path:getNodes()
+            -- Callback when the goal is reached
             actor.callback = callback
+            -- Default to walking animation
             actor.action = "walk"
-            actor.dirCalcCounter = 0    -- calculate direction instantly
+            -- Calculate actor direction immediately
+            actor.lastx, actor.lasty = actor.x, actor.y
+            actor.direction = slime.calculateDirection(actor.x, actor.y, x, y)
+            -- Output debug
             slime.log("move " .. name .. " to " .. x .. " : " .. y)
         end
     end
