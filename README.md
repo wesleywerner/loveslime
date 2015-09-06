@@ -20,21 +20,27 @@ The name is an acronym for "SLUDGE to L&Ouml;VE Inspired Mimicry Environment".
 * Text status bar.
 * Actor dialogues.
 
+---
+
 # SLIME API
 
 ## Backgrounds
 
-`slime.background (image, [, delay])`
+![func](api/func.png) `slime.background (image, [, delay])`
 
 Add a background to the stage. `delay` sets how many milliseconds to display the background if multiple backgrounds are loaded, and may be omitted if only one background is set.
+
+![func](api/func.png) `slime.walkable (mask)`
+
+Set the areas that are walkable by actors, where black (`#000`) indicates non-walkable areas, and any other color for walkable.
 
 ## Layers
 
 Layers define areas of your background where actors can walk behind.
 
-`slime.layer (source, mask, baseline)`
+![func](api/func.png) `slime.layer (source, mask, baseline)`
 
-Set a new layer on the `source` background using the `mask` image. The mask is an image of the same dimensions as the background, filled black for non-walkable areas, and any other color for walkable.
+Set a new layer on the `source` background using the `mask` image. The mask is an image of the same dimensions as the background.
 
 The `baseline` is the y-position a character needs to be behind in order to be hidden by the layer.
 
@@ -42,19 +48,17 @@ The `baseline` is the y-position a character needs to be behind in order to be h
 
 The cardinal directions are oriented to your screen so that `SOUTH` points to the bottom of your screen, and `NORTH` to the top. So an actor facing `SOUTH` is looking at the player.
 
-![compass](api/compass.png "Compass Directions")
+![func](api/func.png) `slime.actor (name, x, y, hotspotx, hotspoty)`  
 
-`slime.actor (name, x, y, hotspotx, hotspoty)`  
-
-Adds a new actor to the stage.
+Add a new actor to the stage.
 
   * `name` identifies the actor. You can use the same name multiple times, however when calling `moveActor` (which take the name) only the first actor with that name is moved.
   * `x` and `y` sets the starting position of the actor.
   * `hotspotx` and `hotspoty` sets the hotspot of the actor. The default actor hotspot (if not given) to centered at the base of the image.
   
-`slime.idleAnimation (actor, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])`  
-`slime.walkAnimation (actor, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])`  
-`slime.talkAnimation (actor, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])`  
+![func](api/func.png) `slime.idleAnimation (actor, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])`  
+![func](api/func.png) `slime.walkAnimation (actor, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])`  
+![func](api/func.png) `slime.talkAnimation (actor, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])`  
 
 These are helper functions that in turn call `addAnimation` with the `keys` "idle", "walk" and "talk" respectively. 
 
@@ -64,13 +68,13 @@ These are helper functions that in turn call `addAnimation` with the `keys` "idl
   * `south` and `southd` are the frames and delays for the south-facing animation.
   * The other directions are optional but recommended. `SOUTH` will be used as default if none of the other directions are given.
   
-Things to note:
+Notes:
 
-* `tileset` is a file name to the image tileset, and will be cached for re-use later.
+* `tileset` is a file name to the image tileset, they are cached for re-use. Multiple actors who use the same tileset will re-use the cached copies.
 * Only `south` and `southd` parameters are mandatory. If the rest are omitted then south will be used as the default for all directions.
 * If a `west` parameter is given, and `east` is `nil` or omitted, then the west animation will automatically be mirrored and used for the `east`.
 
-`slime.addAnimation (actor, key, tileset, w, h, frames, delays)`  
+![func](api/func.png) `slime.addAnimation (actor, key, tileset, w, h, frames, delays)`  
 
 This is for adding custom animations.
 
@@ -79,10 +83,7 @@ This is for adding custom animations.
   * `w` and `h` are the width and height of each frame.
   * `frames` and `delays` are the frames and delays for the animation.
 
-## Notes
-
-* Actor animation tilesets are cached. Multiple actors who use the same tileset filename will re-use the cached tileset image.
-* 
+---
 
 # LICENSE
 
