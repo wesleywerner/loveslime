@@ -64,42 +64,39 @@
 <h2>
 <a id="backgrounds" class="anchor" href="#backgrounds" aria-hidden="true"><span class="octicon octicon-link"></span></a>Backgrounds</h2>
 
-<p><img src="api/func.png" alt="func"> <code>slime.background (image, [, delay])</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime.background (backgroundfilename, [, delay])</code></p>
 
 <p>Add a background to the stage. <code>delay</code> sets how many milliseconds to display the background if multiple backgrounds are loaded, and may be omitted if only one background is set.</p>
 
-<p><img src="api/func.png" alt="func"> <code>slime.walkable (mask)</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime.floor (floorfilename)</code></p>
 
-<p>Set the areas that are walkable by actors, where black (<code>#000</code>) indicates non-walkable areas, and any other color for walkable.</p>
+<p>Set the floor where actors can walk. This is an image where black (<code>#000</code>) indicates non-walkable areas, and any other color for walkable.</p>
 
 <h2>
 <a id="layers" class="anchor" href="#layers" aria-hidden="true"><span class="octicon octicon-link"></span></a>Layers</h2>
 
 <p>Layers define areas of your background where actors can walk behind.</p>
 
-<p><img src="api/func.png" alt="func"> <code>slime.layer (source, mask, baseline)</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime.layer (backgroundfilename, maskfilename, baseline)</code></p>
 
-<p>Set a new layer on the <code>source</code> background using the <code>mask</code> image. The mask is an image of the same dimensions as the background.</p>
+<p>Add a new layer over the <code>background</code> using the <code>mask</code> image. The mask is an image with black (<code>#000</code>) where there is no layer, or any other colour to indicate a hide-behind layer.</p>
 
 <p>The <code>baseline</code> is the y-position a character needs to be behind in order to be hidden by the layer.</p>
 
 <h2>
 <a id="actors" class="anchor" href="#actors" aria-hidden="true"><span class="octicon octicon-link"></span></a>Actors</h2>
 
-<p>The cardinal directions are oriented to your screen so that <code>SOUTH</code> points to the bottom of your screen, and <code>NORTH</code> to the top. So an actor facing <code>SOUTH</code> is looking at the player.</p>
-
 <p><img src="api/func.png" alt="func"> <code>slime.actor (name, x, y, hotspotx, hotspoty)</code>  </p>
 
 <p>Add a new actor to the stage.</p>
 
 <ul>
-<li>
-<code>name</code> identifies the actor. You can use the same name multiple times, however when calling <code>moveActor</code> (which take the name) only the first actor with that name is moved.</li>
-<li>
-<code>x</code> and <code>y</code> sets the starting position of the actor.</li>
-<li>
-<code>hotspotx</code> and <code>hotspoty</code> sets the hotspot of the actor. The default actor hotspot (if not given) to centered at the base of the image.</li>
+<li>The <code>name</code> identifies the actor. You can use the same name multiple times, however when calling <code>moveActor</code> (which take the name) only the first actor with that name is moved.</li>
+<li>The <code>x</code> and <code>y</code> sets the starting position of the actor.</li>
+<li>The <code>hotspotx</code> and <code>hotspoty</code> sets the point relative to the <code>x</code>/<code>y</code>. This point determines when an actor is considered behind a layer baseline. If no hotspot is given, it will default to centered at the base of the sprite.</li>
 </ul>
+
+<p>The cardinal directions are oriented to your screen so that <code>SOUTH</code> points to the bottom of your screen, and <code>NORTH</code> to the top. So an actor facing <code>SOUTH</code> is looking at the player.</p>
 
 <p><img src="api/func.png" alt="func"> <code>slime.idleAnimation (actor, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])</code><br>
 <img src="api/func.png" alt="func"> <code>slime.walkAnimation (actor, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])</code><br>
@@ -108,23 +105,18 @@
 <p>These are helper functions that in turn call <code>addAnimation</code> with the <code>keys</code> "idle", "walk" and "talk" respectively. </p>
 
 <ul>
-<li>
-<code>actor</code> is an instance create via <code>slime.actor</code>
+<li>The <code>actor</code> is an instance create via <code>slime.actor</code>
 </li>
-<li>
-<code>tileset</code> is the filename of the image tileset.</li>
-<li>
-<code>w</code> and <code>h</code> are the width and height of each frame.</li>
-<li>
-<code>south</code> and <code>southd</code> are the frames and delays for the south-facing animation.</li>
+<li>The <code>tileset</code> is a file name.</li>
+<li>The <code>w</code> and <code>h</code> are the width and height of each frame.</li>
+<li>The <code>south</code> and <code>southd</code> are the frames and delays for the south-facing animation.</li>
 <li>The other directions are optional but recommended. <code>SOUTH</code> will be used as default if none of the other directions are given.</li>
 </ul>
 
 <p>Notes:</p>
 
 <ul>
-<li>
-<code>tileset</code> is a file name to the image tileset, they are cached for re-use. Multiple actors who use the same tileset will re-use the cached copies.</li>
+<li>The <code>tileset</code> is a file name to the image tileset, they are cached for re-use. Multiple actors who use the same tileset will re-use the cached copies.</li>
 <li>Only <code>south</code> and <code>southd</code> parameters are mandatory. If the rest are omitted then south will be used as the default for all directions.</li>
 <li>If a <code>west</code> parameter is given, and <code>east</code> is <code>nil</code> or omitted, then the west animation will automatically be mirrored and used for the <code>east</code>.</li>
 </ul>
@@ -134,15 +126,11 @@
 <p>This is for adding custom animations.</p>
 
 <ul>
-<li>
-<code>actor</code> is an instance create via <code>slime.actor</code>
+<li>The <code>actor</code> is an instance create via <code>slime.actor</code>
 </li>
-<li>
-<code>key</code> is the animation key.</li>
-<li>
-<code>w</code> and <code>h</code> are the width and height of each frame.</li>
-<li>
-<code>frames</code> and <code>delays</code> are the frames and delays for the animation.</li>
+<li>The <code>key</code> is the animation key.</li>
+<li>The <code>w</code> and <code>h</code> are the width and height of each frame.</li>
+<li>The <code>frames</code> and <code>delays</code> are the frames and delays for the animation.</li>
 </ul>
 
 <hr>
