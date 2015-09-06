@@ -26,13 +26,13 @@ function love.load()
     slime.walkAnimation (ego,
                         "green-monster.png",
                         12, 12,         -- tile width & height
-                        {'18-21', 1},   -- north
-                        0.2,            -- delays
-                        {'3-6', 1},     -- east
-                        0.2,            -- delays
                         {'11-14', 1},   -- south
                         0.2,            -- delays
                         {'6-3', 1},     -- west
+                        0.2,            -- delays
+                        {'18-21', 1},   -- north
+                        0.2,            -- delays
+                        {'3-6', 1},     -- east
                         0.2             -- delays
                         )
 
