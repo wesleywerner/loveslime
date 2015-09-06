@@ -3,21 +3,31 @@ slime = require ("slime")
 function love.load()
     
     -- nearest image interpolation
-    love.graphics.setDefaultFilter( "nearest", "nearest", 1 )
+    love.graphics.setDefaultFilter("nearest", "nearest", 1)
     
     local background = love.graphics.newImage("background.png")
-    local background2 = love.graphics.newImage("background2.png")
-    local mask = love.graphics.newImage("mask.png")
-    local scientist = love.graphics.newImage("scientist.png")
-    local walkzone = love.graphics.newImage("walkzone2.png")
+    local layermask = love.graphics.newImage("layer-mask.png")
+    local walkzone = love.graphics.newImage("walk-door-open-mask.png")
     
-    slime.background(background, 0, 0, 2)
-    slime.background(background2, 0, 0, 1)
-    slime.layer(background, mask, 0, 0, 62)
+    slime.background(background, 0, 0)
+    slime.layer(background, layermask, 0, 0, 50)
     slime.walkable(walkzone)
 
-    local ego = slime.actor("ego", scientist, 40, 60)
+    local ego = slime.actor("ego", 70, 50)
     ego.movedelay = 0.05
+    
+    ego:animation ( "idle east",            -- animation key
+                    "green-monster.png",    -- tileset file name
+                    12, 12,                 -- tile width & height
+                    {'3-2', 1},             -- frames
+                    {3, 0.2}                -- delays
+                    )
+    ego:animation ( "walk east",            -- animation key
+                    "green-monster.png",    -- tileset file name
+                    12, 12,                 -- tile width & height
+                    {'3-6', 1},             -- frames
+                    0.2                     -- delays
+                    )
     
 end
 

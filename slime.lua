@@ -42,7 +42,7 @@ require 'map'
 
 -- Uses anim8 by Enrique García Cota
 -- https://github.com/kikito/anim8
-require 'anim8'
+local anim8 = require 'anim8'
 
 slime.counters = {}
 
@@ -134,8 +134,9 @@ end
 --    \__,_|\___|\__\___/|_|  |___/
 
 slime.actors = {}
+slime.tilesets = {}
 
-function slime.actor (name, image, x, y, hotspotx, hotspoty)
+function slime.actor (name, x, y, hotspotx, hotspoty)
 
     -- Add an actor to the stage.
     -- Allows adding the same actor name multiple times, but only
@@ -148,16 +149,57 @@ function slime.actor (name, image, x, y, hotspotx, hotspoty)
 
     local newActor = {
         ["name"] = name,
-        ["image"] = image,
         ["x"] = x,
         ["y"] = y,
-        ["hotspotX"] = image:getWidth() / 2,
-        ["hotspotY"] = image:getHeight()
+        ["w"] = 10,        
+        ["h"] = 20,
+        ["hotspotX"] = 5,
+        ["hotspotY"] = 20,
+        ["animations"] = { },
+        ["direction"] = "east",
+        ["action"] = "idle"
         }
         
     if (hotspotx and hotspoty) then
         newActor.hotspotX = hotspotx
         newActor.hotspotY = hotspoty
+    end
+    
+    -- Actor function to add a new animation.
+    function newActor:animation (name, tileset, w, h, frames, delays)
+
+        -- cache tileset image to save loading duplicate images
+        local image = slime.tilesets[tileset]
+        if (not slime.tilesets[tileset]) then
+            image = love.graphics.newImage(tileset)
+            slime.tilesets[tileset] = image
+        end
+
+        -- default actor hotspot to centered at the base of the image
+        self["w"] = w
+        self["h"] = h
+        self["hotspotX"] = w / 2
+        self["hotspotY"] = h
+        
+        local g = anim8.newGrid(w, h, image:getWidth(), image:getHeight())
+        local animation = anim8.newAnimation(g(unpack(frames)), delays)
+        
+        self.animations[name] = { 
+            ["name"] = name,
+            ["tileset"] = tileset,
+            ["animation"] = animation
+            }
+            
+        -- default to this anim
+        if (not self.anim) then
+            self.anim = self.animations[name]
+        end
+        
+    end
+    
+    function newActor:getAnim ()
+        local key = self.action .. " " .. self.direction
+        return self.animations[key]
     end
     
     if (slime.actors[name]) then
@@ -170,7 +212,15 @@ function slime.actor (name, image, x, y, hotspotx, hotspoty)
 end
 
 function slime.drawActor (actor)
-    love.graphics.draw(actor.image, actor.x - actor.hotspotX, actor.y - actor.hotspotY)
+
+    local animation = actor:getAnim()
+    if (animation) then
+        local tileset = slime.tilesets[animation["tileset"]]
+        animation["animation"]:draw(tileset, actor.x - actor.hotspotX, actor.y - actor.hotspotY)
+    else
+        love.graphics.rectangle ("fill", actor.x - actor.hotspotX, actor.y - actor.hotspotY, actor.w, actor.h)
+    end
+
 end
 
 function slime.moveActor (name, x, y, callback)
@@ -195,6 +245,7 @@ function slime.moveActor (name, x, y, callback)
         else
             actor.path = path:getNodes()
             actor.callback = callback
+            actor.action = "walk"
             slime.log("move " .. name .. " to " .. x .. " : " .. y)
         end
     end
@@ -222,6 +273,7 @@ function slime.moveActorOnPath (actor, dt)
         if (point) then
             actor.x, actor.y = point.location.x, point.location.y
         else
+            actor.action = "idle"
             if (actor.callback) then
                 actor.callback()
             end
@@ -293,6 +345,10 @@ function slime.update (dt)
     
     for iactor, actor in pairs(slime.actors) do
         slime.moveActorOnPath (actor, dt)
+        local anim = actor:getAnim()
+        if (anim and anim["animation"]) then
+            anim["animation"]:update(dt)
+        end
     end
 
 end
@@ -416,7 +472,7 @@ function slime.outlineStageElements()
     -- draw outlines of characters
     love.graphics.setColor(0, 255, 0, 64)
     for iactor, actor in pairs(slime.actors) do
-        love.graphics.rectangle( "line", actor.x - actor.hotspotX, actor.y - actor.hotspotY, actor.image:getWidth(), actor.image:getHeight() )
+        love.graphics.rectangle( "line", actor.x - actor.hotspotX, actor.y - actor.hotspotY, actor.w, actor.h )
         love.graphics.circle( "line", actor.x, actor.y, 1, 6 )
     end
 
