@@ -16,9 +16,18 @@ The name is an acronym for "SLUDGE to L&Ouml;VE Inspired Mimicry Environment".
 **TODO**  
 
 * Hotspots - Regions that fires a callback on click.
-* Customer cursors.
-* Text status bar.
+* Cursors.
+* Text status.
 * Actor dialogues.
+
+# Thanks
+
+I want to thank these people for making use of their code:
+
+* kikito, for your animation library, [anim8](https://love2d.org/wiki/anim8).
+* GloryFish, for your [A* path finding](https://github.com/GloryFish/lua-astar) lua code.
+
+Thank you!
 
 ---
 
@@ -67,7 +76,9 @@ These are helper functions that in turn call `addAnimation` with the `keys` "idl
   * The `w` and `h` are the width and height of each frame.
   * The `south` and `southd` are the frames and delays for the south-facing animation.
   * The other directions are optional but recommended. `SOUTH` will be used as default if none of the other directions are given.
-  
+
+The format of the `south` frames and delays following the [anim8 library](https://github.com/kikito/anim8) convention. I recommend you go over there to read about the Frames format.
+
 Notes:
 
 * The `tileset` is a file name to the image tileset, they are cached for re-use. Multiple actors who use the same tileset will re-use the cached copies.
