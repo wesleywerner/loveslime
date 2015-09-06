@@ -9,8 +9,8 @@ function love.load()
     local layermask = love.graphics.newImage("layer-mask.png")
     local walkzone = love.graphics.newImage("walk-door-open-mask.png")
     
-    slime.background(background, 0, 0)
-    slime.layer(background, layermask, 0, 0, 50)
+    slime.background(background)
+    slime.layer(background, layermask, 50)
     slime.walkable(walkzone)
 
     local ego = slime.actor("ego", 70, 50)
