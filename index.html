@@ -56,24 +56,30 @@
 <li>Actor dialogues.</li>
 </ul>
 
+<hr>
+
 <h1>
 <a id="slime-api" class="anchor" href="#slime-api" aria-hidden="true"><span class="octicon octicon-link"></span></a>SLIME API</h1>
 
 <h2>
 <a id="backgrounds" class="anchor" href="#backgrounds" aria-hidden="true"><span class="octicon octicon-link"></span></a>Backgrounds</h2>
 
-<p><code>slime.background (image, [, delay])</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime.background (image, [, delay])</code></p>
 
 <p>Add a background to the stage. <code>delay</code> sets how many milliseconds to display the background if multiple backgrounds are loaded, and may be omitted if only one background is set.</p>
+
+<p><img src="api/func.png" alt="func"> <code>slime.walkable (mask)</code></p>
+
+<p>Set the areas that are walkable by actors, where black (<code>#000</code>) indicates non-walkable areas, and any other color for walkable.</p>
 
 <h2>
 <a id="layers" class="anchor" href="#layers" aria-hidden="true"><span class="octicon octicon-link"></span></a>Layers</h2>
 
 <p>Layers define areas of your background where actors can walk behind.</p>
 
-<p><code>slime.layer (source, mask, baseline)</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime.layer (source, mask, baseline)</code></p>
 
-<p>Set a new layer on the <code>source</code> background using the <code>mask</code> image. The mask is an image of the same dimensions as the background, filled black for non-walkable areas, and any other color for walkable.</p>
+<p>Set a new layer on the <code>source</code> background using the <code>mask</code> image. The mask is an image of the same dimensions as the background.</p>
 
 <p>The <code>baseline</code> is the y-position a character needs to be behind in order to be hidden by the layer.</p>
 
@@ -82,11 +88,9 @@
 
 <p>The cardinal directions are oriented to your screen so that <code>SOUTH</code> points to the bottom of your screen, and <code>NORTH</code> to the top. So an actor facing <code>SOUTH</code> is looking at the player.</p>
 
-<p><img src="api/compass.png" alt="compass" title="Compass Directions"></p>
+<p><img src="api/func.png" alt="func"> <code>slime.actor (name, x, y, hotspotx, hotspoty)</code>  </p>
 
-<p><code>slime.actor (name, x, y, hotspotx, hotspoty)</code>  </p>
-
-<p>Adds a new actor to the stage.</p>
+<p>Add a new actor to the stage.</p>
 
 <ul>
 <li>
@@ -97,9 +101,9 @@
 <code>hotspotx</code> and <code>hotspoty</code> sets the hotspot of the actor. The default actor hotspot (if not given) to centered at the base of the image.</li>
 </ul>
 
-<p><code>slime.idleAnimation (actor, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])</code><br>
-<code>slime.walkAnimation (actor, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])</code><br>
-<code>slime.talkAnimation (actor, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])</code>  </p>
+<p><img src="api/func.png" alt="func"> <code>slime.idleAnimation (actor, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])</code><br>
+<img src="api/func.png" alt="func"> <code>slime.walkAnimation (actor, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])</code><br>
+<img src="api/func.png" alt="func"> <code>slime.talkAnimation (actor, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])</code>  </p>
 
 <p>These are helper functions that in turn call <code>addAnimation</code> with the <code>keys</code> "idle", "walk" and "talk" respectively. </p>
 
@@ -116,16 +120,16 @@
 <li>The other directions are optional but recommended. <code>SOUTH</code> will be used as default if none of the other directions are given.</li>
 </ul>
 
-<p>Things to note:</p>
+<p>Notes:</p>
 
 <ul>
 <li>
-<code>tileset</code> is a file name to the image tileset, and will be cached for re-use later.</li>
+<code>tileset</code> is a file name to the image tileset, they are cached for re-use. Multiple actors who use the same tileset will re-use the cached copies.</li>
 <li>Only <code>south</code> and <code>southd</code> parameters are mandatory. If the rest are omitted then south will be used as the default for all directions.</li>
 <li>If a <code>west</code> parameter is given, and <code>east</code> is <code>nil</code> or omitted, then the west animation will automatically be mirrored and used for the <code>east</code>.</li>
 </ul>
 
-<p><code>slime.addAnimation (actor, key, tileset, w, h, frames, delays)</code>  </p>
+<p><img src="api/func.png" alt="func"> <code>slime.addAnimation (actor, key, tileset, w, h, frames, delays)</code>  </p>
 
 <p>This is for adding custom animations.</p>
 
@@ -141,13 +145,7 @@
 <code>frames</code> and <code>delays</code> are the frames and delays for the animation.</li>
 </ul>
 
-<h2>
-<a id="notes" class="anchor" href="#notes" aria-hidden="true"><span class="octicon octicon-link"></span></a>Notes</h2>
-
-<ul>
-<li>Actor animation tilesets are cached. Multiple actors who use the same tileset filename will re-use the cached tileset image.</li>
-<li>
-</ul>
+<hr>
 
 <h1>
 <a id="license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>LICENSE</h1>
