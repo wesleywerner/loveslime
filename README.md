@@ -32,24 +32,30 @@ _TODO_
 
 ## Setting the stage
 
+`slime.background (image, x, y [, delay])`
+
+Add a background to the stage. `x` and `y` set where the background is drawn, and the delay sets for how many milliseconds to display the background for when you have multiple (and ths animated) backgrounds.
+
+
 ## Adding actors
 
     The cardinal directions are oriented to your screen so that `SOUTH` points to the bottom of your screen, and `NORTH` to the top. So an actor facing `SOUTH` is looking at the player.
 
-* `slime.actor (name, x, y, hotspotx, hotspoty)`
-** `name` identifies the actor. You can use the same name multiple times, however when calling `moveActor` (which take the name) only the first actor with that name is moved.
-** `x` and `y` sets the starting position of the actor.
-** `hotspotx` and `hotspoty` sets the hotspot of the actor. The default actor hotspot (if not given) to centered at the base of the image.
-* `slime.idleAnimation`, `slime.walkAnimation`, `slime.talkAnimation`: `(actor, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])`
-** `actor` is an instance create via `slime.actor`
-** `tileset` is the filename of the image tileset.
-** `w` and `h` are the width and height of each frame.
-** `south` and `southd` are the frames and delays for the south-facing animation.
-* `slime.addAnimation (actor, key, tileset, w, h, frames, delays)`
-** `actor` is an instance create via `slime.actor`
-** `key` is the animation key.
-** `w` and `h` are the width and height of each frame.
-** `frames` and `delays` are the frames and delays for the animation.
+### `slime.actor (name, x, y, hotspotx, hotspoty)`
+  * `name` identifies the actor. You can use the same name multiple times, however when calling `moveActor` (which take the name) only the first actor with that name is moved.
+  * `x` and `y` sets the starting position of the actor.
+  * `hotspotx` and `hotspoty` sets the hotspot of the actor. The default actor hotspot (if not given) to centered at the base of the image.
+### `slime.idleAnimation`, `slime.walkAnimation`, `slime.talkAnimation`: `(actor, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])`
+  * `actor` is an instance create via `slime.actor`
+  * `tileset` is the filename of the image tileset.
+  * `w` and `h` are the width and height of each frame.
+  * `south` and `southd` are the frames and delays for the south-facing animation.
+  * The other directions are optional but recommended. `SOUTH` will be used as default if none of the other directions are given.
+### `slime.addAnimation (actor, key, tileset, w, h, frames, delays)`
+  * `actor` is an instance create via `slime.actor`
+  * `key` is the animation key.
+  * `w` and `h` are the width and height of each frame.
+  * `frames` and `delays` are the frames and delays for the animation.
 
 ## Layers
 
