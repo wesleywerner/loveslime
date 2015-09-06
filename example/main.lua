@@ -16,18 +16,40 @@ function love.load()
     local ego = slime.actor("ego", 70, 50)
     ego.movedelay = 0.05
     
-    ego:animation ( "idle east",            -- animation key
-                    "green-monster.png",    -- tileset file name
-                    12, 12,                 -- tile width & height
-                    {'3-2', 1},             -- frames
-                    {3, 0.2}                -- delays
-                    )
-    ego:animation ( "walk east",            -- animation key
-                    "green-monster.png",    -- tileset file name
-                    12, 12,                 -- tile width & height
-                    {'3-6', 1},             -- frames
-                    0.2                     -- delays
-                    )
+    slime.idleAnimation (ego,
+                        "green-monster.png",
+                        12, 12,         -- tile width & height
+                        {'3-2', 1},     -- frames
+                        {3, 0.2}        -- delays
+                        )
+
+    slime.walkAnimation (ego,
+                        "green-monster.png",
+                        12, 12,         -- tile width & height
+                        {'18-21', 1},   -- north
+                        0.2,            -- delays
+                        {'3-6', 1},     -- east
+                        0.2,            -- delays
+                        {'11-14', 1},   -- south
+                        0.2,            -- delays
+                        {'6-3', 1},     -- west
+                        0.2             -- delays
+                        )
+
+
+    --ego:talkAnimation ("green-monster.png",
+                        --12, 12,         -- tile width & height
+                        --{'15-17', 1},   -- north
+                        --0.2,            -- delays
+                        --{'7-9', 1},     -- east
+                        --0.2,            -- delays
+                        --{'15-17', 1},   -- south
+                        --0.2,            -- delays
+                        --{'7-9', 1},     -- west
+                        --0.2             -- delays
+                        --)
+                            
+
     
 end
 

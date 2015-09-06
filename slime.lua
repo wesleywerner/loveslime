@@ -165,38 +165,6 @@ function slime.actor (name, x, y, hotspotx, hotspoty)
         newActor.hotspotY = hotspoty
     end
     
-    -- Actor function to add a new animation.
-    function newActor:animation (name, tileset, w, h, frames, delays)
-
-        -- cache tileset image to save loading duplicate images
-        local image = slime.tilesets[tileset]
-        if (not slime.tilesets[tileset]) then
-            image = love.graphics.newImage(tileset)
-            slime.tilesets[tileset] = image
-        end
-
-        -- default actor hotspot to centered at the base of the image
-        self["w"] = w
-        self["h"] = h
-        self["hotspotX"] = w / 2
-        self["hotspotY"] = h
-        
-        local g = anim8.newGrid(w, h, image:getWidth(), image:getHeight())
-        local animation = anim8.newAnimation(g(unpack(frames)), delays)
-        
-        self.animations[name] = { 
-            ["name"] = name,
-            ["tileset"] = tileset,
-            ["animation"] = animation
-            }
-            
-        -- default to this anim
-        if (not self.anim) then
-            self.anim = self.animations[name]
-        end
-        
-    end
-    
     function newActor:getAnim ()
         local key = self.action .. " " .. self.direction
         return self.animations[key]
@@ -209,6 +177,60 @@ function slime.actor (name, x, y, hotspotx, hotspoty)
     end
     
     return newActor
+end
+
+-- Helper functions to batch build actor animations
+function slime.idleAnimation (actor, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
+    slime.prefabAnimation ("idle", actor, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
+end
+
+function slime.walkAnimation (actor, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
+    slime.prefabAnimation ("walk", actor, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
+end
+
+function slime.talkAnimation (actor, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
+    slime.prefabAnimation ("talk", actor, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
+end
+
+-- Create a prefabricated animation sequence of the cardinal directions.
+-- Use the south direction (facing the player) as default if none of the other directions are given.
+function slime.prefabAnimation (prefix, actor, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
+    slime.addAnimation (actor, prefix .. " south", tileset, w, h, south, southd)
+    slime.addAnimation (actor, prefix .. " west", tileset, w, h, west or south, westd or southd)
+    slime.addAnimation (actor, prefix .. " north", tileset, w, h, north or south, northd or southd)
+    slime.addAnimation (actor, prefix .. " east", tileset, w, h, east or south, eastd or southd)
+end
+
+-- Create a custom animation.
+function slime.addAnimation (actor, key, tileset, w, h, frames, delays)
+
+    -- cache tileset image to save loading duplicate images
+    local image = slime.tilesets[tileset]
+    if (not slime.tilesets[tileset]) then
+        image = love.graphics.newImage(tileset)
+        slime.tilesets[tileset] = image
+    end
+
+    -- default actor hotspot to centered at the base of the image
+    actor["w"] = w
+    actor["h"] = h
+    actor["hotspotX"] = w / 2
+    actor["hotspotY"] = h
+    
+    local g = anim8.newGrid(w, h, image:getWidth(), image:getHeight())
+    local animation = anim8.newAnimation(g(unpack(frames)), delays)
+    
+    actor.animations[key] = { 
+        --["name"] = key,
+        ["tileset"] = tileset,
+        ["animation"] = animation
+        }
+        
+    -- default to this anim
+    if (not actor.anim) then
+        actor.anim = actor.animations[key]
+    end
+    
 end
 
 function slime.drawActor (actor)
