@@ -19,9 +19,9 @@
         <h2>SLIME is a LÖVE library for creating point-and-click adventure games.</h2>
 
         <section id="downloads">
-          <a href="https://github.com/wesleywerner/love2dslime/zipball/master" class="btn">Download as .zip</a>
-          <a href="https://github.com/wesleywerner/love2dslime/tarball/master" class="btn">Download as .tar.gz</a>
-          <a href="https://github.com/wesleywerner/love2dslime" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
+          <a href="https://github.com/wesleywerner/loveslime/zipball/master" class="btn">Download as .zip</a>
+          <a href="https://github.com/wesleywerner/loveslime/tarball/master" class="btn">Download as .tar.gz</a>
+          <a href="https://github.com/wesleywerner/loveslime" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
         </section>
       </div>
     </header>
@@ -31,40 +31,122 @@
         <h1>
 <a id="slime" class="anchor" href="#slime" aria-hidden="true"><span class="octicon octicon-link"></span></a>SLIME</h1>
 
-<p>SLIME is a point-and-click adventure game library for LÖVE.</p>
+<p>SLIME is a point-and-click adventure game library for LÖVE. It is inspired by the <a href="https://opensludge.github.io/">SLUDGE game engine</a>.</p>
+
+<p>The name is an acronym for "SLUDGE to LÖVE Inspired Mimicry Environment".</p>
+
+<p><strong>Status:</strong> In Development<br>
+<strong>Version:</strong> 0.1  </p>
 
 <h1>
-<a id="building" class="anchor" href="#building" aria-hidden="true"><span class="octicon octicon-link"></span></a>BUILDING</h1>
-
-<p>Meant for bundling the code and third-party libraries into a release.</p>
-
-<pre><code>$ ./release.sh
-</code></pre>
-
-<h1>
-<a id="what-does-slime-stand-for" class="anchor" href="#what-does-slime-stand-for" aria-hidden="true"><span class="octicon octicon-link"></span></a>WHAT DOES SLIME STAND FOR</h1>
-
-<p>The name is an acronym for SLUDGE to LÖVE Inspired Mimicry Enrichment. </p>
-
-<p>It is inspired by the SLUDGE game engine.</p>
-
-<h1>
-<a id="roadmap" class="anchor" href="#roadmap" aria-hidden="true"><span class="octicon octicon-link"></span></a>ROADMAP</h1>
-
-<p><strong>Version 0.1</strong></p>
+<a id="features" class="anchor" href="#features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Features</h1>
 
 <ul>
 <li>Animated backgrounds.</li>
-<li>Actors.</li>
+<li>Animated actors with directional movement.</li>
+<li>A Star path finding movement.</li>
 </ul>
 
-<p><em>TODO</em></p>
+<p><strong>TODO</strong>  </p>
 
 <ul>
-<li>Actor animations. Certain animation keys like "Walk East" and "Walk West" are automatically used for movement. Custom actions can be triggered via <code>AnimateActor ("jump", [repeat count], [callback])</code> (pseudocode).</li>
-<li>Pathfinding movement. Read an image mask that is converted into the walkable map.</li>
-<li>Hotspots. Define regions that fires a callback on click.</li>
-<li>Cursors. Set with a mode like "pointer", "look", "take". The mode is passed to hotspot or actor callbacks.</li>
+<li>Hotspots - Regions that fires a callback on click.</li>
+<li>Customer cursors.</li>
+<li>Text status bar.</li>
+<li>Actor dialogues.</li>
+</ul>
+
+<h1>
+<a id="slime-api" class="anchor" href="#slime-api" aria-hidden="true"><span class="octicon octicon-link"></span></a>SLIME API</h1>
+
+<h2>
+<a id="backgrounds" class="anchor" href="#backgrounds" aria-hidden="true"><span class="octicon octicon-link"></span></a>Backgrounds</h2>
+
+<p><code>slime.background (image, [, delay])</code></p>
+
+<p>Add a background to the stage. <code>delay</code> sets how many milliseconds to display the background if multiple backgrounds are loaded, and may be omitted if only one background is set.</p>
+
+<h2>
+<a id="layers" class="anchor" href="#layers" aria-hidden="true"><span class="octicon octicon-link"></span></a>Layers</h2>
+
+<p>Layers define areas of your background where actors can walk behind.</p>
+
+<p><code>slime.layer (source, mask, baseline)</code></p>
+
+<p>Set a new layer on the <code>source</code> background using the <code>mask</code> image. The mask is an image of the same dimensions as the background, filled black for non-walkable areas, and any other color for walkable.</p>
+
+<p>The <code>baseline</code> is the y-position a character needs to be behind in order to be hidden by the layer.</p>
+
+<h2>
+<a id="actors" class="anchor" href="#actors" aria-hidden="true"><span class="octicon octicon-link"></span></a>Actors</h2>
+
+<p>The cardinal directions are oriented to your screen so that <code>SOUTH</code> points to the bottom of your screen, and <code>NORTH</code> to the top. So an actor facing <code>SOUTH</code> is looking at the player.</p>
+
+<p><img src="api/compass.png" alt="compass" title="Compass Directions"></p>
+
+<p><code>slime.actor (name, x, y, hotspotx, hotspoty)</code>  </p>
+
+<p>Adds a new actor to the stage.</p>
+
+<ul>
+<li>
+<code>name</code> identifies the actor. You can use the same name multiple times, however when calling <code>moveActor</code> (which take the name) only the first actor with that name is moved.</li>
+<li>
+<code>x</code> and <code>y</code> sets the starting position of the actor.</li>
+<li>
+<code>hotspotx</code> and <code>hotspoty</code> sets the hotspot of the actor. The default actor hotspot (if not given) to centered at the base of the image.</li>
+</ul>
+
+<p><code>slime.idleAnimation (actor, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])</code><br>
+<code>slime.walkAnimation (actor, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])</code><br>
+<code>slime.talkAnimation (actor, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])</code>  </p>
+
+<p>These are helper functions that in turn call <code>addAnimation</code> with the <code>keys</code> "idle", "walk" and "talk" respectively. </p>
+
+<ul>
+<li>
+<code>actor</code> is an instance create via <code>slime.actor</code>
+</li>
+<li>
+<code>tileset</code> is the filename of the image tileset.</li>
+<li>
+<code>w</code> and <code>h</code> are the width and height of each frame.</li>
+<li>
+<code>south</code> and <code>southd</code> are the frames and delays for the south-facing animation.</li>
+<li>The other directions are optional but recommended. <code>SOUTH</code> will be used as default if none of the other directions are given.</li>
+</ul>
+
+<p>Things to note:</p>
+
+<ul>
+<li>
+<code>tileset</code> is a file name to the image tileset, and will be cached for re-use later.</li>
+<li>Only <code>south</code> and <code>southd</code> parameters are mandatory. If the rest are omitted then south will be used as the default for all directions.</li>
+<li>If a <code>west</code> parameter is given, and <code>east</code> is <code>nil</code> or omitted, then the west animation will automatically be mirrored and used for the <code>east</code>.</li>
+</ul>
+
+<p><code>slime.addAnimation (actor, key, tileset, w, h, frames, delays)</code>  </p>
+
+<p>This is for adding custom animations.</p>
+
+<ul>
+<li>
+<code>actor</code> is an instance create via <code>slime.actor</code>
+</li>
+<li>
+<code>key</code> is the animation key.</li>
+<li>
+<code>w</code> and <code>h</code> are the width and height of each frame.</li>
+<li>
+<code>frames</code> and <code>delays</code> are the frames and delays for the animation.</li>
+</ul>
+
+<h2>
+<a id="notes" class="anchor" href="#notes" aria-hidden="true"><span class="octicon octicon-link"></span></a>Notes</h2>
+
+<ul>
+<li>Actor animation tilesets are cached. Multiple actors who use the same tileset filename will re-use the cached tileset image.</li>
+<li>
 </ul>
 
 <h1>
