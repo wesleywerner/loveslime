@@ -28,6 +28,36 @@ _TODO_
 * Hotspots. Define regions that fires a callback on click.
 * Cursors. Set with a mode like "pointer", "look", "take". The mode is passed to hotspot or actor callbacks.
 
+# USING SLIME
+
+## Setting the stage
+
+## Adding actors
+
+    The cardinal directions are oriented to your screen so that `SOUTH` points to the bottom of your screen, and `NORTH` to the top. So an actor facing `SOUTH` is looking at the player.
+
+* `slime.actor (name, x, y, hotspotx, hotspoty)`
+** `name` identifies the actor. You can use the same name multiple times, however when calling `moveActor` (which take the name) only the first actor with that name is moved.
+** `x` and `y` sets the starting position of the actor.
+** `hotspotx` and `hotspoty` sets the hotspot of the actor. The default actor hotspot (if not given) to centered at the base of the image.
+* `slime.idleAnimation`, `slime.walkAnimation`, `slime.talkAnimation`: `(actor, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])`
+** `actor` is an instance create via `slime.actor`
+** `tileset` is the filename of the image tileset.
+** `w` and `h` are the width and height of each frame.
+** `south` and `southd` are the frames and delays for the south-facing animation.
+* `slime.addAnimation (actor, key, tileset, w, h, frames, delays)`
+** `actor` is an instance create via `slime.actor`
+** `key` is the animation key.
+** `w` and `h` are the width and height of each frame.
+** `frames` and `delays` are the frames and delays for the animation.
+
+## Layers
+
+## Notes
+
+* Actor animation tilesets are cached. Multiple actors who use the same tileset filename will re-use the cached tileset image.
+* 
+
 # LICENSE
 
 This program is free software: you can redistribute it and/or modify

@@ -151,12 +151,15 @@ function slime.actor (name, x, y, hotspotx, hotspoty)
         ["name"] = name,
         ["x"] = x,
         ["y"] = y,
-        ["w"] = 10,        
-        ["h"] = 20,
+        ["lastx"] = x,              -- previous position to calcualte
+        ["lasty"] = y,              -- direction.
+        ["dirCalcCounter"] = 0,     -- delay direction calc counter.
+        ["w"] = 10,                 -- default sprite size when
+        ["h"] = 20,                 -- no animation is set.
         ["hotspotX"] = 5,
         ["hotspotY"] = 20,
         ["animations"] = { },
-        ["direction"] = "east",
+        ["direction"] = "south",
         ["action"] = "idle"
         }
         
@@ -268,6 +271,7 @@ function slime.moveActor (name, x, y, callback)
             actor.path = path:getNodes()
             actor.callback = callback
             actor.action = "walk"
+            actor.dirCalcCounter = 0    -- calculate direction instantly
             slime.log("move " .. name .. " to " .. x .. " : " .. y)
         end
     end
@@ -294,6 +298,13 @@ function slime.moveActorOnPath (actor, dt)
         local point = table.remove(actor.path)
         if (point) then
             actor.x, actor.y = point.location.x, point.location.y
+            -- Test if we should calculate actor direction
+            actor.dirCalcCounter = actor.dirCalcCounter - 1
+            if (actor.dirCalcCounter <= 0) then
+                actor.dirCalcCounter = 5
+                actor.direction = slime.calculateDirection(actor.lastx, actor.lasty, actor.x, actor.y)
+                actor.lastx, actor.lasty = actor.x, actor.y
+            end
         else
             actor.action = "idle"
             if (actor.callback) then
@@ -301,6 +312,71 @@ function slime.moveActorOnPath (actor, dt)
             end
         end
     end
+end
+
+-- Return the nearest cardinal direction represented by the angle of movement.
+function slime.calculateDirection (x1, y1, x2, y2)
+
+    -- function angle(x1, y1, x2, y2)
+    --     local ang = math.atan2(y2 - y1, x2 - x1) * 180 / math.pi
+    --     ang = 90 - ang
+    --     if (ang < 0) then ang = ang + 360 end
+    --     return ang
+    -- end
+    -- 
+    -- print('nw', angle(100, 100, 99, 99))
+    -- print('n', angle(100, 100, 100, 99))
+    -- print('ne', angle(100, 100, 101, 99))
+    -- print('sw', angle(100, 100, 99, 101))
+    -- print('s', angle(100, 100, 100, 101))
+    -- print('se', angle(100, 100, 101, 101))
+    -- print('w', angle(100, 100, 99, 100))
+    -- print('e', angle(100, 100, 101, 100))
+    --
+    -- nw	225.0
+    -- n	180.0
+    -- ne	135.0
+    -- sw	315.0
+    -- s	0.0
+    -- se	45.0
+    -- w	270.0
+    -- e	90.0
+    --
+    --        180
+    --         N
+    --   225   |    135
+    --         |
+    --  270    |      90
+    --  W -----+----- E
+    --         |
+    --         |
+    --   315   |    45
+    --         S
+    --         0 
+    
+    -- test if a value is between a range (inclusive)
+    local function between(n, a, b)
+        return n >= a and n <= b 
+    end
+    
+    -- calculate the angle between the two points
+    local ang = math.atan2(y2 - y1, x2 - x1) * 180 / math.pi
+    
+    -- map the angle to a 360 degree range
+    ang = 90 - ang
+    if (ang < 0) then ang = ang + 360 end
+    
+    if between(ang, 0, 45) or between(ang, 315, 359) then
+        return 'south'
+    elseif between(ang, 45, 135) then
+        return 'east'
+    elseif between(ang, 135, 225) then
+        return 'north'
+    elseif between(ang, 225, 315) then
+        return 'west'
+    end
+    
+    --return 'south'
 end
 
 --    _                           
