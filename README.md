@@ -1,63 +1,83 @@
 # SLIME
 
-SLIME is a point-and-click adventure game library for LÖVE.
+SLIME is a point-and-click adventure game library for L&Ouml;VE. It is inspired by the [SLUDGE game engine](https://opensludge.github.io/).
 
-# BUILDING
+The name is an acronym for "SLUDGE to L&Ouml;VE Inspired Mimicry Environment".
 
-Meant for bundling the code and third-party libraries into a release.
+**Status:** In Development  
+**Version:** 0.1  
 
-    $ ./release.sh
-
-# WHAT DOES SLIME STAND FOR
-
-The name is an acronym for SLUDGE to LÖVE Inspired Mimicry Enrichment. 
-
-It is inspired by the SLUDGE game engine.
-
-# ROADMAP
-
-**Version 0.1**
+# Features
 
 * Animated backgrounds.
-* Actors.
-* Pathfinding movement. Read an image mask that is converted into the walkable map.
+* Animated actors with directional movement.
+* A Star path finding movement.
 
-_TODO_
+**TODO**  
 
-* Actor animations. Certain animation keys like "Walk East" and "Walk West" are automatically used for movement. Custom actions can be triggered via `AnimateActor ("jump", [repeat count], [callback])` (pseudocode).
-* Hotspots. Define regions that fires a callback on click.
-* Cursors. Set with a mode like "pointer", "look", "take". The mode is passed to hotspot or actor callbacks.
+* Hotspots - Regions that fires a callback on click.
+* Customer cursors.
+* Text status bar.
+* Actor dialogues.
 
-# USING SLIME
+# SLIME API
 
-## Setting the stage
+## Backgrounds
 
-`slime.background (image, x, y [, delay])`
+`slime.background (image, [, delay])`
 
-Add a background to the stage. `x` and `y` set where the background is drawn, and the delay sets for how many milliseconds to display the background for when you have multiple (and ths animated) backgrounds.
+Add a background to the stage. `delay` sets how many milliseconds to display the background if multiple backgrounds are loaded, and may be omitted if only one background is set.
 
+## Layers
 
-## Adding actors
+Layers define areas of your background where actors can walk behind.
 
-    The cardinal directions are oriented to your screen so that `SOUTH` points to the bottom of your screen, and `NORTH` to the top. So an actor facing `SOUTH` is looking at the player.
+`slime.layer (source, mask, baseline)`
 
-### `slime.actor (name, x, y, hotspotx, hotspoty)`
+Set a new layer on the `source` background using the `mask` image. The mask is an image of the same dimensions as the background, filled black for non-walkable areas, and any other color for walkable.
+
+The `baseline` is the y-position a character needs to be behind in order to be hidden by the layer.
+
+## Actors
+
+The cardinal directions are oriented to your screen so that `SOUTH` points to the bottom of your screen, and `NORTH` to the top. So an actor facing `SOUTH` is looking at the player.
+
+![compass](api/compass.png "Compass Directions")
+
+`slime.actor (name, x, y, hotspotx, hotspoty)`  
+
+Adds a new actor to the stage.
+
   * `name` identifies the actor. You can use the same name multiple times, however when calling `moveActor` (which take the name) only the first actor with that name is moved.
   * `x` and `y` sets the starting position of the actor.
   * `hotspotx` and `hotspoty` sets the hotspot of the actor. The default actor hotspot (if not given) to centered at the base of the image.
-### `slime.idleAnimation`, `slime.walkAnimation`, `slime.talkAnimation`: `(actor, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])`
+  
+`slime.idleAnimation (actor, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])`  
+`slime.walkAnimation (actor, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])`  
+`slime.talkAnimation (actor, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])`  
+
+These are helper functions that in turn call `addAnimation` with the `keys` "idle", "walk" and "talk" respectively. 
+
   * `actor` is an instance create via `slime.actor`
   * `tileset` is the filename of the image tileset.
   * `w` and `h` are the width and height of each frame.
   * `south` and `southd` are the frames and delays for the south-facing animation.
   * The other directions are optional but recommended. `SOUTH` will be used as default if none of the other directions are given.
-### `slime.addAnimation (actor, key, tileset, w, h, frames, delays)`
+  
+Things to note:
+
+* `tileset` is a file name to the image tileset, and will be cached for re-use later.
+* Only `south` and `southd` parameters are mandatory. If the rest are omitted then south will be used as the default for all directions.
+* If a `west` parameter is given, and `east` is `nil` or omitted, then the west animation will automatically be mirrored and used for the `east`.
+
+`slime.addAnimation (actor, key, tileset, w, h, frames, delays)`  
+
+This is for adding custom animations.
+
   * `actor` is an instance create via `slime.actor`
   * `key` is the animation key.
   * `w` and `h` are the width and height of each frame.
   * `frames` and `delays` are the frames and delays for the animation.
-
-## Layers
 
 ## Notes
 
