@@ -53,6 +53,7 @@ function slime.reset ()
     slime.actors = {}
     slime.layers = {}
     slime.debug.log = {}
+    slime.hotspots = {}
     slime.astar = nil
     slime.statusText = nil
 end
@@ -456,6 +457,28 @@ function slime:createLayer (source, mask)
     return love.graphics.newImage(layerData)
 end
 
+--    _           _                   _       
+--   | |__   ___ | |_ ___ _ __   ___ | |_ ___ 
+--   | '_ \ / _ \| __/ __| '_ \ / _ \| __/ __|
+--   | | | | (_) | |_\__ \ |_) | (_) | |_\__ \
+--   |_| |_|\___/ \__|___/ .__/ \___/ \__|___/
+--                       |_|                  
+
+slime.hotspots = {}
+
+function slime.hotspot(name, callback, x, y, w, h)
+
+    table.insert(slime.hotspots, {
+        ["name"] = name, 
+        ["callback"] = callback, 
+        ["x"] = x, 
+        ["y"] = y, 
+        ["w"] = w, 
+        ["h"] = h
+    })
+
+end
+
 --        _                    
 --     __| |_ __ __ ___      __
 --    / _` | '__/ _` \ \ /\ / /
@@ -531,6 +554,26 @@ function slime.getObject (x, y)
         if (x >= actor.x - actor.hotspotX and x <= actor.x - actor.hotspotX + actor.w) and 
             (y >= actor.y - actor.hotspotY and y <= actor.y - actor.hotspotY + actor.h) then
             return actor
+        end
+    end
+    
+    for ihotspot, hotspot in pairs(slime.hotspots) do
+        if (x >= hotspot.x and x <= hotspot.x + hotspot.w) and
+            (y >= hotspot.y and y <= hotspot.y + hotspot.h) then
+            return hotspot
+        end
+    end
+    
+end
+
+function slime.interact (x, y)
+
+    local obj = slime.getObject(x, y)
+    
+    if (obj) then
+        if (obj.callback) then
+            obj.callback()
+            return true
         end
     end
     
