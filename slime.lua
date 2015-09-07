@@ -141,7 +141,7 @@ end
 slime.actors = {}
 slime.tilesets = {}
 
-function slime.actor (name, x, y, hotspotx, hotspoty)
+function slime.actor (name, x, y, hotspotx, hotspoty, image)
 
     -- Add an actor to the stage.
     -- Allows adding the same actor name multiple times, but only
@@ -151,6 +151,16 @@ function slime.actor (name, x, y, hotspotx, hotspoty)
     -- The hotspotX/Y values are the offset of the actor's hotspot
     -- from the image origin. By default this is centered at the base
     -- of the image.
+    
+    -- default sprite size
+    local w = 10
+    local h = 10
+    
+    -- load the image if one is specified.
+    if (image) then 
+        image = love.graphics.newImage(image) 
+        w, h = image:getDimensions()
+    end
 
     local newActor = {
         ["name"] = name,
@@ -159,10 +169,11 @@ function slime.actor (name, x, y, hotspotx, hotspoty)
         ["lastx"] = x,              -- previous position to calcualte
         ["lasty"] = y,              -- direction.
         ["dirCalcCounter"] = 0,     -- delay direction calc counter.
-        ["w"] = 10,                 -- default sprite size when
-        ["h"] = 20,                 -- no animation is set.
-        ["hotspotX"] = 5,
-        ["hotspotY"] = 20,
+        ["w"] = w,
+        ["h"] = h,
+        ["hotspotX"] = 0,
+        ["hotspotY"] = 0,
+        ["image"] = image,          -- a static image of this actor.
         ["animations"] = { },
         ["direction"] = "south",
         ["action"] = "idle"
@@ -256,6 +267,8 @@ function slime.drawActor (actor)
     if (animation) then
         local tileset = slime.tilesets[animation["tileset"]]
         animation["animation"]:draw(tileset, actor.x - actor.hotspotX, actor.y - actor.hotspotY)
+    elseif (actor.image) then
+        love.graphics.draw(actor.image, actor.x - actor.hotspotX, actor.y - actor.hotspotY)
     else
         love.graphics.rectangle ("fill", actor.x - actor.hotspotX, actor.y - actor.hotspotY, actor.w, actor.h)
     end

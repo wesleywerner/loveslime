@@ -1,4 +1,9 @@
+-- Store the slime module in a global variable so that other stage files
+-- have access to it.
 slime = require ("slime")
+
+-- We can separate each stage into a file for easier code management.
+require ("cell")
 
 -- Scale our graphics so that our pixel art is better visible.
 -- When handling mouse positions we account for scale in the xy points.
@@ -9,14 +14,13 @@ function love.load()
     -- Nearest image interpolation (pixel graphics, no anti-aliasing)
     love.graphics.setDefaultFilter("nearest", "nearest", 1)
     
-    -- Load the first room
+    -- Load the first room, our prison cell
     cellRoom()
     
 end
 
 function love.draw()
 
-    -- scale the graphics larger to see our pixel art better.
     love.graphics.push()
     love.graphics.scale(scale)
     slime.draw(scale)
@@ -34,7 +38,8 @@ function love.update(dt)
 
 end
 
-function love.keypressed( key, isrepeat )
+-- Escape key exits, Tab key toggles debug information
+function love.keypressed(key, isrepeat)
     if key == "escape" then
         love.event.quit()
     end
@@ -43,6 +48,7 @@ function love.keypressed( key, isrepeat )
     end
 end
 
+-- Left clicking moves our Ego actor, and interacts with objects.
 function love.mousepressed(x, y, button)
 
     -- Adjust for scale
@@ -63,9 +69,10 @@ function love.mousepressed(x, y, button)
     
 end
 
+-- Show the name of the object under our pointer.
 function updateStatus()
     
-    local x, y = love.mouse.getPosition( )
+    local x, y = love.mouse.getPosition()
     
     -- Adjust for scale
     x = math.floor(x / scale)
@@ -78,80 +85,5 @@ function updateStatus()
     else
         slime.status()
     end
-    
-end
-
--- Since the player's actor, or Ego, will appear in many scenes
--- it is easier to set up this actor with a function for re-use.
-function setupEgoAnimations(ego)
-
-    -- actor movement delay in ms
-    ego.movedelay = 0.05
-
-    -- The idle animation plays when the actor is not walking or talking.
-    -- We have two frames, the first shows for a few seconds,
-    -- the second flashes by to make the actor blink.
-    slime.idleAnimation (ego,
-                        "green-monster.png",
-                        12, 12,         -- tile width & height
-                        {'11-10', 1},   -- south
-                        {3, 0.2},       -- delays
-                        {'3-2', 1},     -- west
-                        {3, 0.2},       -- delays
-                        {18, 1},        -- north
-                        1,              -- delays
-                        nil,            -- east
-                        nil             -- (auto flipped from west)
-                        )
-
-    slime.walkAnimation (ego,
-                        "green-monster.png",
-                        12, 12,         -- tile width & height
-                        {'11-14', 1},   -- south
-                        0.2,            -- delays
-                        {'6-3', 1},     -- west
-                        0.2,            -- delays
-                        {'18-21', 1},   -- north
-                        0.2,            -- delays
-                        nil,            -- east
-                        nil             -- (auto flipped from west)
-                        )
-
-
-    --ego:talkAnimation ("green-monster.png",
-                        --12, 12,         -- tile width & height
-                        --{'15-17', 1},   -- north
-                        --0.2,            -- delays
-                        --{'7-9', 1},     -- east
-                        --0.2,            -- delays
-                        --{'15-17', 1},   -- south
-                        --0.2,            -- delays
-                        --{'7-9', 1},     -- west
-                        --0.2             -- delays
-                        --)
-                            
-end
-
-function cellRoom()
-
-    slime.reset()
-
-    slime.background("background.png")
-    slime.layer("background.png", "layer-mask.png", 50)
-    slime.floor("walk-door-open-mask.png")
-    slime.hotspot("crack", wallCrackAction, 92, 23, 9, 9)
-
-    local ego = slime.actor("ego", 70, 50)
-    setupEgoAnimations(ego)
-
-
-end
-
--- Called when interacting with the crack in the wall
-function wallCrackAction()
-    
-    local turnEgo = function() slime.turnActor("ego", "east") end
-    
-    slime.moveActor("ego", 90, 34, turnEgo)
     
 end
