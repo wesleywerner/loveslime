@@ -15,7 +15,7 @@ function love.draw()
     -- scale the graphics larger to see our pixel art better.
     love.graphics.push()
     love.graphics.scale(4, 4)
-    slime.draw()
+    slime.draw(4, 4)
     love.graphics.pop()
     
     -- Display debug info (only works if slime.debug["enabled"] == true)
@@ -26,6 +26,7 @@ end
 function love.update(dt)
     
     slime.update (dt)
+    updateStatus()
 
 end
 
@@ -45,6 +46,25 @@ function love.mousepressed(x, y, button)
         y = math.floor(y / 4)
         slime.moveActor("ego", x, y)
     end
+end
+
+function updateStatus()
+    
+    local x, y = love.mouse.getPosition( )
+    
+    -- Adjust for scale
+    x = math.floor(x / 4)
+    y = math.floor(y / 4)
+    
+    local obj = slime.getObject(x, y)
+    
+    if (obj) then
+        --print(obj, obj.name)
+        slime.status(obj.name)
+    else
+        slime.status()
+    end
+    
 end
 
 -- Since the player's actor, or Ego, will appear in many scenes
