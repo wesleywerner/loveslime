@@ -262,6 +262,16 @@ function slime.drawActor (actor)
 
 end
 
+function slime.turnActor (name, direction)
+
+    local actor = slime.actors[name]
+
+    if (actor) then
+        actor.direction = direction
+    end
+    
+end
+
 function slime.moveActor (name, x, y, callback)
 
     -- Move an actor to point xy using A Star path finding
