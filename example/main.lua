@@ -145,7 +145,9 @@ end
 
 -- Called when interacting with the crack in the wall
 function wallCrackAction()
-
-    slime.moveActor("ego", 90, 34)
+    
+    local turnEgo = function() slime.turnActor("ego", "east") end
+    
+    slime.moveActor("ego", 90, 34, turnEgo)
     
 end
