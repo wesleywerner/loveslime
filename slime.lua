@@ -54,6 +54,7 @@ function slime.reset ()
     slime.layers = {}
     slime.debug.log = {}
     slime.astar = nil
+    slime.statusText = nil
 end
 
 --                       _      
@@ -475,7 +476,10 @@ function slime.update (dt)
 
 end
 
-function slime.draw ( )
+function slime.draw (scaleX, scaleY)
+
+    scaleX = scaleX or 1
+    scaleY = scaleY or 1
 
     -- Background
     local bg = slime.backgrounds[slime.counters["background index"]]
@@ -504,10 +508,33 @@ function slime.draw ( )
         end
     end
     
+    -- status text
+    if (slime.statusText) then
+        love.graphics.printf(slime.statusText, 0, 0, love.window.getWidth() / scaleX, "center")
+    end
+    
     slime.outlineStageElements()
 
 end
 
+-- Set a status text
+function slime.status (text)
+
+    slime.statusText = text
+
+end
+
+-- Gets a list of object under xy.
+function slime.getObject (x, y)
+
+    for iactor, actor in pairs(slime.actors) do
+        if (x >= actor.x - actor.hotspotX and x <= actor.x - actor.hotspotX + actor.w) and 
+            (y >= actor.y - actor.hotspotY and y <= actor.y - actor.hotspotY + actor.h) then
+            return actor
+        end
+    end
+    
+end
 
 --        _      _                 
 --     __| | ___| |__  _   _  __ _ 
