@@ -1,5 +1,9 @@
 slime = require ("slime")
 
+-- Scale our graphics so that our pixel art is better visible.
+-- When handling mouse positions we account for scale in the xy points.
+scale = 4
+
 function love.load()
     
     -- Nearest image interpolation (pixel graphics, no anti-aliasing)
@@ -14,8 +18,8 @@ function love.draw()
 
     -- scale the graphics larger to see our pixel art better.
     love.graphics.push()
-    love.graphics.scale(4, 4)
-    slime.draw(4, 4)
+    love.graphics.scale(scale)
+    slime.draw(scale)
     love.graphics.pop()
     
     -- Display debug info (only works if slime.debug["enabled"] == true)
@@ -42,8 +46,8 @@ end
 function love.mousepressed(x, y, button)
 
     -- Adjust for scale
-    x = math.floor(x / 4)
-    y = math.floor(y / 4)
+    x = math.floor(x / scale)
+    y = math.floor(y / scale)
 
     if button == "l" then
         
@@ -64,8 +68,8 @@ function updateStatus()
     local x, y = love.mouse.getPosition( )
     
     -- Adjust for scale
-    x = math.floor(x / 4)
-    y = math.floor(y / 4)
+    x = math.floor(x / scale)
+    y = math.floor(y / scale)
     
     local obj = slime.getObject(x, y)
     

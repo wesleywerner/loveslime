@@ -142,9 +142,9 @@ Set or unset the status bar text.
 
 Update animated backgrounds, actor movements and animations.
 
-![func](api/func.png) `slime.draw (scaleX, scaleY)`
+![func](api/func.png) `slime.draw ([scale])`
 
-Draw the scene to the display. The `scale` parameters are only needed if you called `love.graphics.scale` before calling this function.
+Draw the scene to the display. The `scale` parameter defaults to 1, and is only needed if you called `love.graphics.scale` before calling this function.
 
 ---
 

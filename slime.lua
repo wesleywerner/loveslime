@@ -509,10 +509,9 @@ function slime.update (dt)
 
 end
 
-function slime.draw (scaleX, scaleY)
+function slime.draw (scale)
 
-    scaleX = scaleX or 1
-    scaleY = scaleY or 1
+    scale = scale or 1
 
     -- Background
     local bg = slime.backgrounds[slime.counters["background index"]]
@@ -543,7 +542,7 @@ function slime.draw (scaleX, scaleY)
     
     -- status text
     if (slime.statusText) then
-        love.graphics.printf(slime.statusText, 0, 0, love.window.getWidth() / scaleX, "center")
+        love.graphics.printf(slime.statusText, 0, 0, love.window.getWidth() / scale, "center")
     end
     
     slime.outlineStageElements()
