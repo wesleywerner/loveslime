@@ -40,12 +40,23 @@ function love.keypressed( key, isrepeat )
 end
 
 function love.mousepressed(x, y, button)
+
+    -- Adjust for scale
+    x = math.floor(x / 4)
+    y = math.floor(y / 4)
+
     if button == "l" then
-        -- Adjust for scale
-        x = math.floor(x / 4)
-        y = math.floor(y / 4)
-        slime.moveActor("ego", x, y)
+        
+        -- interact with the object at this point
+        local interacted = slime.interact(x, y)
+        
+        if (not interacted) then
+            -- move ego if nothing happened
+            slime.moveActor("ego", x, y)
+        end
+        
     end
+    
 end
 
 function updateStatus()
@@ -59,7 +70,6 @@ function updateStatus()
     local obj = slime.getObject(x, y)
     
     if (obj) then
-        --print(obj, obj.name)
         slime.status(obj.name)
     else
         slime.status()
@@ -125,9 +135,17 @@ function cellRoom()
     slime.background("background.png")
     slime.layer("background.png", "layer-mask.png", 50)
     slime.floor("walk-door-open-mask.png")
+    slime.hotspot("crack", wallCrackAction, 92, 23, 9, 9)
 
     local ego = slime.actor("ego", 70, 50)
     setupEgoAnimations(ego)
 
 
+end
+
+-- Called when interacting with the crack in the wall
+function wallCrackAction()
+
+    slime.moveActor("ego", 90, 34)
+    
 end
