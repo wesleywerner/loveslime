@@ -94,6 +94,58 @@ This is for adding custom animations.
   * The `w` and `h` are the width and height of each frame.
   * The `frames` and `delays` are the frames and delays for the animation.
 
+![func](api/func.png) `slime.moveActor (name, x, y, callback)`
+
+Move an actor by `name` to a point. There has to be a valid path to the destination. The `callback` is fired when the actor reaches the destination.
+
+Example:
+
+    local turnEgo = function() slime.turnActor("ego", "east") end
+    slime.moveActor("ego", 90, 34, turnEgo)
+
+![func](api/func.png) `slime.turnActor (name, direction)`
+
+Turns an Actor to face a direction, one of `south`, `west`, `north` or `east`.
+
+Note that because movement is asyncronous, calling this while an actor is moving won't have any effect as their movement will override their facing direction. This can be solved by calling `turnActor` as a callback to `moveActor`.
+
+# Hotspots
+
+![func](api/func.png) `slime.hotspot(name, callback, x, y, w, h)`
+
+Adds a hotspot to the stage. The callback will fire if the pointer is over the hotspot when `slime.interact` is called.
+
+![func](api/func.png) `slime.interact (x, y)`
+
+Check if any object is under `x/y` and fire it's callback if there is on.
+
+Returns `true` if the callback was fired.
+
+![func](api/func.png) `slime.getObject (x, y)`
+
+Gets the first object under `x/y`. The order of types checked is:
+
+* Actors
+* Hotspots
+
+Returns `nil` if no object is found.
+
+# Status
+
+![func](api/func.png) `slime.status (text)`
+
+Set or unset the status bar text.
+
+# Drawing
+
+![func](api/func.png) `slime.update (dt)`
+
+Update animated backgrounds, actor movements and animations.
+
+![func](api/func.png) `slime.draw (scaleX, scaleY)`
+
+Draw the scene to the display. The `scale` parameters are only needed if you called `love.graphics.scale` before calling this function.
+
 ---
 
 # LICENSE
