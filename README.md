@@ -12,12 +12,12 @@ The name is an acronym for "SLUDGE to L&Ouml;VE Inspired Mimicry Environment".
 * Animated backgrounds.
 * Animated actors with directional movement.
 * A Star path finding movement.
+* Status text.
 
 **TODO**  
 
 * Hotspots - Regions that fires a callback on click.
 * Cursors.
-* Text status.
 * Actor dialogues.
 
 # Thanks
