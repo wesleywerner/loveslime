@@ -547,7 +547,7 @@ function slime.status (text)
 
 end
 
--- Gets a list of object under xy.
+-- Gets the object under xy.
 function slime.getObject (x, y)
 
     for iactor, actor in pairs(slime.actors) do
