@@ -55,13 +55,14 @@ The `baseline` is the y-position a character needs to be behind in order to be h
 
 ## Actors
 
-![func](api/func.png) `slime.actor (name, x, y, hotspotx, hotspoty)`  
+![func](api/func.png) `slime.actor (name, x, y [, hotspotY, hotspotY, image])`  
 
 Add a new actor to the stage.
 
   * The `name` identifies the actor. You can use the same name multiple times, however when calling `moveActor` (which take the name) only the first actor with that name is moved.
   * The `x` and `y` sets the starting position of the actor.
-  * The `hotspotx` and `hotspoty` sets the point relative to the `x`/`y`. This point determines when an actor is considered behind a layer baseline. If no hotspot is given, it will default to centered at the base of the sprite.
+  * Optional `hotspot X` and `hotspot Y` sets the point relative to the `x/y`. This point determines when an actor is considered behind a layer baseline. It is also the offset used to draw the actor sprite. If no hotspot is given, it will default to centered at the base of the sprite for animated actors, and to `0,0` for static image actors.
+  * Optional `image` is a static (non-animated) image file name to use for the actor's sprite.
   
 The cardinal directions are oriented to your screen so that `SOUTH` points to the bottom of your screen, and `NORTH` to the top. So an actor facing `SOUTH` is looking at the player.
 
