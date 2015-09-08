@@ -102,6 +102,10 @@ Example:
 
     local turnEgo = function() slime.turnActor("ego", "east") end
     slime.moveActor("ego", 90, 34, turnEgo)
+    
+![func](api/func.png) `slime.moveActorTo (name, target, callback)`
+
+Move actor `name` to another actor `target`.
 
 ![func](api/func.png) `slime.turnActor (name, direction)`
 
