@@ -322,8 +322,20 @@ function slime.moveActor (name, x, y, callback)
     end
 end
 
+-- Move an actor to another actor
+function slime.moveActorTo (name, target, callback)
+
+    local targetActor = slime.actors[target]
+    
+    if (targetActor) then
+        slime.moveActor (name, targetActor.x, targetActor.y, callback)
+    else
+        slime.log("no actor named " .. target)
+    end
+end
+
 function slime.moveActorOnPath (actor, dt)
-    if (actor.path) then
+    if (actor.path and #actor.path > 0) then
         -- Check if the actor's speed is set to delay movement.
         -- If no speed is set, we move on every update.
         if (actor.movedelay) then
@@ -350,7 +362,9 @@ function slime.moveActorOnPath (actor, dt)
                 actor.direction = slime.calculateDirection(actor.lastx, actor.lasty, actor.x, actor.y)
                 actor.lastx, actor.lasty = actor.x, actor.y
             end
-        else
+        end
+        
+        if (#actor.path == 0) then
             actor.action = "idle"
             if (actor.callback) then
                 actor.callback()
@@ -594,6 +608,7 @@ function slime.interact (x, y)
     
     if (obj) then
         if (obj.callback) then
+            slime.log("Interacting with " .. obj.name)
             obj.callback()
             return true
         end
