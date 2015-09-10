@@ -40,6 +40,9 @@ local slime = {
 -- https://github.com/GloryFish/lua-astar
 require 'map'
 
+-- bresenham line algorithm
+require 'bresenham'
+
 -- Uses anim8 by Enrique García Cota
 -- https://github.com/kikito/anim8
 local anim8 = require 'anim8'
@@ -302,6 +305,22 @@ function slime.moveActor (name, x, y, moveCompleteCallback)
         -- Our path runs backwards so we can pop the points off the stack
         local start = { x = actor.x, y = actor.y }
         local goal = { x = x, y = y }
+        
+        -- If the goal is on a solid block, we use the bresenham line
+        -- algorithm to draw a straight line to the origin, and return
+        -- the first open node on that line.
+        local findNearestPoint = slime.handler:nodeBlocking(goal)
+        if (findNearestPoint) then
+            local walkTheLine = bresenham (start, goal)
+            while (findNearestPoint) do
+                if (#walkTheLine == 0) then
+                    findNearestPoint = false
+                else
+                    goal = table.remove(walkTheLine)
+                    findNearestPoint = slime.handler:nodeBlocking(goal)
+                end
+            end
+        end
         
         -- Calculate a path
         local path = slime.astar:findPath(goal, start)
