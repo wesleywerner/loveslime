@@ -49,6 +49,11 @@ local anim8 = require 'anim8'
 
 slime.counters = {}
 
+-- Store settings to customize the look of SLIME
+slime.settings = {
+    ["status position"] = 70,
+    ["dialogue position"] = 0
+    }
 
 function slime.reset ()
     slime.counters = {}
@@ -636,7 +641,7 @@ function slime.draw (scale)
     
     -- status text
     if (slime.statusText) then
-        love.graphics.printf(slime.statusText, 0, 0, love.window.getWidth() / scale, "center")
+        love.graphics.printf(slime.statusText, 0, slime.settings["status position"], love.window.getWidth() / scale, "center")
     end
     
     -- Draw Dialogues
@@ -646,7 +651,7 @@ function slime.draw (scale)
         local r, g, b, a = love.graphics.getColor()
         -- Set a new speech color
         love.graphics.setColor(dlg.actor.speechcolor)
-        love.graphics.printf(dlg.text, 0, 40, love.window.getWidth() / scale, "center")
+        love.graphics.printf(dlg.text, 0, slime.settings["dialogue position"], love.window.getWidth() / scale, "center")
         -- Restore original color
         love.graphics.setColor(r, g, b, a)
     end
