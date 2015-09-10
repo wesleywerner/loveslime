@@ -600,9 +600,13 @@ function slime.update (dt)
     -- Update the first dialogue display time.
     -- Remove the dialogue if it's time expired.
     if (#slime.dialogues > 0) then
-        slime.dialogues[1].time = slime.dialogues[1].time - dt
-        if (slime.dialogues[1].time < 0) then
+        local dlg = slime.dialogues[1]
+        dlg.time = dlg.time - dt
+        if (dlg.time < 0) then
             table.remove(slime.dialogues, 1)
+            dlg.actor.action = "idle"
+        else
+            dlg.actor.action = "talk"
         end
     end
 
