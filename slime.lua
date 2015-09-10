@@ -179,7 +179,8 @@ function slime.actor (name, x, y, hotspotx, hotspoty, image)
         ["image"] = image,          -- a static image of this actor.
         ["animations"] = { },
         ["direction"] = "south",
-        ["action"] = "idle"
+        ["action"] = "idle",
+        ["speechcolor"] = {255, 255, 255}
         }
         
     if (hotspotx and hotspoty) then
@@ -457,6 +458,43 @@ function slime.calculateDirection (x1, y1, x2, y2)
     --return 'south'
 end
 
+
+--        _ _       _                        
+--     __| (_) __ _| | ___   __ _ _   _  ___ 
+--    / _` | |/ _` | |/ _ \ / _` | | | |/ _ \
+--   | (_| | | (_| | | (_) | (_| | |_| |  __/
+--    \__,_|_|\__,_|_|\___/ \__, |\__,_|\___|
+--                          |___/            
+
+slime.dialogues = { }
+
+
+-- Make an actor say something
+function slime.addDialogue (name, text)
+
+    local newDialogue = {
+        ["actor"] = slime.actors[name],
+        ["text"] = text,
+        ["time"] = 3
+        }
+        
+    if (not newDialogue.actor) then
+        slime.log("Dialog failed: No actor named " .. name)
+        return
+    end
+    
+    table.insert(slime.dialogues, newDialogue)
+
+end
+
+
+-- Checks if there is an actor talking.
+function slime.someoneTalking ()
+
+    return (#slime.dialogues > 0)
+
+end
+
 --    _                           
 --   | | __ _ _   _  ___ _ __ ___ 
 --   | |/ _` | | | |/ _ \ '__/ __|
@@ -545,11 +583,21 @@ function slime.update (dt)
 
     slime.updateBackground(dt)
     
+    -- Update animations
     for iactor, actor in pairs(slime.actors) do
         slime.moveActorOnPath (actor, dt)
         local anim = actor:getAnim()
         if (anim and anim["animation"]) then
             anim["animation"]:update(dt)
+        end
+    end
+    
+    -- Update the first dialogue display time.
+    -- Remove the dialogue if it's time expired.
+    if (#slime.dialogues > 0) then
+        slime.dialogues[1].time = slime.dialogues[1].time - dt
+        if (slime.dialogues[1].time < 0) then
+            table.remove(slime.dialogues, 1)
         end
     end
 
@@ -589,6 +637,18 @@ function slime.draw (scale)
     -- status text
     if (slime.statusText) then
         love.graphics.printf(slime.statusText, 0, 0, love.window.getWidth() / scale, "center")
+    end
+    
+    -- Draw Dialogues
+    if (#slime.dialogues > 0) then
+        local dlg = slime.dialogues[1]
+        -- Store the original color
+        local r, g, b, a = love.graphics.getColor()
+        -- Set a new speech color
+        love.graphics.setColor(dlg.actor.speechcolor)
+        love.graphics.printf(dlg.text, 0, 40, love.window.getWidth() / scale, "center")
+        -- Restore original color
+        love.graphics.setColor(r, g, b, a)
     end
     
     slime.outlineStageElements()
