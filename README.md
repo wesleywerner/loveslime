@@ -57,12 +57,18 @@ The `baseline` is the y-position a character needs to be behind in order to be h
 
 ![func](api/func.png) `slime.actor (name, x, y [, hotspotY, hotspotY, image])`  
 
-Add a new actor to the stage.
+Add a new actor to the stage and returns the new actor object.
 
   * The `name` identifies the actor. You can use the same name multiple times, however when calling `moveActor` (which take the name) only the first actor with that name is moved.
   * The `x` and `y` sets the starting position of the actor.
   * Optional `hotspot X` and `hotspot Y` sets the point relative to the `x/y`. This point determines when an actor is considered behind a layer baseline. It is also the offset used to draw the actor sprite. If no hotspot is given, it will default to centered at the base of the sprite for animated actors, and to `0,0` for static image actors.
   * Optional `image` is a static (non-animated) image file name to use for the actor's sprite.
+  
+The returned actor object has these additional properties you may optionally set:
+
+    actor["speechcolor"] = {255, 255, 255}          -- Set the dialogue color for this actor as {red, green, blue}
+
+**Direction**
   
 The cardinal directions are oriented to your screen so that `SOUTH` points to the bottom of your screen, and `NORTH` to the top. So an actor facing `SOUTH` is looking at the player.
 
@@ -114,7 +120,7 @@ Turns an Actor to face a direction, one of `south`, `west`, `north` or `east`.
 
 Note that because movement is asyncronous, calling this while an actor is moving won't have any effect as their movement will override their facing direction. This can be solved by calling `turnActor` as a callback to `moveActor`.
 
-# Hotspots
+## Hotspots
 
 ![func](api/func.png) `slime.hotspot(name, callback, x, y, w, h)`
 
@@ -130,13 +136,13 @@ Returns `true` if the callback was fired.
 
 Gets a table of objects under `x/y`, or `nil` if no object is found.
 
-# Status
+## Status
 
 ![func](api/func.png) `slime.status (text)`
 
 Set or unset the status bar text.
 
-# Drawing
+## Drawing
 
 ![func](api/func.png) `slime.update (dt)`
 
@@ -145,6 +151,25 @@ Update animated backgrounds, actor movements and animations.
 ![func](api/func.png) `slime.draw ([scale])`
 
 Draw the scene to the display. The `scale` parameter defaults to 1, and is only needed if you called `love.graphics.scale` before calling this function.
+
+## Actor Dialogues
+
+You can queue multiple dialog texts at once, the actor animation will change to "talk" and the words will print on screen.
+
+![func](api/func.png) `slime.addDialogue (name, text)`
+
+Queue a dialogue for an actor by `name`.
+
+![func](api/func.png) `slime.someoneTalking ()`
+
+Returns `true` if there is a dialogue displaying.
+
+## Settings
+
+SLIME offers these settings to customize your game:
+
+    slime.settings["status position"] = 70      -- The Y position to print the built-in status text
+    slime.settings["dialogue position"] = 0     -- The Y position to pring actor dialogue text
 
 ---
 
