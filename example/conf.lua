@@ -1,5 +1,5 @@
 function love.conf(t)
-    t.window.title = "stencil test"
+    t.window.title = "SLIME Example Game"
     t.window.width = 170 * 4
     t.window.height = 96 * 4
     --t.window.fullscreen = true

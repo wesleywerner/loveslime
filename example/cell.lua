@@ -65,17 +65,18 @@ function setupEgoAnimations(ego)
                         )
 
 
-    --ego:talkAnimation ("green-monster.png",
-                        --12, 12,         -- tile width & height
-                        --{'15-17', 1},   -- north
-                        --0.2,            -- delays
-                        --{'7-9', 1},     -- east
-                        --0.2,            -- delays
-                        --{'15-17', 1},   -- south
-                        --0.2,            -- delays
-                        --{'7-9', 1},     -- west
-                        --0.2             -- delays
-                        --)
+    slime.talkAnimation (ego,
+                        "green-monster.png",
+                        12, 12,         -- tile width & height
+                        {'15-17', 1},   -- south
+                        0.2,            -- delays
+                        {'7-9', 1},     -- west
+                        0.2,            -- delays
+                        {'15-17', 1},   -- north
+                        0.2,            -- delays
+                        nil,            -- east
+                        nil             -- (auto flipped from west)
+                        )
                             
 end
 
@@ -89,7 +90,5 @@ end
 
 function bowlInteraction ( )
     slime.log("take the bowl")
-    slime.turnActor ("ego", "south")
-    slime.addDialogue ("ego", "I got a new bowl")
-    slime.addDialogue ("ego", "It is shiny")
+    slime.addDialogue ("ego", "I can't pick things up yet")
 end
