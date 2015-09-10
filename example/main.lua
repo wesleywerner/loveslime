@@ -78,10 +78,14 @@ function updateStatus()
     x = math.floor(x / scale)
     y = math.floor(y / scale)
     
-    local obj = slime.getObject(x, y)
+    local objects = slime.getObjects(x, y)
     
-    if (obj) then
-        slime.status(obj.name)
+    if (objects) then
+        local items = {}
+        for i, obj in pairs(objects) do
+            table.insert(items, obj.name)
+        end
+        slime.status(table.concat(items, ", "))
     else
         slime.status()
     end

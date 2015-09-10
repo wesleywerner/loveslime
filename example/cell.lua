@@ -82,9 +82,8 @@ end
 -- Called when interacting with the hole in the wall
 function holeInteraction ( )
     
-    local turnEgo = function() slime.turnActor("ego", "east") end
-    
-    slime.moveActor("ego", 90, 34, turnEgo)
+    slime.log ("dig cement")
+    slime.turnActor ("ego", "east")
     
 end
 

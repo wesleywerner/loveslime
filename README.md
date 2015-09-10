@@ -126,14 +126,9 @@ Check if any object is under `x/y` and fire it's callback if there is on.
 
 Returns `true` if the callback was fired.
 
-![func](api/func.png) `slime.getObject (x, y)`
+![func](api/func.png) `slime.getObjects (x, y)`
 
-Gets the first object under `x/y`. The order of types checked is:
-
-* Actors
-* Hotspots
-
-Returns `nil` if no object is found.
+Gets a table of objects under `x/y`, or `nil` if no object is found.
 
 # Status
 

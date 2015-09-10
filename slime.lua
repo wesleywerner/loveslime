@@ -603,33 +603,41 @@ function slime.status (text)
 end
 
 -- Gets the object under xy.
-function slime.getObject (x, y)
+function slime.getObjects (x, y)
+
+    local objects = { }
 
     for iactor, actor in pairs(slime.actors) do
         if (x >= actor.x - actor.hotspotX and x <= actor.x - actor.hotspotX + actor.w) and 
             (y >= actor.y - actor.hotspotY and y <= actor.y - actor.hotspotY + actor.h) then
-            return actor
+            table.insert(objects, actor)
         end
     end
     
     for ihotspot, hotspot in pairs(slime.hotspots) do
         if (x >= hotspot.x and x <= hotspot.x + hotspot.w) and
             (y >= hotspot.y and y <= hotspot.y + hotspot.h) then
-            return hotspot
+            table.insert(objects, hotspot)
         end
+    end
+    
+    if (#objects == 0) then
+        return nil
+    else
+        return objects
     end
     
 end
 
 function slime.interact (x, y)
 
-    local obj = slime.getObject(x, y)
+    local objects = slime.getObjects(x, y)
+    if (not objects) then return end
     
-    if (obj) then
-        if (obj.InteractCallback) then
-            slime.log("Interacting with " .. obj.name)
-            obj.InteractCallback()
-            return true
+    for i, object in pairs(objects) do
+        if (object.InteractCallback) then
+            slime.log("Interacting with " .. object.name)
+            object.InteractCallback()
         end
     end
     
