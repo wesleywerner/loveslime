@@ -119,3 +119,7 @@ function SlimeMapHandler:_handleNode(x, y, fromnode, destx, desty)
   
   return nil
 end
+
+function SlimeMapHandler:nodeBlocking(location)
+    return self.tiles[location.y][location.x] == 1
+end
