@@ -716,20 +716,23 @@ function slime.outlineStageElements()
     
     local r, g, b, a = love.graphics.getColor( )
     
-    -- draw outlines of layers
+    -- draw baselines for layers
     love.graphics.setColor(255, 0, 0, 64)
     for i, layer in pairs(slime.layers) do
         love.graphics.line( 0, layer.baseline, love.window.getHeight(), layer.baseline)
     end
     
-    -- draw walkable areas
-    -- TODO
+    -- draw outlines of hotspots
+    love.graphics.setColor(0, 0, 255, 64)
+    for ihotspot, hotspot in pairs(slime.hotspots) do
+        love.graphics.rectangle("line", hotspot.x, hotspot.y, hotspot.w, hotspot.h)
+    end
     
-    -- draw outlines of characters
+    -- draw outlines of actors
     love.graphics.setColor(0, 255, 0, 64)
     for iactor, actor in pairs(slime.actors) do
-        love.graphics.rectangle( "line", actor.x - actor.hotspotX, actor.y - actor.hotspotY, actor.w, actor.h )
-        love.graphics.circle( "line", actor.x, actor.y, 1, 6 )
+        love.graphics.rectangle("line", actor.x - actor.hotspotX, actor.y - actor.hotspotY, actor.w, actor.h)
+        love.graphics.circle("line", actor.x, actor.y, 1, 6)
     end
 
     love.graphics.setColor(r, g, b, a)
