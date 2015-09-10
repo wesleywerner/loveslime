@@ -22,7 +22,7 @@ function cellRoom()
     
     -- Add a bowl on the floor as an actor
     local bowl = slime.actor("bowl", 65, 37, 2, 5, "bowl1.png")
-    bowl.callback = bowlInteraction
+    bowl.InteractCallback = bowlInteraction
     
 
 
@@ -89,8 +89,5 @@ function holeInteraction ( )
 end
 
 function bowlInteraction ( )
-    local function takeBowl ()
-        slime.log("take the bowl")
-    end
-    slime.moveActorTo ("ego", "bowl", takeBowl)
+    slime.log("take the bowl")
 end

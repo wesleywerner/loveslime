@@ -57,14 +57,14 @@ function love.mousepressed(x, y, button)
 
     if button == "l" then
         
-        -- interact with the object at this point
-        local interacted = slime.interact(x, y)
-        
-        if (not interacted) then
-            -- move ego if nothing happened
-            slime.moveActor("ego", x, y)
+        local interactCall = function()
+            slime.interact (x, y)
         end
         
+        -- Move Ego to the x/y position and interact with any
+        -- object that is there.
+        slime.moveActor ("ego", x, y, interactCall)
+
     end
     
 end

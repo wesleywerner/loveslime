@@ -285,7 +285,7 @@ function slime.turnActor (name, direction)
     
 end
 
-function slime.moveActor (name, x, y, callback)
+function slime.moveActor (name, x, y, moveCompleteCallback)
 
     -- Move an actor to point xy using A Star path finding
     
@@ -310,7 +310,7 @@ function slime.moveActor (name, x, y, callback)
         else
             actor.path = path:getNodes()
             -- Callback when the goal is reached
-            actor.callback = callback
+            actor.moveCompleteCallback = moveCompleteCallback
             -- Default to walking animation
             actor.action = "walk"
             -- Calculate actor direction immediately
@@ -323,12 +323,12 @@ function slime.moveActor (name, x, y, callback)
 end
 
 -- Move an actor to another actor
-function slime.moveActorTo (name, target, callback)
+function slime.moveActorTo (name, target, moveCompleteCallback)
 
     local targetActor = slime.actors[target]
     
     if (targetActor) then
-        slime.moveActor (name, targetActor.x, targetActor.y, callback)
+        slime.moveActor (name, targetActor.x, targetActor.y, moveCompleteCallback)
     else
         slime.log("no actor named " .. target)
     end
@@ -366,8 +366,8 @@ function slime.moveActorOnPath (actor, dt)
         
         if (#actor.path == 0) then
             actor.action = "idle"
-            if (actor.callback) then
-                actor.callback()
+            if (actor.moveCompleteCallback) then
+                actor.moveCompleteCallback()
             end
         end
     end
@@ -503,11 +503,11 @@ end
 
 slime.hotspots = {}
 
-function slime.hotspot(name, callback, x, y, w, h)
+function slime.hotspot(name, InteractCallback, x, y, w, h)
 
     table.insert(slime.hotspots, {
         ["name"] = name, 
-        ["callback"] = callback, 
+        ["InteractCallback"] = InteractCallback, 
         ["x"] = x, 
         ["y"] = y, 
         ["w"] = w, 
@@ -607,9 +607,9 @@ function slime.interact (x, y)
     local obj = slime.getObject(x, y)
     
     if (obj) then
-        if (obj.callback) then
+        if (obj.InteractCallback) then
             slime.log("Interacting with " .. obj.name)
-            obj.callback()
+            obj.InteractCallback()
             return true
         end
     end
