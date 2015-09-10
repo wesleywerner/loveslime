@@ -25,6 +25,7 @@ I want to thank these people for making use of their code:
 
 * kikito, for your animation library, [anim8](https://love2d.org/wiki/anim8).
 * GloryFish, for your [A* path finding](https://github.com/GloryFish/lua-astar) lua code.
+* Bresenham's Line Algorithm [from roguebasin.com](http://www.roguebasin.com/index.php?title=Bresenham%27s_Line_Algorithm#Lua)
 
 Thank you!
 
