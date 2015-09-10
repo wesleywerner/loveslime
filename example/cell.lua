@@ -89,4 +89,7 @@ end
 
 function bowlInteraction ( )
     slime.log("take the bowl")
+    slime.turnActor ("ego", "south")
+    slime.addDialogue ("ego", "I got a new bowl")
+    slime.addDialogue ("ego", "It is shiny")
 end
