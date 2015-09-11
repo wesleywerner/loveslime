@@ -187,7 +187,8 @@ function slime.actor (name, x, y, hotspotx, hotspoty, image)
         ["animations"] = { },
         ["direction"] = "south",
         ["action"] = "idle",
-        ["speechcolor"] = {255, 255, 255}
+        ["speechcolor"] = {255, 255, 255},
+        ["inventory"] = { }
         }
         
     if (hotspotx and hotspoty) then
@@ -597,6 +598,51 @@ function slime.hotspot(name, InteractCallback, x, y, w, h)
         ["h"] = h
     })
 
+end
+
+--    _                      _                   
+--   (_)_ ____   _____ _ __ | |_ ___  _ __ _   _ 
+--   | | '_ \ \ / / _ \ '_ \| __/ _ \| '__| | | |
+--   | | | | \ V /  __/ | | | || (_) | |  | |_| |
+--   |_|_| |_|\_/ \___|_| |_|\__\___/|_|   \__, |
+--                                         |___/ 
+
+slime.inventories = { }
+
+-- Give an inventory item
+function slime.addInventory (bag, object)
+
+    -- Replace the image path with the image data
+    object.image = love.graphics.newImage(object.image)
+    
+    -- Add the inventory item under "name"
+    if (not slime.inventories[bag]) then slime.inventories[bag] = { } end
+    local inv = slime.inventories[bag]
+    table.insert(inv, object)
+    
+    slime.log (bag .. " given " .. object.name)
+
+end
+
+-- Get a list of inventory items
+function slime.getInventory (bag)
+
+    return slime.inventories[bag] or { }
+
+end
+
+-- Delete an inventory item from a list
+function slime.delInventory (bag, name)
+
+    local inv = slime.inventories[bag]
+    if (inv) then 
+        for i, item in pairs(inv) do
+            if (item.name == name) then
+                table.remove(inv, i)
+            end
+        end
+    end
+    
 end
 
 --        _                    
