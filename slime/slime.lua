@@ -210,37 +210,45 @@ function slime.actor (name, x, y, hotspotx, hotspoty, image)
 end
 
 -- Helper functions to batch build actor animations
-function slime.idleAnimation (actor, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
-    slime.prefabAnimation ("idle", actor, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
+function slime.idleAnimation (name, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
+    slime.prefabAnimation ("idle", name, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
 end
 
-function slime.walkAnimation (actor, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
-    slime.prefabAnimation ("walk", actor, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
+function slime.walkAnimation (name, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
+    slime.prefabAnimation ("walk", name, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
 end
 
-function slime.talkAnimation (actor, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
-    slime.prefabAnimation ("talk", actor, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
+function slime.talkAnimation (name, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
+    slime.prefabAnimation ("talk", name, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
 end
 
 -- Create a prefabricated animation sequence of the cardinal directions.
 -- Use the south direction (facing the player) as default if none of the other directions are given.
-function slime.prefabAnimation (prefix, actor, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
-    slime.addAnimation (actor, prefix .. " south", tileset, w, h, south, southd)
-    slime.addAnimation (actor, prefix .. " west", tileset, w, h, west or south, westd or southd)
-    slime.addAnimation (actor, prefix .. " north", tileset, w, h, north or south, northd or southd)
+function slime.prefabAnimation (prefix, name, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
+
+    slime.addAnimation (name, prefix .. " south", tileset, w, h, south, southd)
+    slime.addAnimation (name, prefix .. " west", tileset, w, h, west or south, westd or southd)
+    slime.addAnimation (name, prefix .. " north", tileset, w, h, north or south, northd or southd)
 
     -- if the east animations is empty, flip the west animation if there is one
     if (not east and west) then
-        local eastAnim = slime.addAnimation (actor, prefix .. " east", tileset, w, h, east or west, eastd or westd)
+        local eastAnim = slime.addAnimation (name, prefix .. " east", tileset, w, h, east or west, eastd or westd)
         eastAnim:flipH()
     else
-        slime.addAnimation (actor, prefix .. " east", tileset, w, h, east or south, eastd or southd)
+        slime.addAnimation (name, prefix .. " east", tileset, w, h, east or south, eastd or southd)
     end
 end
 
 -- Create a custom animation.
-function slime.addAnimation (actor, key, tileset, w, h, frames, delays)
+function slime.addAnimation (name, key, tileset, w, h, frames, delays)
 
+    local actor = slime.actors[name]
+    
+    if (not actor) then
+        slime.log ("Add animation failed: no actor named " .. name)
+        return
+    end
+    
     -- cache tileset image to save loading duplicate images
     local image = slime.tilesets[tileset]
     if (not slime.tilesets[tileset]) then

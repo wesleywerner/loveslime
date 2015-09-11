@@ -38,7 +38,7 @@ function setupEgoAnimations(ego)
     -- The idle animation plays when the actor is not walking or talking.
     -- We have two frames, the first shows for a few seconds,
     -- the second flashes by to make the actor blink.
-    slime.idleAnimation (ego,
+    slime.idleAnimation ("ego",
                         "images/green-monster.png",
                         12, 12,         -- tile width & height
                         {'11-10', 1},   -- south
@@ -51,7 +51,7 @@ function setupEgoAnimations(ego)
                         nil             -- (auto flipped from west)
                         )
 
-    slime.walkAnimation (ego,
+    slime.walkAnimation ("ego",
                         "images/green-monster.png",
                         12, 12,         -- tile width & height
                         {'11-14', 1},   -- south
@@ -65,7 +65,7 @@ function setupEgoAnimations(ego)
                         )
 
 
-    slime.talkAnimation (ego,
+    slime.talkAnimation ("ego",
                         "images/green-monster.png",
                         12, 12,         -- tile width & height
                         {'15-17', 1},   -- south

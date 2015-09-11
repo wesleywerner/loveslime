@@ -92,13 +92,13 @@ The returned actor object has these additional properties you may optionally set
   
 The cardinal directions are oriented to your screen so that `SOUTH` points to the bottom of your screen, and `NORTH` to the top. So an actor facing `SOUTH` is looking at the player.
 
-![func](api/func.png) `slime.idleAnimation (actor, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])`  
-![func](api/func.png) `slime.walkAnimation (actor, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])`  
-![func](api/func.png) `slime.talkAnimation (actor, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])`  
+![func](api/func.png) `slime.idleAnimation (name, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])`  
+![func](api/func.png) `slime.walkAnimation (name, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])`  
+![func](api/func.png) `slime.talkAnimation (name, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])`  
 
 These are helper functions that in turn call `addAnimation` with the `keys` "idle", "walk" and "talk" respectively. 
 
-  * The `actor` is an instance create via `slime.actor`
+  * The `name` of the actor that was created via `slime.actor`
   * The `tileset` is a file name.
   * The `w` and `h` are the width and height of each frame.
   * The `south` and `southd` are the frames and delays for the south-facing animation.
@@ -112,11 +112,11 @@ Notes:
 * Only `south` and `southd` parameters are mandatory. If the rest are omitted then south will be used as the default for all directions.
 * If a `west` parameter is given, and `east` is `nil` or omitted, then the west animation will automatically be mirrored and used for the `east`.
 
-![func](api/func.png) `slime.addAnimation (actor, key, tileset, w, h, frames, delays)`  
+![func](api/func.png) `slime.addAnimation (name, key, tileset, w, h, frames, delays)`  
 
 This is for adding custom animations.
 
-  * The `actor` is an instance create via `slime.actor`
+  * The `name` of the actor that was created via `slime.actor`
   * The `key` is the animation key.
   * The `w` and `h` are the width and height of each frame.
   * The `frames` and `delays` are the frames and delays for the animation.
