@@ -2,8 +2,8 @@
 -- have access to it.
 slime = require ("slime.slime")
 
--- We can separate each stage into a file for easier code management.
-require ("cell")
+require ("actors")
+require ("stages")
 
 -- Scale our graphics so that our pixel art is better visible.
 -- When handling mouse positions we account for scale in the xy points.
