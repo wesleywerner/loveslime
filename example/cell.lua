@@ -5,13 +5,13 @@ function cellRoom()
     slime.reset()
 
     -- Add the background
-    slime.background("background.png")
+    slime.background("images/background.png")
     
     -- Apply a layer where actors can walk behind walls
-    slime.layer("background.png", "layer-mask.png", 50)
+    slime.layer("images/background.png", "images/layer-mask.png", 50)
     
     -- Set the floor that actors can walk on
-    slime.floor("walk-door-open-mask.png")
+    slime.floor("images/walk-door-open-mask.png")
     
     -- Add a hole in the wall hotspot
     slime.hotspot("hole", holeInteraction, 92, 23, 9, 9)
@@ -21,7 +21,7 @@ function cellRoom()
     setupEgoAnimations(ego)
     
     -- Add a bowl on the floor as an actor
-    local bowl = slime.actor("bowl", 65, 37, 2, 5, "bowl1.png")
+    local bowl = slime.actor("bowl", 65, 37, 2, 5, "images/bowl1.png")
     bowl.InteractCallback = bowlInteraction
     
 
@@ -39,7 +39,7 @@ function setupEgoAnimations(ego)
     -- We have two frames, the first shows for a few seconds,
     -- the second flashes by to make the actor blink.
     slime.idleAnimation (ego,
-                        "green-monster.png",
+                        "images/green-monster.png",
                         12, 12,         -- tile width & height
                         {'11-10', 1},   -- south
                         {3, 0.2},       -- delays
@@ -52,7 +52,7 @@ function setupEgoAnimations(ego)
                         )
 
     slime.walkAnimation (ego,
-                        "green-monster.png",
+                        "images/green-monster.png",
                         12, 12,         -- tile width & height
                         {'11-14', 1},   -- south
                         0.2,            -- delays
@@ -66,7 +66,7 @@ function setupEgoAnimations(ego)
 
 
     slime.talkAnimation (ego,
-                        "green-monster.png",
+                        "images/green-monster.png",
                         12, 12,         -- tile width & height
                         {'15-17', 1},   -- south
                         0.2,            -- delays
