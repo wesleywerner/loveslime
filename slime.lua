@@ -502,6 +502,17 @@ function slime.someoneTalking ()
 
 end
 
+-- Skips the current displayed dialogue
+function slime.skipSpeech ( )
+
+    local dlg = slime.dialogues[1]
+    if (dlg) then
+        table.remove(slime.dialogues, 1)
+        dlg.actor.action = "idle"
+    end
+
+end
+
 --    _                           
 --   | | __ _ _   _  ___ _ __ ___ 
 --   | |/ _` | | | |/ _ \ '__/ __|
@@ -605,8 +616,7 @@ function slime.update (dt)
         local dlg = slime.dialogues[1]
         dlg.time = dlg.time - dt
         if (dlg.time < 0) then
-            table.remove(slime.dialogues, 1)
-            dlg.actor.action = "idle"
+            slime.skipSpeech()
         else
             dlg.actor.action = "talk"
         end

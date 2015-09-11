@@ -57,6 +57,13 @@ function love.mousepressed(x, y, button)
 
     if button == "l" then
         
+        -- If there is speech showing, skip it on mouse click 
+        -- and ignore any other interactions.
+        if (slime.someoneTalking()) then
+            slime.skipSpeech()
+            return
+        end
+        
         local interactCall = function()
             slime.interact (x, y)
         end
