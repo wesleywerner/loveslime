@@ -89,6 +89,8 @@ function holeInteraction ( )
 end
 
 function bowlInteraction ( )
-    slime.log("take the bowl")
-    slime.addDialogue ("ego", "I can't pick things up yet")
+    slime.log ("take the bowl")
+    slime.turnActor ("ego", "south")
+    slime.addSpeech ("ego", "I can't pick it up yet...")
+    slime.addSpeech ("ego", "but I hope to soon!")
 end

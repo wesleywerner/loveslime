@@ -53,8 +53,8 @@ slime.counters = {}
 slime.settings = {
     ["status position"] = 70,
     ["status font size"] = 12,
-    ["dialogue position"] = 0,
-    ["dialogue font size"] = 10
+    ["speech position"] = 0,
+    ["speech font size"] = 10
     }
 
 function slime.reset ()
@@ -473,24 +473,24 @@ end
 --    \__,_|_|\__,_|_|\___/ \__, |\__,_|\___|
 --                          |___/            
 
-slime.dialogues = { }
+slime.speech = { }
 
 
 -- Make an actor say something
-function slime.addDialogue (name, text)
+function slime.addSpeech (name, text)
 
-    local newDialogue = {
+    local newSpeech = {
         ["actor"] = slime.actors[name],
         ["text"] = text,
         ["time"] = 3
         }
         
-    if (not newDialogue.actor) then
-        slime.log("Dialog failed: No actor named " .. name)
+    if (not newSpeech.actor) then
+        slime.log("Speech failed: No actor named " .. name)
         return
     end
     
-    table.insert(slime.dialogues, newDialogue)
+    table.insert(slime.speech, newSpeech)
 
 end
 
@@ -498,17 +498,17 @@ end
 -- Checks if there is an actor talking.
 function slime.someoneTalking ()
 
-    return (#slime.dialogues > 0)
+    return (#slime.speech > 0)
 
 end
 
--- Skips the current displayed dialogue
+-- Skips the current speech
 function slime.skipSpeech ( )
 
-    local dlg = slime.dialogues[1]
-    if (dlg) then
-        table.remove(slime.dialogues, 1)
-        dlg.actor.action = "idle"
+    local spc = slime.speech[1]
+    if (spc) then
+        table.remove(slime.speech, 1)
+        spc.actor.action = "idle"
     end
 
 end
@@ -610,15 +610,14 @@ function slime.update (dt)
         end
     end
     
-    -- Update the first dialogue display time.
-    -- Remove the dialogue if it's time expired.
-    if (#slime.dialogues > 0) then
-        local dlg = slime.dialogues[1]
-        dlg.time = dlg.time - dt
-        if (dlg.time < 0) then
+    -- Update the speech display time.
+    if (#slime.speech > 0) then
+        local spc = slime.speech[1]
+        spc.time = spc.time - dt
+        if (spc.time < 0) then
             slime.skipSpeech()
         else
-            dlg.actor.action = "talk"
+            spc.actor.action = "talk"
         end
     end
 
@@ -661,15 +660,15 @@ function slime.draw (scale)
         love.graphics.printf(slime.statusText, 0, slime.settings["status position"], love.window.getWidth() / scale, "center")
     end
     
-    -- Draw Dialogues
-    if (#slime.dialogues > 0) then
-        local dlg = slime.dialogues[1]
+    -- Draw Speech
+    if (#slime.speech > 0) then
+        local spc = slime.speech[1]
         -- Store the original color
         local r, g, b, a = love.graphics.getColor()
         -- Set a new speech color
-        love.graphics.setColor(dlg.actor.speechcolor)
-        love.graphics.setFont(love.graphics.newFont(slime.settings["dialogue font size"]))
-        love.graphics.printf(dlg.text, 0, slime.settings["dialogue position"], love.window.getWidth() / scale, "center")
+        love.graphics.setColor(spc.actor.speechcolor)
+        love.graphics.setFont(love.graphics.newFont(slime.settings["speech font size"]))
+        love.graphics.printf(spc.text, 0, slime.settings["speech position"], love.window.getWidth() / scale, "center")
         -- Restore original color
         love.graphics.setColor(r, g, b, a)
     end

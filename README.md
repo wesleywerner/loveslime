@@ -14,10 +14,10 @@ The name is an acronym for "SLUDGE to L&Ouml;VE Inspired Mimicry Environment".
 * A Star path finding movement.
 * Status text.
 * Hotspots - Regions that fires a callback on click.
+* Actor Speech
 
 **TODO**  
 
-* Actor dialogues.
 
 # Thanks
 
@@ -66,7 +66,7 @@ Add a new actor to the stage and returns the new actor object.
   
 The returned actor object has these additional properties you may optionally set:
 
-    actor["speechcolor"] = {255, 255, 255}          -- Set the dialogue color for this actor as {red, green, blue}
+    actor["speechcolor"] = {255, 255, 255}          -- Set the speech color for this actor as {red, green, blue}
 
 **Direction**
   
@@ -152,17 +152,17 @@ Update animated backgrounds, actor movements and animations.
 
 Draw the scene to the display. The `scale` parameter defaults to 1, and is only needed if you called `love.graphics.scale` before calling this function.
 
-## Actor Dialogues
+## Actor Speech
 
-You can queue multiple dialog texts at once, the actor animation will change to "talk" and the words will print on screen.
+You can queue multiple speeches at once, the actor animation will change to "talk" and the words will print on screen.
 
-![func](api/func.png) `slime.addDialogue (name, text)`
+![func](api/func.png) `slime.addSpeech (name, text)`
 
-Queue a dialogue for an actor by `name`.
+Queue a speech for an actor by `name`.
 
 ![func](api/func.png) `slime.someoneTalking ()`
 
-Returns `true` if there is a dialogue displaying.
+Returns `true` if there is speech displaying.
 
 ## Settings
 
@@ -170,8 +170,8 @@ SLIME offers these settings to customize your game:
 
     slime.settings["status position"] = 70      -- The Y position to print the built-in status text
     slime.settings["status font size"] = 12     -- The font size for status text
-    slime.settings["dialogue position"] = 0     -- The Y position to pring actor dialogue text
-    slime.settings["dialogue font size"] = 10   -- The font size for dialogue text
+    slime.settings["speech position"] = 0       -- The Y position to print speech
+    slime.settings["speech font size"] = 10     -- The font size for speech
 
 ---
 
