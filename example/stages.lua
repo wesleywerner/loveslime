@@ -30,11 +30,17 @@ function holeInteraction ( )
     
     slime.log ("dig cement")
     slime.turnActor ("ego", "east")
+    slime.delInventory ("ego", "spoon")
     
 end
 
 function bowlInteraction ( )
-    slime.log ("take the bowl")
+
+    -- give ego a bowl and a spoon inventory items
+    slime.addInventory ("ego", { ["name"] = "bowl", ["image"] = "images/bowl2.png" })
+    slime.addInventory ("ego", { ["name"] = "spoon", ["image"] = "images/spoon.png" })
+    
+        
     slime.turnActor ("ego", "south")
     slime.addSpeech ("ego", "I can't pick it up yet...")
     slime.addSpeech ("ego", "but I hope to soon!")

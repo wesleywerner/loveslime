@@ -116,10 +116,10 @@ Notes:
 
 This is for adding custom animations.
 
-  * The `name` of the actor that was created via `slime.actor`
-  * The `key` is the animation key.
-  * The `w` and `h` are the width and height of each frame.
-  * The `frames` and `delays` are the frames and delays for the animation.
+* The `name` of the actor that was created via `slime.actor`
+* The `key` is the animation key.
+* The `w` and `h` are the width and height of each frame.
+* The `frames` and `delays` are the frames and delays for the animation.
 
 ![func](api/func.png) `slime.moveActor (name, x, y, callback)`
 
@@ -183,6 +183,31 @@ Queue a speech for an actor by `name`.
 ![func](api/func.png) `slime.someoneTalking ()`
 
 Returns `true` if there is speech displaying.
+
+## Inventory
+
+The inventory system is very simple yet flexible. It represents a collection of "bags", each bag can hold multiple items, and in this way it supports inventory for multiple actors.
+
+![func](api/func.png) `slime.addInventory (bag, object)`
+
+* The name of the `bag` to add to. This can be anything, but for clarity, using an actor's name is a sensible choice.
+* The `object` is a table with the `name` and `image` of the inventory item.
+
+The `image` is a path string, `addInventory()` will automatically load the image data for you and replace the `image` property with the image data.
+
+Example:
+
+    slime.addInventory ("ego", { ["name"] = "bowl", ["image"] = "images/bowl2.png" })
+    slime.addInventory ("ego", { ["name"] = "spoon", ["image"] = "images/spoon.png" })
+
+
+![func](api/func.png) `slime.getInventory (bag)`
+
+Get the inventory items in the `bag`.
+
+![func](api/func.png) `slime.delInventory (bag, name)`
+
+Delete an inventory item `name` from a specific `bag`.
 
 ## Settings
 

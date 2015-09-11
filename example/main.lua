@@ -19,11 +19,18 @@ function love.load()
     
 end
 
+function drawInventory ()
+    for i, inv in pairs(slime.getInventory("ego")) do
+        love.graphics.draw(inv.image, i * 10, 86)
+    end
+end
+
 function love.draw()
 
     love.graphics.push()
     love.graphics.scale(scale)
     slime.draw(scale)
+    drawInventory()
     love.graphics.pop()
     
     -- Display debug info (only works if slime.debug["enabled"] == true)
