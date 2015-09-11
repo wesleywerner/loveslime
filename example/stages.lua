@@ -5,13 +5,13 @@ function cellRoom()
     slime.reset()
 
     -- Add the background
-    slime.background("images/background.png")
+    slime.background("images/cell-background.png")
     
     -- Apply a layer where actors can walk behind walls
-    slime.layer("images/background.png", "images/layer-mask.png", 50)
+    slime.layer("images/cell-background.png", "images/cell-layer.png", 50)
     
     -- Set the floor that actors can walk on
-    slime.floor("images/walk-door-open-mask.png")
+    slime.floor("images/cell-floor-closed.png")
     
     -- Add a hole in the wall hotspot
     slime.hotspot("hole", holeInteraction, 92, 23, 9, 9)

@@ -11,7 +11,7 @@ function addEgoAnimations(ego)
     -- We have two frames, the first shows for a few seconds,
     -- the second flashes by to make the actor blink.
     slime.idleAnimation ("ego",
-                        "images/green-monster.png",
+                        "images/ego.png",
                         12, 12,         -- tile width & height
                         {'11-10', 1},   -- south
                         {3, 0.2},       -- delays
@@ -24,7 +24,7 @@ function addEgoAnimations(ego)
                         )
 
     slime.walkAnimation ("ego",
-                        "images/green-monster.png",
+                        "images/ego.png",
                         12, 12,         -- tile width & height
                         {'11-14', 1},   -- south
                         0.2,            -- delays
@@ -38,7 +38,7 @@ function addEgoAnimations(ego)
 
 
     slime.talkAnimation ("ego",
-                        "images/green-monster.png",
+                        "images/ego.png",
                         12, 12,         -- tile width & height
                         {'15-17', 1},   -- south
                         0.2,            -- delays
