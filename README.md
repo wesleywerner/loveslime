@@ -169,7 +169,9 @@ Returns `true` if there is a dialogue displaying.
 SLIME offers these settings to customize your game:
 
     slime.settings["status position"] = 70      -- The Y position to print the built-in status text
+    slime.settings["status font size"] = 12     -- The font size for status text
     slime.settings["dialogue position"] = 0     -- The Y position to pring actor dialogue text
+    slime.settings["dialogue font size"] = 10   -- The font size for dialogue text
 
 ---
 

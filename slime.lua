@@ -52,7 +52,9 @@ slime.counters = {}
 -- Store settings to customize the look of SLIME
 slime.settings = {
     ["status position"] = 70,
-    ["dialogue position"] = 0
+    ["status font size"] = 12,
+    ["dialogue position"] = 0,
+    ["dialogue font size"] = 10
     }
 
 function slime.reset ()
@@ -645,6 +647,7 @@ function slime.draw (scale)
     
     -- status text
     if (slime.statusText) then
+        love.graphics.setFont(love.graphics.newFont(slime.settings["status font size"]))
         love.graphics.printf(slime.statusText, 0, slime.settings["status position"], love.window.getWidth() / scale, "center")
     end
     
@@ -655,6 +658,7 @@ function slime.draw (scale)
         local r, g, b, a = love.graphics.getColor()
         -- Set a new speech color
         love.graphics.setColor(dlg.actor.speechcolor)
+        love.graphics.setFont(love.graphics.newFont(slime.settings["dialogue font size"]))
         love.graphics.printf(dlg.text, 0, slime.settings["dialogue position"], love.window.getWidth() / scale, "center")
         -- Restore original color
         love.graphics.setColor(r, g, b, a)
