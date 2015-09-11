@@ -29,9 +29,29 @@ I want to thank these people for making use of their code:
 
 Thank you!
 
+# Building
+
+These steps detail setting up to build for a release of SLIME. If you intend to only use the library for _making_ a game (and not developing SLIME) then consider using one of the provided **release packages** instead.
+
+1. Clone this repository. The `--recursive` option will fetch submodules for you.
+
+    git clone --recursive git@github.com:wesleywerner/loveslime.git
+    
+2. We need to copy the dependency modules into slime, and update one line so that the `require` call can find the module. From the root SLIME directory:
+    * Copy over the required files  
+        cp lua-astar/{astar,middleclass}.lua slime/
+        cp anim8/anim8.lua slime/
+    * Update the require path  
+        sed -i "s/require 'middleclass'/require 'slime.middleclass'/g" slime/astar.lua
+
+
 ---
 
 # SLIME API
+
+To use SLIME simply `require` it into your `main.lua`:
+
+    slime = require ("slime.slime")
 
 ## Backgrounds
 

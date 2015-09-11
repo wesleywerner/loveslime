@@ -1,6 +1,6 @@
 -- Store the slime module in a global variable so that other stage files
 -- have access to it.
-slime = require ("slime")
+slime = require ("slime.slime")
 
 -- We can separate each stage into a file for easier code management.
 require ("cell")

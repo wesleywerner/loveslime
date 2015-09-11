@@ -38,14 +38,14 @@ local slime = {
 
 -- Uses Lua A* by GloryFish
 -- https://github.com/GloryFish/lua-astar
-require 'map'
+require 'slime.slimemaphandler'
 
 -- bresenham line algorithm
-require 'bresenham'
+require 'slime.bresenham'
 
 -- Uses anim8 by Enrique García Cota
 -- https://github.com/kikito/anim8
-local anim8 = require 'anim8'
+local anim8 = require 'slime.anim8'
 
 slime.counters = {}
 

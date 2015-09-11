@@ -3,8 +3,8 @@
 -- Created by Jay Roberts on 2011-01-12.
 -- Copyright 2011 GloryFish.org. All rights reserved.
 
-require 'middleclass'
-require 'astar'
+require 'slime.middleclass'
+require 'slime.astar'
 
 SlimeMapHandler = class('SlimeMapHandler')
 
