@@ -17,10 +17,14 @@ function cellRoom()
     slime.hotspot("hole", holeInteraction, 92, 23, 9, 9)
 
     -- Add our main actor, Ego
-    addEgoAnimations(slime.actor("ego", 70, 50))
+    local ego = slime.actor("ego")
+    ego.x, ego.y = 70, 50
+    addEgoAnimations(ego)
     
     -- Add a bowl on the floor as an actor
-    local bowl = slime.actor("bowl", 65, 37, 2, 5, "images/bowl1.png")
+    local bowl = slime.actor("bowl")
+    bowl.x, bowl.y = 65, 37
+    slime.addImage("bowl", love.graphics.newImage("images/bowl1.png"))
     bowl.InteractCallback = bowlInteraction
     
 end

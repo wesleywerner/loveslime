@@ -18,6 +18,8 @@ The name is an acronym for "SLUDGE to L&Ouml;VE Inspired Mimicry Environment".
 
 **TODO**  
 
+* Improve movement. Find nearest open node by looking south, west, north and east. Choose the point of the shortest distance from the goal.
+* InventoryChanged callback. Inventory hotspots.
 
 # Thanks
 
@@ -53,6 +55,10 @@ To use SLIME simply `require` it into your `main.lua`:
 
     slime = require ("slime.slime")
 
+A note on Direction:
+  
+The cardinal directions are oriented so that `SOUTH` points to the bottom of your screen, and `NORTH` to the top. So an actor facing `SOUTH` is looking at the player.
+
 ## Backgrounds
 
 ![func](api/func.png) `slime.background (backgroundfilename, [, delay])`
@@ -75,22 +81,19 @@ The `baseline` is the y-position a character needs to be behind in order to be h
 
 ## Actors
 
-![func](api/func.png) `slime.actor (name, x, y [, hotspotY, hotspotY, image])`  
+Actors are items on your stage that may move or talk, like people, animals or robots. They can also be inanimate objects that may not move or talk but are animated, like doors, toasters and computers.
 
-Add a new actor to the stage and returns the new actor object.
+![func](api/func.png) `slime.actor (name)`
 
-  * The `name` identifies the actor. You can use the same name multiple times, however when calling `moveActor` (which take the name) only the first actor with that name is moved.
-  * The `x` and `y` sets the starting position of the actor.
-  * Optional `hotspot X` and `hotspot Y` sets the point relative to the `x/y`. This point determines when an actor is considered behind a layer baseline. It is also the offset used to draw the actor sprite. If no hotspot is given, it will default to centered at the base of the sprite for animated actors, and to `0,0` for static image actors.
-  * Optional `image` is a static (non-animated) image file name to use for the actor's sprite.
-  
-The returned actor object has these additional properties you may optionally set:
+Adds and returns an actor to the stage. After this call you need to give the actor a position and image/animation for it to become visible on the stage. These properties are available:
 
-    actor["speechcolor"] = {255, 255, 255}          -- Set the speech color for this actor as {red, green, blue}
+    actor.x = 50    -- The actor position.
+    actor.y = 50
+    actor.speechcolor = {255, 255, 255}     -- Set the speech color for this actor as {red, green, blue}
 
-**Direction**
-  
-The cardinal directions are oriented to your screen so that `SOUTH` points to the bottom of your screen, and `NORTH` to the top. So an actor facing `SOUTH` is looking at the player.
+![func](api/func.png) `slime.addImage (name, image)`
+
+Sets a static (non-animated) image as an actor's sprite.
 
 ![func](api/func.png) `slime.idleAnimation (name, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])`  
 ![func](api/func.png) `slime.walkAnimation (name, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])`  
@@ -104,7 +107,7 @@ These are helper functions that in turn call `addAnimation` with the `keys` "idl
   * The `south` and `southd` are the frames and delays for the south-facing animation.
   * The other directions are optional but recommended. `SOUTH` will be used as default if none of the other directions are given.
 
-The format of the `south` frames and delays following the [anim8 library](https://github.com/kikito/anim8) convention. I recommend you go over there to read about the Frames format.
+The format of the `south` frames and delays follow the [anim8 library](https://github.com/kikito/anim8) convention. I recommend you go over there to read about the Frames format.
 
 Notes:
 

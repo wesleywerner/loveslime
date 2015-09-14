@@ -151,39 +151,26 @@ end
 slime.actors = {}
 slime.tilesets = {}
 
-function slime.actor (name, x, y, hotspotx, hotspoty, image)
+function slime.actor (name)
 
     -- Add an actor to the stage.
     -- Allows adding the same actor name multiple times, but only
     -- the first instance uses the "name" as the key, subsequent
     -- duplicates will use the natural numbering of the table.
-    --
-    -- The hotspotX/Y values are the offset of the actor's hotspot
-    -- from the image origin. By default this is centered at the base
-    -- of the image.
     
     -- default sprite size
     local w = 10
     local h = 10
     
-    -- load the image if one is specified.
-    if (image) then 
-        image = love.graphics.newImage(image) 
-        w, h = image:getDimensions()
-    end
-
     local newActor = {
         ["name"] = name,
-        ["x"] = x,
-        ["y"] = y,
-        ["lastx"] = x,              -- previous position to calcualte
-        ["lasty"] = y,              -- direction.
-        ["dirCalcCounter"] = 0,     -- delay direction calc counter.
+        ["x"] = 0,
+        ["y"] = 0,
+        ["direction recalc delay"] = 0,     -- delay direction calc counter.
         ["w"] = w,
         ["h"] = h,
-        ["hotspotX"] = 0,
-        ["hotspotY"] = 0,
-        ["image"] = image,          -- a static image of this actor.
+        ["base"] = {0, 0},                  -- image draw offset vs actor x/y
+        ["image"] = nil,                    -- a static image of this actor.
         ["animations"] = { },
         ["direction"] = "south",
         ["action"] = "idle",
@@ -191,11 +178,6 @@ function slime.actor (name, x, y, hotspotx, hotspoty, image)
         ["inventory"] = { }
         }
         
-    if (hotspotx and hotspoty) then
-        newActor.hotspotX = hotspotx
-        newActor.hotspotY = hotspoty
-    end
-    
     function newActor:getAnim ()
         local key = self.action .. " " .. self.direction
         return self.animations[key]
@@ -260,8 +242,7 @@ function slime.addAnimation (name, key, tileset, w, h, frames, delays)
     -- default actor hotspot to centered at the base of the image
     actor["w"] = w
     actor["h"] = h
-    actor["hotspotX"] = w / 2
-    actor["hotspotY"] = h
+    actor["base"] = { w/2, h }
     
     local g = anim8.newGrid(w, h, image:getWidth(), image:getHeight())
     local animation = anim8.newAnimation(g(unpack(frames)), delays)
@@ -281,16 +262,32 @@ function slime.addAnimation (name, key, tileset, w, h, frames, delays)
     
 end
 
+-- Set a static image as an actor's sprite.
+function slime.addImage (name, image)
+
+    local actor = slime.actors[name]
+    
+    if (not actor) then
+        slime.log ("Add image failed: no actor named " .. name)
+    else
+        actor.image = image
+        actor.w = image:getWidth()
+        actor.h = image:getHeight()
+        actor.base = { actor.w/2, actor.h }
+    end
+    
+end
+
 function slime.drawActor (actor)
 
     local animation = actor:getAnim()
     if (animation) then
         local tileset = slime.tilesets[animation["tileset"]]
-        animation["animation"]:draw(tileset, actor.x - actor.hotspotX, actor.y - actor.hotspotY)
+        animation["animation"]:draw(tileset, actor.x - actor.base[1], actor.y - actor.base[2])
     elseif (actor.image) then
-        love.graphics.draw(actor.image, actor.x - actor.hotspotX, actor.y - actor.hotspotY)
+        love.graphics.draw(actor.image, actor.x - actor.base[1], actor.y - actor.base[2])
     else
-        love.graphics.rectangle ("fill", actor.x - actor.hotspotX, actor.y - actor.hotspotY, actor.w, actor.h)
+        love.graphics.rectangle ("fill", actor.x - actor.base[1], actor.y - actor.base[2], actor.w, actor.h)
     end
 
 end
@@ -392,9 +389,9 @@ function slime.moveActorOnPath (actor, dt)
         if (point) then
             actor.x, actor.y = point.location.x, point.location.y
             -- Test if we should calculate actor direction
-            actor.dirCalcCounter = actor.dirCalcCounter - 1
-            if (actor.dirCalcCounter <= 0) then
-                actor.dirCalcCounter = 5
+            actor["direction recalc delay"] = actor["direction recalc delay"] - 1
+            if (actor["direction recalc delay"] <= 0) then
+                actor["direction recalc delay"] = 5
                 actor.direction = slime.calculateDirection(actor.lastx, actor.lasty, actor.x, actor.y)
                 actor.lastx, actor.lasty = actor.x, actor.y
             end
@@ -744,8 +741,8 @@ function slime.getObjects (x, y)
     local objects = { }
 
     for iactor, actor in pairs(slime.actors) do
-        if (x >= actor.x - actor.hotspotX and x <= actor.x - actor.hotspotX + actor.w) and 
-            (y >= actor.y - actor.hotspotY and y <= actor.y - actor.hotspotY + actor.h) then
+        if (x >= actor.x - actor.base[1] and x <= actor.x - actor.base[1] + actor.w) and 
+            (y >= actor.y - actor.base[2] and y <= actor.y - actor.base[2] + actor.h) then
             table.insert(objects, actor)
         end
     end
@@ -867,7 +864,7 @@ function slime.outlineStageElements()
     -- draw outlines of actors
     love.graphics.setColor(0, 255, 0, 64)
     for iactor, actor in pairs(slime.actors) do
-        love.graphics.rectangle("line", actor.x - actor.hotspotX, actor.y - actor.hotspotY, actor.w, actor.h)
+        love.graphics.rectangle("line", actor.x - actor.base[1], actor.y - actor.base[2], actor.w, actor.h)
         love.graphics.circle("line", actor.x, actor.y, 1, 6)
     end
 
