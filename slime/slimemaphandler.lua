@@ -37,6 +37,10 @@ function SlimeMapHandler:initialize()
   self.tiles = { }
 end
 
+function SlimeMapHandler:size()
+    return { w = #self.tiles[1], h = #self.tiles }
+end
+
 function SlimeMapHandler:getNode(location)
   -- Here you make sure the requested node is valid (i.e. on the map, not blocked)
   if location.x > #self.tiles[1] or location.y > #self.tiles then
