@@ -565,10 +565,10 @@ end
 
 slime.layers = {}
 
-function slime.layer (backgroundfilename, maskfilename, baseline)
+function slime.layer (background, mask, baseline)
 
-    local source = love.graphics.newImage(backgroundfilename)
-    local mask = love.graphics.newImage(maskfilename)
+    local source = love.graphics.newImage(background)
+    local mask = love.graphics.newImage(mask)
     
     local newLayer = { 
         ["image"] = slime:createLayer(source, mask),
@@ -728,7 +728,7 @@ function slime.draw (scale)
     -- Layers
     -- layers are ordered by their baselines: smaller values first.
     -- for each layer, draw the actors above it, then draw the layer.
-    local maxBaseline = nil
+    local maxBaseline = 0
     for i, layer in pairs(slime.layers) do
         for iactor, actor in pairs(slime.actors) do
             if (actor.y) < layer.baseline then
