@@ -9,6 +9,9 @@ require ("stages")
 -- When handling mouse positions we account for scale in the xy points.
 scale = 4
 
+-- Hotspots below this mark is from our inventory bag
+bagPosition = 86
+
 function love.load()
     
     -- Nearest image interpolation (pixel graphics, no anti-aliasing)
@@ -20,9 +23,35 @@ function love.load()
 end
 
 function drawInventory ()
-    for i, inv in pairs(slime.getInventory("ego")) do
+    for i, inv in pairs(slime.bagContents("ego")) do
         love.graphics.draw(inv.image, i * 10, 86)
     end
+end
+
+-- Handles bag hotspot clicks
+function bagHandler (data)
+    slime.log ("bag clicked on " .. data.name)
+end
+
+function slime.inventoryChanged ( )
+    
+    -- Clear existing bag hotspots
+    for i, spot in ipairs(slime.hotspots) do
+        if (type(spot.data) == "table") and spot.data.isbagitem then
+            table.remove (slime.hotspots, i)
+        end
+    end
+    
+    -- Add current bag hotspots
+    for i, inv in pairs(slime.bagContents("ego")) do
+        local data = {
+            ["isbagitem"] = true,
+            ["name"] = inv.name
+            }
+        local w, h = inv.image:getDimensions()
+        slime.hotspot (inv.name, bagHandler, i * 10, bagPosition, w, h, data)
+    end
+    
 end
 
 function love.draw()
@@ -71,13 +100,15 @@ function love.mousepressed(x, y, button)
             return
         end
         
-        local interactCall = function()
+        -- The point is in our bag inventory area
+        if (y > bagPosition) then
             slime.interact (x, y)
         end
         
         -- Move Ego to the x/y position and interact with any
         -- object that is there.
-        slime.moveActor ("ego", x, y, interactCall)
+        slime.moveActor ("ego", x, y, 
+            function() slime.interact (x, y) end)
 
     end
     

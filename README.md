@@ -9,17 +9,17 @@ The name is an acronym for "SLUDGE to L&Ouml;VE Inspired Mimicry Environment".
 
 # Features
 
-* Animated backgrounds.
-* Animated actors with directional movement.
-* A Star path finding movement.
-* Status text.
-* Hotspots - Regions that fires a callback on click.
+* Animated backgrounds
+* Actors with directional movement
+* Path finding movement
+* Status text
+* Hotspots
 * Actor Speech
+* Bags (inventory)
 
 **TODO**  
 
-* Improve movement. Find nearest open node by looking south, west, north and east. Choose the point of the shortest distance from the goal.
-* InventoryChanged callback. Inventory hotspots.
+* Tutorial
 
 # Thanks
 
@@ -145,15 +145,17 @@ Note that because movement is asyncronous, calling this while an actor is moving
 
 ## Hotspots
 
-![func](api/func.png) `slime.hotspot(name, callback, x, y, w, h)`
+![func](api/func.png) `slime.hotspot (name, callback, x, y, w, h [,data])`
 
-Adds a hotspot to the stage. The callback will fire if the pointer is over the hotspot when `slime.interact` is called.
+Adds a hotspot to the stage. The `callback` will fire if the pointer is over the hotspot when `slime.interact` is called.
+
+The optional `data` value gets passed to your callback. This is useful for when you have multiple hotspots that all use the same callback function.
 
 ![func](api/func.png) `slime.interact (x, y)`
 
-Check if any object is under `x/y` and fire it's callback if there is on.
+Check if any object is under `x/y` and fire it's handler.
 
-Returns `true` if the callback was fired.
+Returns `true` if the handler was fired.
 
 ![func](api/func.png) `slime.getObjects (x, y)`
 
@@ -187,30 +189,29 @@ Queue a speech for an actor by `name`.
 
 Returns `true` if there is speech displaying.
 
-## Inventory
+## Bags
 
-The inventory system is very simple yet flexible. It represents a collection of "bags", each bag can hold multiple items, and in this way it supports inventory for multiple actors.
+Bags are analogous to inventory. The bags system is very simple yet flexible: Each bag has a name and can hold multiple items. In this way it supports inventory for multiple actors.
 
-![func](api/func.png) `slime.addInventory (bag, object)`
+![func](api/func.png) `slime.bagInsert (bag, object)`
 
-* The name of the `bag` to add to. This can be anything, but for clarity, using an actor's name is a sensible choice.
-* The `object` is a table with the `name` and `image` of the inventory item.
+Inserts something into a bag.
 
-The `image` is a path string, `addInventory()` will automatically load the image data for you and replace the `image` property with the image data.
+* The name of the `bag` can be anything, but for clarity, using an actor's name is a sensible choice.
+* The `object` is a table with a `name` value. You can add your own values to the object too.
 
 Example:
 
-    slime.addInventory ("ego", { ["name"] = "bowl", ["image"] = "images/bowl2.png" })
-    slime.addInventory ("ego", { ["name"] = "spoon", ["image"] = "images/spoon.png" })
+    local theSpoon = { ["name"] = "spoon" }
+    slime.bagInsert ("ego", theSpoon)
 
+![func](api/func.png) `slime.bagContents (bag)`
 
-![func](api/func.png) `slime.getInventory (bag)`
+Gets the contents of a bag as a table.
 
-Get the inventory items in the `bag`.
+![func](api/func.png) `slime.bagRemove (bag, name)`
 
-![func](api/func.png) `slime.delInventory (bag, name)`
-
-Delete an inventory item `name` from a specific `bag`.
+Removes an item (`name`) from a `bag`.
 
 ## Settings
 

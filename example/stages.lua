@@ -14,7 +14,7 @@ function cellRoom()
     slime.floor("images/cell-floor-closed.png")
     
     -- Add a hole in the wall hotspot
-    slime.hotspot("hole", holeInteraction, 92, 23, 9, 9)
+    slime.hotspot("hole", holeHandler, 92, 23, 9, 9)
 
     -- Add our main actor, Ego
     local ego = slime.actor("ego")
@@ -25,24 +25,24 @@ function cellRoom()
     local bowl = slime.actor("bowl")
     bowl.x, bowl.y = 65, 37
     slime.addImage("bowl", love.graphics.newImage("images/bowl1.png"))
-    bowl.InteractCallback = bowlInteraction
+    bowl.callback = bowlHandler
     
 end
 
 -- Called when interacting with the hole in the wall
-function holeInteraction ( )
+function holeHandler ( data )
     
     slime.log ("dig cement")
     slime.turnActor ("ego", "east")
-    slime.delInventory ("ego", "spoon")
+    slime.bagRemove ("ego", "spoon")
     
 end
 
-function bowlInteraction ( )
+function bowlHandler ( )
 
     -- give ego a bowl and a spoon inventory items
-    slime.addInventory ("ego", { ["name"] = "bowl", ["image"] = "images/bowl2.png" })
-    slime.addInventory ("ego", { ["name"] = "spoon", ["image"] = "images/spoon.png" })
+    slime.bagInsert ("ego", { ["name"] = "bowl", ["image"] = love.graphics.newImage("images/bowl2.png") })
+    slime.bagInsert ("ego", { ["name"] = "spoon", ["image"] = love.graphics.newImage("images/spoon.png") })
     
         
     slime.turnActor ("ego", "south")

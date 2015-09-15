@@ -616,17 +616,18 @@ end
 --   |_| |_|\___/ \__|___/ .__/ \___/ \__|___/
 --                       |_|                  
 
-slime.hotspots = {}
+slime.hotspots = { }
 
-function slime.hotspot(name, InteractCallback, x, y, w, h)
+function slime.hotspot(name, callback, x, y, w, h, data)
 
     table.insert(slime.hotspots, {
         ["name"] = name, 
-        ["InteractCallback"] = InteractCallback, 
+        ["callback"] = callback, 
         ["x"] = x, 
         ["y"] = y, 
         ["w"] = w, 
-        ["h"] = h
+        ["h"] = h,
+        ["data"] = data
     })
 
 end
@@ -638,38 +639,44 @@ end
 --   |_|_| |_|\_/ \___|_| |_|\__\___/|_|   \__, |
 --                                         |___/ 
 
-slime.inventories = { }
+-- Stores bags and their contents.
+slime.bags = { }
 
--- Give an inventory item
-function slime.addInventory (bag, object)
+-- Placeholder for the inventory changed callback
+function slime.inventoryChanged ( )
 
-    -- Replace the image path with the image data
-    object.image = love.graphics.newImage(object.image)
-    
+end
+
+-- Add an item to a bag.
+function slime.bagInsert (bag, object)
+
     -- Add the inventory item under "name"
-    if (not slime.inventories[bag]) then slime.inventories[bag] = { } end
-    local inv = slime.inventories[bag]
+    if (not slime.bags[bag]) then slime.bags[bag] = { } end
+    local inv = slime.bags[bag]
     table.insert(inv, object)
+    slime.inventoryChanged()
     
-    slime.log (bag .. " given " .. object.name)
+    slime.log ("Added " .. object.name .. " to bag \"" .. bag .. "\"")
 
 end
 
--- Get a list of inventory items
-function slime.getInventory (bag)
+-- Get items from a bag.
+function slime.bagContents (bag)
 
-    return slime.inventories[bag] or { }
+    return slime.bags[bag] or { }
 
 end
 
--- Delete an inventory item from a list
-function slime.delInventory (bag, name)
+-- Remove an item from a bag.
+function slime.bagRemove (bag, name)
 
-    local inv = slime.inventories[bag]
+    local inv = slime.bags[bag]
     if (inv) then 
         for i, item in pairs(inv) do
             if (item.name == name) then
                 table.remove(inv, i)
+                slime.log ("Removed " .. name .. " from bag \"" .. bag .. "\"")
+                slime.inventoryChanged()
             end
         end
     end
@@ -802,9 +809,9 @@ function slime.interact (x, y)
     if (not objects) then return end
     
     for i, object in pairs(objects) do
-        if (object.InteractCallback) then
+        if (object.callback) then
             slime.log("Interacting with " .. object.name)
-            object.InteractCallback()
+            object.callback(object.data)
         end
     end
     
@@ -854,6 +861,7 @@ slime.debugdraw = function ( )
     love.graphics.draw(debugOverlay, 0, 0);
     
     -- print frame speed
+    love.graphics.setFont(love.graphics.newFont(12))
     love.graphics.print(tostring(love.timer.getFPS()) .. " fps", 12, 10)
 
     -- print background info
