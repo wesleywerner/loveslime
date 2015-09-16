@@ -484,8 +484,14 @@ But what just happened?
 
 1. On the `inventoryChanged` callback we build the `bagButtons` table.
 2. We leverage the `data` parameter so we can identify it later in the callback.
-3. ?
-4. Profit.
 
 SLIME will draw the button images for us, and our calls to `interact` will fire their callbacks.
+
+# TODO
+
+Tutorial sections still in progress
+
+* Using inventory items on hotspots
+* Adding NPCs
+* A dialogue example
 
