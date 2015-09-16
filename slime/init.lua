@@ -179,8 +179,12 @@ function slime.actor (name)
         }
         
     function newActor:getAnim ()
-        local key = self.action .. " " .. self.direction
-        return self.animations[key]
+        if (self.customAnimationKey) then
+            return self.animations[self.customAnimationKey]
+        else
+            local key = self.action .. " " .. self.direction
+            return self.animations[key]
+        end
     end
     
     if (slime.actors[name]) then
@@ -223,7 +227,7 @@ function slime.prefabAnimation (prefix, name, tileset, w, h, south, southd, west
 end
 
 -- Create a custom animation.
-function slime.addAnimation (name, key, tileset, w, h, frames, delays)
+function slime.addAnimation (name, key, tileset, w, h, frames, delays, onLoop)
 
     local actor = slime.actors[name]
     
@@ -245,20 +249,29 @@ function slime.addAnimation (name, key, tileset, w, h, frames, delays)
     actor["base"] = { w/2, h }
     
     local g = anim8.newGrid(w, h, image:getWidth(), image:getHeight())
-    local animation = anim8.newAnimation(g(unpack(frames)), delays)
+    local animation = anim8.newAnimation(g(unpack(frames)), delays, onLoop)
     
     actor.animations[key] = { 
-        --["name"] = key,
         ["tileset"] = tileset,
         ["animation"] = animation
         }
-        
-    -- default to this anim
-    if (not actor.anim) then
-        actor.anim = actor.animations[key]
-    end
+    
+    --actor.customAnimationKey = key
     
     return animation
+    
+end
+
+-- Set the animation of an actor
+function slime.setAnimation (name, key)
+
+    local actor = slime.actors[name]
+    
+    if (not actor) then
+        slime.log ("Set animation failed: no actor named " .. name)
+    else
+        actor.customAnimationKey = key
+    end
     
 end
 
@@ -270,6 +283,7 @@ function slime.addImage (name, image)
     if (not actor) then
         slime.log ("Add image failed: no actor named " .. name)
     else
+        image = love.graphics.newImage(image)
         actor.image = image
         actor.w = image:getWidth()
         actor.h = image:getHeight()
@@ -641,6 +655,7 @@ end
 
 -- Stores bags and their contents.
 slime.bags = { }
+slime.bagButtons = { }
 
 -- Placeholder for the inventory changed callback
 function slime.inventoryChanged ( )
@@ -650,11 +665,17 @@ end
 -- Add an item to a bag.
 function slime.bagInsert (bag, object)
 
+    -- load the image data
+    if type(object.image) == "string" then
+        print("replacing item image with load - " .. object.name)
+        object.image = love.graphics.newImage(object.image)
+    end
+
     -- Add the inventory item under "name"
     if (not slime.bags[bag]) then slime.bags[bag] = { } end
     local inv = slime.bags[bag]
     table.insert(inv, object)
-    slime.inventoryChanged()
+    slime.inventoryChanged (bag)
     
     slime.log ("Added " .. object.name .. " to bag \"" .. bag .. "\"")
 
@@ -676,12 +697,30 @@ function slime.bagRemove (bag, name)
             if (item.name == name) then
                 table.remove(inv, i)
                 slime.log ("Removed " .. name .. " from bag \"" .. bag .. "\"")
-                slime.inventoryChanged()
+                slime.inventoryChanged (bag)
             end
         end
     end
     
 end
+
+function slime.bagButton (name, image, callback, x, y, w, h, data)
+
+    if type(image) == "string" then image = love.graphics.newImage(image) end
+    
+    table.insert(slime.bagButtons, {
+        ["name"] = name,
+        ["image"] = image,
+        ["callback"] = callback,
+        ["x"] = x,
+        ["y"] = y,
+        ["w"] = w,
+        ["h"] = h,
+        ["data"] = data
+    })
+
+end
+
 
 --        _                    
 --     __| |_ __ __ ___      __
@@ -746,6 +785,11 @@ function slime.draw (scale)
         end
     end
     
+    -- Bag Buttons
+    for counter, button in pairs(slime.bagButtons) do
+        love.graphics.draw (button.image, button.x, button.y)
+    end
+    
     -- status text
     if (slime.statusText) then
         love.graphics.setFont(love.graphics.newFont(slime.settings["status font size"]))
@@ -789,6 +833,13 @@ function slime.getObjects (x, y)
     end
     
     for ihotspot, hotspot in pairs(slime.hotspots) do
+        if (x >= hotspot.x and x <= hotspot.x + hotspot.w) and
+            (y >= hotspot.y and y <= hotspot.y + hotspot.h) then
+            table.insert(objects, hotspot)
+        end
+    end
+    
+    for ihotspot, hotspot in pairs(slime.bagButtons) do
         if (x >= hotspot.x and x <= hotspot.x + hotspot.w) and
             (y >= hotspot.y and y <= hotspot.y + hotspot.h) then
             table.insert(objects, hotspot)
@@ -903,13 +954,19 @@ function slime.outlineStageElements()
         love.graphics.rectangle("line", hotspot.x, hotspot.y, hotspot.w, hotspot.h)
     end
     
+    -- Outline bag buttons
+    love.graphics.setColor(255, 0, 255, 64)
+    for counter, button in pairs(slime.bagButtons) do
+        love.graphics.rectangle("line", button.x, button.y, button.w, button.h)
+    end    
+
     -- draw outlines of actors
     love.graphics.setColor(0, 255, 0, 64)
     for iactor, actor in pairs(slime.actors) do
         love.graphics.rectangle("line", actor.x - actor.base[1], actor.y - actor.base[2], actor.w, actor.h)
         love.graphics.circle("line", actor.x, actor.y, 1, 6)
     end
-
+    
     love.graphics.setColor(r, g, b, a)
     
 end
