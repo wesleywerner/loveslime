@@ -36,6 +36,8 @@ Thank you!
 
 # SLIME API
 
+This API reference lists the available functionality of SLIME. You should read the [SLIME tutorial](https://github.com/wesleywerner/loveslime/blob/master/tutorial/tutorial.md) to see an example how these are used.
+
 To use SLIME simply `require`:
 
     slime = require ("slime")
