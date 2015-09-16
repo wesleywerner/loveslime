@@ -20,6 +20,7 @@ The name is an acronym for "SLUDGE to L&Ouml;VE Inspired Mimicry Environment".
 **TODO**  
 
 * Tutorial
+* Tidy function parameter names
 
 # Thanks
 
@@ -39,9 +40,10 @@ To use SLIME simply `require`:
 
     slime = require ("slime")
 
-A note on Direction:
+## Notes
   
-The cardinal directions are oriented so that `SOUTH` points to the bottom of your screen, and `NORTH` to the top. So an actor facing `SOUTH` is looking at the player.
+* The cardinal directions are oriented so that `SOUTH` points to the bottom of your screen, and `NORTH` to the top. So an actor facing `SOUTH` is looking at the player.
+* Whenever an image is passed to SLIME, assume it is the filename of the image. The image data will be loaded for you.
 
 ## Reset
 
@@ -79,7 +81,7 @@ Actors are items on your stage that may move or talk, like people, animals or ro
 
 Adds and returns an actor to the stage. After this call you need to give the actor a position and image/animation for it to become visible on the stage. These properties are available:
 
-    actor.x = 50    -- The actor position.
+    actor.x = 50
     actor.y = 50
     actor.speechcolor = {255, 255, 255}     -- Set the speech color for this actor as {red, green, blue}
 
@@ -107,7 +109,7 @@ Notes:
 * Only `south` and `southd` parameters are mandatory. If the rest are omitted then south will be used as the default for all directions.
 * If a `west` parameter is given, and `east` is `nil` or omitted, then the west animation will automatically be mirrored and used for the `east`.
 
-![func](api/func.png) `slime.addAnimation (name, key, tileset, w, h, frames, delays)`  
+![func](api/func.png) `slime.addAnimation (name, key, tileset, w, h, frames, delays [,onLoop])`  
 
 This is for adding custom animations.
 
@@ -115,6 +117,7 @@ This is for adding custom animations.
 * The `key` is the animation key.
 * The `w` and `h` are the width and height of each frame.
 * The `frames` and `delays` are the frames and delays for the animation.
+* If you give the `onLoop` value as a function, it will be called when the animation loops.
 
 ![func](api/func.png) `slime.moveActor (name, x, y, callback)`
 
@@ -204,6 +207,14 @@ Gets the contents of a bag as a table.
 ![func](api/func.png) `slime.bagRemove (bag, name)`
 
 Removes an item (`name`) from a `bag`.
+
+![func](api/func.png) `slime.inventoryChanged (bag)`
+
+This is a **callback** function that you can implement if you want to be notified whenever a bag content changed. The name of the bag that changed is passed.
+
+![func](api/func.png) `slime.bagButton (name, image, callback, x, y, w, h, data)`
+
+Add a hotspot with an image that draws on screen. 
 
 ## Settings
 
