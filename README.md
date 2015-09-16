@@ -31,33 +31,23 @@ I want to thank these people for making use of their code:
 
 Thank you!
 
-# Building
-
-These steps detail setting up to build for a release of SLIME. If you intend to only use the library for _making_ a game (and not developing SLIME) then consider using one of the provided **release packages** instead.
-
-1. Clone this repository. The `--recursive` option will fetch submodules for you.
-
-    git clone --recursive git@github.com:wesleywerner/loveslime.git
-    
-2. We need to copy the dependency modules into slime, and update one line so that the `require` call can find the module. From the root SLIME directory:
-    * Copy over the required files  
-        cp lua-astar/{astar,middleclass}.lua slime/
-        cp anim8/anim8.lua slime/
-    * Update the require path  
-        sed -i "s/require 'middleclass'/require 'slime.middleclass'/g" slime/astar.lua
-
-
 ---
 
 # SLIME API
 
-To use SLIME simply `require` it into your `main.lua`:
+To use SLIME simply `require`:
 
-    slime = require ("slime.slime")
+    slime = require ("slime")
 
 A note on Direction:
   
 The cardinal directions are oriented so that `SOUTH` points to the bottom of your screen, and `NORTH` to the top. So an actor facing `SOUTH` is looking at the player.
+
+## Reset
+
+![func](api/func.png) `slime.reset ()`
+
+Clear the stage, actors and hotspots. Call this before setting up a new stage. Note that bags (inventories) are _not_ cleared.
 
 ## Backgrounds
 
@@ -73,9 +63,11 @@ Set the floor where actors can walk. This is an image where black (`#000`) indic
 
 Layers define areas of your background where actors can walk behind.
 
-![func](api/func.png) `slime.layer (backgroundfilename, maskfilename, baseline)`
+![func](api/func.png) `slime.layer (background, mask, baseline)`
 
-Add a new layer over the `background` using the `mask` image. The mask is an image with black (`#000`) where there is no layer, or any other colour to indicate a hide-behind layer.
+Add a walk-behind layer. The `background` is where to cut the layer from. The `mask` defines where to cut.
+
+The mask is an image with black (`#000`) where there is no layer, or any other colour to indicate the hide-behind layer.
 
 The `baseline` is the y-position a character needs to be behind in order to be hidden by the layer.
 
