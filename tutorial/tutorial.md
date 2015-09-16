@@ -476,7 +476,7 @@ And skip actor movement if the mouse was clicked in the "bag position" zone:
             slime.moveActor ("ego", x, y, function() slime.interact (x, y) end)
         end
 
-![screen 8](tutorial-images/screen8.png)
+![screen 8](tutorial-images/screen8.gif)
 
 Nice work, Ego! 
 
