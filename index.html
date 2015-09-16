@@ -42,24 +42,62 @@
 <a id="features" class="anchor" href="#features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Features</h1>
 
 <ul>
-<li>Animated backgrounds.</li>
-<li>Animated actors with directional movement.</li>
-<li>A Star path finding movement.</li>
+<li>Animated backgrounds</li>
+<li>Actors with directional movement</li>
+<li>Path finding movement</li>
+<li>Status text</li>
+<li>Hotspots</li>
+<li>Actor Speech</li>
+<li>Bags (inventory)</li>
 </ul>
 
 <p><strong>TODO</strong>  </p>
 
 <ul>
-<li>Hotspots - Regions that fires a callback on click.</li>
-<li>Customer cursors.</li>
-<li>Text status bar.</li>
-<li>Actor dialogues.</li>
+<li>Tutorial</li>
+<li>Tidy function parameter names</li>
 </ul>
+
+<h1>
+<a id="thanks" class="anchor" href="#thanks" aria-hidden="true"><span class="octicon octicon-link"></span></a>Thanks</h1>
+
+<p>I want to thank these people for making use of their code:</p>
+
+<ul>
+<li>kikito, for your animation library, <a href="https://love2d.org/wiki/anim8">anim8</a>.</li>
+<li>GloryFish, for your <a href="https://github.com/GloryFish/lua-astar">A* path finding</a> lua code.</li>
+<li>Bresenham's Line Algorithm <a href="http://www.roguebasin.com/index.php?title=Bresenham%27s_Line_Algorithm#Lua">from roguebasin.com</a>
+</li>
+</ul>
+
+<p>Thank you!</p>
 
 <hr>
 
 <h1>
 <a id="slime-api" class="anchor" href="#slime-api" aria-hidden="true"><span class="octicon octicon-link"></span></a>SLIME API</h1>
+
+<p>This API reference lists the available functionality of SLIME. You should read the <a href="https://github.com/wesleywerner/loveslime/blob/master/tutorial/tutorial.md">SLIME tutorial</a> to see an example how these are used.</p>
+
+<p>To use SLIME simply <code>require</code>:</p>
+
+<pre><code>slime = require ("slime")
+</code></pre>
+
+<h2>
+<a id="notes" class="anchor" href="#notes" aria-hidden="true"><span class="octicon octicon-link"></span></a>Notes</h2>
+
+<ul>
+<li>The cardinal directions are oriented so that <code>SOUTH</code> points to the bottom of your screen, and <code>NORTH</code> to the top. So an actor facing <code>SOUTH</code> is looking at the player.</li>
+<li>Whenever an image is passed to SLIME, assume it is the filename of the image. The image data will be loaded for you.</li>
+</ul>
+
+<h2>
+<a id="reset" class="anchor" href="#reset" aria-hidden="true"><span class="octicon octicon-link"></span></a>Reset</h2>
+
+<p><img src="api/func.png" alt="func"> <code>slime.reset ()</code></p>
+
+<p>Clear the stage, actors and hotspots. Call this before setting up a new stage. Note that bags (inventories) are <em>not</em> cleared.</p>
 
 <h2>
 <a id="backgrounds" class="anchor" href="#backgrounds" aria-hidden="true"><span class="octicon octicon-link"></span></a>Backgrounds</h2>
@@ -77,41 +115,48 @@
 
 <p>Layers define areas of your background where actors can walk behind.</p>
 
-<p><img src="api/func.png" alt="func"> <code>slime.layer (backgroundfilename, maskfilename, baseline)</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime.layer (background, mask, baseline)</code></p>
 
-<p>Add a new layer over the <code>background</code> using the <code>mask</code> image. The mask is an image with black (<code>#000</code>) where there is no layer, or any other colour to indicate a hide-behind layer.</p>
+<p>Add a walk-behind layer. The <code>background</code> is where to cut the layer from. The <code>mask</code> defines where to cut.</p>
+
+<p>The mask is an image with black (<code>#000</code>) where there is no layer, or any other colour to indicate the hide-behind layer.</p>
 
 <p>The <code>baseline</code> is the y-position a character needs to be behind in order to be hidden by the layer.</p>
 
 <h2>
 <a id="actors" class="anchor" href="#actors" aria-hidden="true"><span class="octicon octicon-link"></span></a>Actors</h2>
 
-<p><img src="api/func.png" alt="func"> <code>slime.actor (name, x, y, hotspotx, hotspoty)</code>  </p>
+<p>Actors are items on your stage that may move or talk, like people, animals or robots. They can also be inanimate objects that may not move or talk but are animated, like doors, toasters and computers.</p>
 
-<p>Add a new actor to the stage.</p>
+<p><img src="api/func.png" alt="func"> <code>slime.actor (name)</code></p>
 
-<ul>
-<li>The <code>name</code> identifies the actor. You can use the same name multiple times, however when calling <code>moveActor</code> (which take the name) only the first actor with that name is moved.</li>
-<li>The <code>x</code> and <code>y</code> sets the starting position of the actor.</li>
-<li>The <code>hotspotx</code> and <code>hotspoty</code> sets the point relative to the <code>x</code>/<code>y</code>. This point determines when an actor is considered behind a layer baseline. If no hotspot is given, it will default to centered at the base of the sprite.</li>
-</ul>
+<p>Adds and returns an actor to the stage. After this call you need to give the actor a position and image/animation for it to become visible on the stage. These properties are available:</p>
 
-<p>The cardinal directions are oriented to your screen so that <code>SOUTH</code> points to the bottom of your screen, and <code>NORTH</code> to the top. So an actor facing <code>SOUTH</code> is looking at the player.</p>
+<pre><code>actor.x = 50
+actor.y = 50
+actor.speechcolor = {255, 255, 255}     -- Set the speech color for this actor as {red, green, blue}
+</code></pre>
 
-<p><img src="api/func.png" alt="func"> <code>slime.idleAnimation (actor, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])</code><br>
-<img src="api/func.png" alt="func"> <code>slime.walkAnimation (actor, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])</code><br>
-<img src="api/func.png" alt="func"> <code>slime.talkAnimation (actor, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])</code>  </p>
+<p><img src="api/func.png" alt="func"> <code>slime.addImage (name, image)</code></p>
+
+<p>Sets a static (non-animated) image as an actor's sprite.</p>
+
+<p><img src="api/func.png" alt="func"> <code>slime.idleAnimation (name, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])</code><br>
+<img src="api/func.png" alt="func"> <code>slime.walkAnimation (name, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])</code><br>
+<img src="api/func.png" alt="func"> <code>slime.talkAnimation (name, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])</code>  </p>
 
 <p>These are helper functions that in turn call <code>addAnimation</code> with the <code>keys</code> "idle", "walk" and "talk" respectively. </p>
 
 <ul>
-<li>The <code>actor</code> is an instance create via <code>slime.actor</code>
+<li>The <code>name</code> of the actor that was created via <code>slime.actor</code>
 </li>
 <li>The <code>tileset</code> is a file name.</li>
 <li>The <code>w</code> and <code>h</code> are the width and height of each frame.</li>
 <li>The <code>south</code> and <code>southd</code> are the frames and delays for the south-facing animation.</li>
 <li>The other directions are optional but recommended. <code>SOUTH</code> will be used as default if none of the other directions are given.</li>
 </ul>
+
+<p>The format of the <code>south</code> frames and delays follow the <a href="https://github.com/kikito/anim8">anim8 library</a> convention. I recommend you go over there to read about the Frames format.</p>
 
 <p>Notes:</p>
 
@@ -121,17 +166,135 @@
 <li>If a <code>west</code> parameter is given, and <code>east</code> is <code>nil</code> or omitted, then the west animation will automatically be mirrored and used for the <code>east</code>.</li>
 </ul>
 
-<p><img src="api/func.png" alt="func"> <code>slime.addAnimation (actor, key, tileset, w, h, frames, delays)</code>  </p>
+<p><img src="api/func.png" alt="func"> <code>slime.addAnimation (name, key, tileset, w, h, frames, delays [,onLoop])</code>  </p>
 
 <p>This is for adding custom animations.</p>
 
 <ul>
-<li>The <code>actor</code> is an instance create via <code>slime.actor</code>
+<li>The <code>name</code> of the actor that was created via <code>slime.actor</code>
 </li>
 <li>The <code>key</code> is the animation key.</li>
 <li>The <code>w</code> and <code>h</code> are the width and height of each frame.</li>
 <li>The <code>frames</code> and <code>delays</code> are the frames and delays for the animation.</li>
+<li>If you give the <code>onLoop</code> value as a function, it will be called when the animation loops.</li>
 </ul>
+
+<p><img src="api/func.png" alt="func"> <code>slime.moveActor (name, x, y, callback)</code></p>
+
+<p>Move an actor by <code>name</code> to a point. There has to be a valid path to the destination. The <code>callback</code> is fired when the actor reaches the destination.</p>
+
+<p>Example:</p>
+
+<pre><code>local turnEgo = function() slime.turnActor("ego", "east") end
+slime.moveActor("ego", 90, 34, turnEgo)
+</code></pre>
+
+<p><img src="api/func.png" alt="func"> <code>slime.moveActorTo (name, target, callback)</code></p>
+
+<p>Move actor <code>name</code> to another actor <code>target</code>.</p>
+
+<p><img src="api/func.png" alt="func"> <code>slime.turnActor (name, direction)</code></p>
+
+<p>Turns an Actor to face a direction, one of <code>south</code>, <code>west</code>, <code>north</code> or <code>east</code>.</p>
+
+<p>Note that because movement is asyncronous, calling this while an actor is moving won't have any effect as their movement will override their facing direction. This can be solved by calling <code>turnActor</code> as a callback to <code>moveActor</code>.</p>
+
+<h2>
+<a id="hotspots" class="anchor" href="#hotspots" aria-hidden="true"><span class="octicon octicon-link"></span></a>Hotspots</h2>
+
+<p><img src="api/func.png" alt="func"> <code>slime.hotspot (name, callback, x, y, w, h [,data])</code></p>
+
+<p>Adds a hotspot to the stage. The <code>callback</code> will fire if the pointer is over the hotspot when <code>slime.interact</code> is called.</p>
+
+<p>The optional <code>data</code> value gets passed to your callback. This is useful for when you have multiple hotspots that all use the same callback function.</p>
+
+<p><img src="api/func.png" alt="func"> <code>slime.interact (x, y)</code></p>
+
+<p>Check if any object is under <code>x/y</code> and fire it's handler.</p>
+
+<p>Returns <code>true</code> if the handler was fired.</p>
+
+<p><img src="api/func.png" alt="func"> <code>slime.getObjects (x, y)</code></p>
+
+<p>Gets a table of objects under <code>x/y</code>, or <code>nil</code> if no object is found.</p>
+
+<h2>
+<a id="status" class="anchor" href="#status" aria-hidden="true"><span class="octicon octicon-link"></span></a>Status</h2>
+
+<p><img src="api/func.png" alt="func"> <code>slime.status (text)</code></p>
+
+<p>Set or unset the status bar text.</p>
+
+<h2>
+<a id="drawing" class="anchor" href="#drawing" aria-hidden="true"><span class="octicon octicon-link"></span></a>Drawing</h2>
+
+<p><img src="api/func.png" alt="func"> <code>slime.update (dt)</code></p>
+
+<p>Update animated backgrounds, actor movements and animations.</p>
+
+<p><img src="api/func.png" alt="func"> <code>slime.draw ([scale])</code></p>
+
+<p>Draw the scene to the display. The <code>scale</code> parameter defaults to 1, and is only needed if you called <code>love.graphics.scale</code> before calling this function.</p>
+
+<h2>
+<a id="actor-speech" class="anchor" href="#actor-speech" aria-hidden="true"><span class="octicon octicon-link"></span></a>Actor Speech</h2>
+
+<p>You can queue multiple speeches at once, the actor animation will change to "talk" and the words will print on screen.</p>
+
+<p><img src="api/func.png" alt="func"> <code>slime.addSpeech (name, text)</code></p>
+
+<p>Queue a speech for an actor by <code>name</code>.</p>
+
+<p><img src="api/func.png" alt="func"> <code>slime.someoneTalking ()</code></p>
+
+<p>Returns <code>true</code> if there is speech displaying.</p>
+
+<h2>
+<a id="bags" class="anchor" href="#bags" aria-hidden="true"><span class="octicon octicon-link"></span></a>Bags</h2>
+
+<p>Bags are analogous to inventory. The bags system is very simple yet flexible: Each bag has a name and can hold multiple items. In this way it supports inventory for multiple actors.</p>
+
+<p><img src="api/func.png" alt="func"> <code>slime.bagInsert (bag, object)</code></p>
+
+<p>Inserts something into a bag.</p>
+
+<ul>
+<li>The name of the <code>bag</code> can be anything, but for clarity, using an actor's name is a sensible choice.</li>
+<li>The <code>object</code> is a table with a <code>name</code> value. You can add your own values to the object too.</li>
+</ul>
+
+<p>Example:</p>
+
+<pre><code>local theSpoon = { ["name"] = "spoon" }
+slime.bagInsert ("ego", theSpoon)
+</code></pre>
+
+<p><img src="api/func.png" alt="func"> <code>slime.bagContents (bag)</code></p>
+
+<p>Gets the contents of a bag as a table.</p>
+
+<p><img src="api/func.png" alt="func"> <code>slime.bagRemove (bag, name)</code></p>
+
+<p>Removes an item (<code>name</code>) from a <code>bag</code>.</p>
+
+<p><img src="api/func.png" alt="func"> <code>slime.inventoryChanged (bag)</code></p>
+
+<p>This is a <strong>callback</strong> function that you can implement if you want to be notified whenever a bag content changed. The name of the bag that changed is passed.</p>
+
+<p><img src="api/func.png" alt="func"> <code>slime.bagButton (name, image, callback, x, y, w, h, data)</code></p>
+
+<p>Add a hotspot with an image that draws on screen. </p>
+
+<h2>
+<a id="settings" class="anchor" href="#settings" aria-hidden="true"><span class="octicon octicon-link"></span></a>Settings</h2>
+
+<p>SLIME offers these settings to customize your game:</p>
+
+<pre><code>slime.settings["status position"] = 70      -- The Y position to print the built-in status text
+slime.settings["status font size"] = 12     -- The font size for status text
+slime.settings["speech position"] = 0       -- The Y position to print speech
+slime.settings["speech font size"] = 10     -- The font size for speech
+</code></pre>
 
 <hr>
 
