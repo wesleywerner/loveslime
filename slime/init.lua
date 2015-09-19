@@ -703,9 +703,11 @@ function slime.bagRemove (bag, name)
     
 end
 
-function slime.bagButton (name, image, x, y, w, h, data)
+function slime.bagButton (name, image, x, y)
 
     if type(image) == "string" then image = love.graphics.newImage(image) end
+    
+    local w, h = image:getDimensions ()
     
     table.insert(slime.bagButtons, {
         ["name"] = name,
