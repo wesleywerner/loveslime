@@ -54,6 +54,7 @@
 <p><strong>TODO</strong>  </p>
 
 <ul>
+<li>Replace the <code>addAnimation</code> callback with a serializable solution</li>
 <li>Tutorial</li>
 <li>Tidy function parameter names</li>
 </ul>
@@ -91,6 +92,76 @@
 <li>The cardinal directions are oriented so that <code>SOUTH</code> points to the bottom of your screen, and <code>NORTH</code> to the top. So an actor facing <code>SOUTH</code> is looking at the player.</li>
 <li>Whenever an image is passed to SLIME, assume it is the filename of the image. The image data will be loaded for you.</li>
 </ul>
+
+<h2>
+<a id="terminology" class="anchor" href="#terminology" aria-hidden="true"><span class="octicon octicon-link"></span></a>Terminology</h2>
+
+<ul>
+<li>Stage: A room or game screen.</li>
+<li>Actors: Visible objects on the stage that may be animated or have static images, they can move around or be stationary.</li>
+<li>Hotspots: Invisible areas on the stage that the player can interact with.</li>
+<li>Floor: Defines where actors are able to walk.</li>
+<li>Layers: Defines areas where actors can walk behind.</li>
+<li>Bags: A short synonymn for inventory.</li>
+</ul>
+
+<h2>
+<a id="stage-setup" class="anchor" href="#stage-setup" aria-hidden="true"><span class="octicon octicon-link"></span></a>Stage setup</h2>
+
+<p>To set up your stage for play you need to clear objects, load a background, set the floor, add any layers, actors and hotspots.</p>
+
+<p>A basic stage setup might look like this:</p>
+
+<pre><code>function setupStage ()
+    slime.reset ()
+    slime.background ("background.png")
+    slime.layer ("background.png", "layer.png", 50)
+    slime.floor ("floor.png")
+    addActors ()
+    addHotspots ()
+    slime.callback = myStageCallback
+end
+
+function myStageCallback (event, object)
+    if (event == "moved") then
+        if (object.name == "ego") then
+            -- The "ego" actor reached her destination.
+            -- object is an instance of the actor.
+        end
+    end
+    if (event == "interact") then
+        if (object.name == "spoon") then
+            -- An actor or hotspot was interacted with (you called slime.interact (x, y))
+            -- object is an instance of the actor or hotspot.
+        end
+    end
+end
+</code></pre>
+
+<p><img src="api/func.png" alt="func"> <code>slime.callback (event, object)</code></p>
+
+<p>This callback notifies you when an actor has moved, or the player interacts something.</p>
+
+<p><strong>event</strong>:  </p>
+
+<ul>
+<li>moved: an actor was told to move and has reached their destination.</li>
+<li>interact: an object was clicked on (via <code>interact (x, y)</code>).</li>
+</ul>
+
+<p><strong>object</strong>:  </p>
+
+<p>The related actor or hotspot. When this is an actor from a "moved" event, you can access the <code>x/y</code> where the actor was told to move with:</p>
+
+<pre><code>object.clickedX
+object.clickedY
+</code></pre>
+
+<p>These may be different than the actor's actual <code>x</code> and <code>y</code> if the floor does not allow walking to the position exactly. In these cases the actor will try to get as close as possible, but you still want the clicked position to call the <code>interact (x, y)</code> function.</p>
+
+<p><img src="api/func.png" alt="func"> <code>slime.inventoryChanged (bag)</code></p>
+
+<p>This callback notifies you when a bag's content has changed. The name of the bag is passed.</p>
 
 <h2>
 <a id="reset" class="anchor" href="#reset" aria-hidden="true"><span class="octicon octicon-link"></span></a>Reset</h2>
@@ -179,40 +250,33 @@ actor.speechcolor = {255, 255, 255}     -- Set the speech color for this actor a
 <li>If you give the <code>onLoop</code> value as a function, it will be called when the animation loops.</li>
 </ul>
 
-<p><img src="api/func.png" alt="func"> <code>slime.moveActor (name, x, y, callback)</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime.moveActor (name, x, y)</code></p>
 
-<p>Move an actor by <code>name</code> to a point. There has to be a valid path to the destination. The <code>callback</code> is fired when the actor reaches the destination.</p>
+<p>Move an actor. There has to be a valid floor set for movement to find a path.</p>
 
 <p>Example:</p>
 
-<pre><code>local turnEgo = function() slime.turnActor("ego", "east") end
-slime.moveActor("ego", 90, 34, turnEgo)
+<pre><code>slime.moveActor("ego", 90, 34)
 </code></pre>
 
-<p><img src="api/func.png" alt="func"> <code>slime.moveActorTo (name, target, callback)</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime.moveActorTo (name, target)</code></p>
 
-<p>Move actor <code>name</code> to another actor <code>target</code>.</p>
+<p>Move an actor to another actor.</p>
 
 <p><img src="api/func.png" alt="func"> <code>slime.turnActor (name, direction)</code></p>
 
 <p>Turns an Actor to face a direction, one of <code>south</code>, <code>west</code>, <code>north</code> or <code>east</code>.</p>
 
-<p>Note that because movement is asyncronous, calling this while an actor is moving won't have any effect as their movement will override their facing direction. This can be solved by calling <code>turnActor</code> as a callback to <code>moveActor</code>.</p>
-
 <h2>
 <a id="hotspots" class="anchor" href="#hotspots" aria-hidden="true"><span class="octicon octicon-link"></span></a>Hotspots</h2>
 
-<p><img src="api/func.png" alt="func"> <code>slime.hotspot (name, callback, x, y, w, h [,data])</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime.hotspot (name, x, y, w, h)</code></p>
 
-<p>Adds a hotspot to the stage. The <code>callback</code> will fire if the pointer is over the hotspot when <code>slime.interact</code> is called.</p>
-
-<p>The optional <code>data</code> value gets passed to your callback. This is useful for when you have multiple hotspots that all use the same callback function.</p>
+<p>Adds a hotspot to the stage.</p>
 
 <p><img src="api/func.png" alt="func"> <code>slime.interact (x, y)</code></p>
 
-<p>Check if any object is under <code>x/y</code> and fire it's handler.</p>
-
-<p>Returns <code>true</code> if the handler was fired.</p>
+<p>Interacts with all objects at <code>x/y</code>. This triggers an "interact" event in <code>slime.callback</code>.</p>
 
 <p><img src="api/func.png" alt="func"> <code>slime.getObjects (x, y)</code></p>
 
@@ -277,11 +341,7 @@ slime.bagInsert ("ego", theSpoon)
 
 <p>Removes an item (<code>name</code>) from a <code>bag</code>.</p>
 
-<p><img src="api/func.png" alt="func"> <code>slime.inventoryChanged (bag)</code></p>
-
-<p>This is a <strong>callback</strong> function that you can implement if you want to be notified whenever a bag content changed. The name of the bag that changed is passed.</p>
-
-<p><img src="api/func.png" alt="func"> <code>slime.bagButton (name, image, callback, x, y, w, h, data)</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime.bagButton (name, image, x, y)</code></p>
 
 <p>Add a hotspot with an image that draws on screen. </p>
 
