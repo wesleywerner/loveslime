@@ -68,6 +68,9 @@ function slime.reset ()
     slime.statusText = nil
 end
 
+function slime.callback (event, object)
+end
+
 --                       _      
 --    ___  ___ ___ _ __ (_) ___ 
 --   / __|/ __/ _ \ '_ \| |/ __|
@@ -316,7 +319,7 @@ function slime.turnActor (name, direction)
     
 end
 
-function slime.moveActor (name, x, y, moveCompleteCallback)
+function slime.moveActor (name, x, y)
 
     -- Move an actor to point xy using A Star path finding
     
@@ -344,9 +347,9 @@ function slime.moveActor (name, x, y, moveCompleteCallback)
         if (path == nil) then
             slime.log("no actor path found")
         else
+            actor.clickedX = x
+            actor.clickedY = y
             actor.path = path:getNodes()
-            -- Callback when the goal is reached
-            actor.moveCompleteCallback = moveCompleteCallback
             -- Default to walking animation
             actor.action = "walk"
             -- Calculate actor direction immediately
@@ -404,12 +407,12 @@ function slime.findNearestOpenPoint (point)
 end
 
 -- Move an actor to another actor
-function slime.moveActorTo (name, target, moveCompleteCallback)
+function slime.moveActorTo (name, target)
 
     local targetActor = slime.actors[target]
     
     if (targetActor) then
-        slime.moveActor (name, targetActor.x, targetActor.y, moveCompleteCallback)
+        slime.moveActor (name, targetActor.x, targetActor.y)
     else
         slime.log("no actor named " .. target)
     end
@@ -447,9 +450,7 @@ function slime.moveActorOnPath (actor, dt)
         
         if (#actor.path == 0) then
             actor.action = "idle"
-            if (actor.moveCompleteCallback) then
-                actor.moveCompleteCallback()
-            end
+            slime.callback ("moved", actor)
         end
     end
 end
@@ -632,16 +633,14 @@ end
 
 slime.hotspots = { }
 
-function slime.hotspot(name, callback, x, y, w, h, data)
+function slime.hotspot(name, x, y, w, h)
 
     table.insert(slime.hotspots, {
         ["name"] = name, 
-        ["callback"] = callback, 
         ["x"] = x, 
         ["y"] = y, 
         ["w"] = w, 
-        ["h"] = h,
-        ["data"] = data
+        ["h"] = h
     })
 
 end
@@ -704,14 +703,15 @@ function slime.bagRemove (bag, name)
     
 end
 
-function slime.bagButton (name, image, callback, x, y, w, h, data)
+function slime.bagButton (name, image, x, y)
 
     if type(image) == "string" then image = love.graphics.newImage(image) end
+    
+    local w, h = image:getDimensions ()
     
     table.insert(slime.bagButtons, {
         ["name"] = name,
         ["image"] = image,
-        ["callback"] = callback,
         ["x"] = x,
         ["y"] = y,
         ["w"] = w,
@@ -860,10 +860,7 @@ function slime.interact (x, y)
     if (not objects) then return end
     
     for i, object in pairs(objects) do
-        if (object.callback) then
-            slime.log("Interacting with " .. object.name)
-            object.callback(object.data)
-        end
+        slime.callback ("interact", object)
     end
     
 end

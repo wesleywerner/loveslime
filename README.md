@@ -19,6 +19,7 @@ The name is an acronym for "SLUDGE to L&Ouml;VE Inspired Mimicry Environment".
 
 **TODO**  
 
+* Replace the `addAnimation` callback with a serializable solution
 * Tutorial
 * Tidy function parameter names
 
@@ -46,6 +47,68 @@ To use SLIME simply `require`:
   
 * The cardinal directions are oriented so that `SOUTH` points to the bottom of your screen, and `NORTH` to the top. So an actor facing `SOUTH` is looking at the player.
 * Whenever an image is passed to SLIME, assume it is the filename of the image. The image data will be loaded for you.
+
+## Terminology
+
+* Stage: A room or game screen.
+* Actors: Visible objects on the stage that may be animated or have static images, they can move around or be stationary.
+* Hotspots: Invisible areas on the stage that the player can interact with.
+* Floor: Defines where actors are able to walk.
+* Layers: Defines areas where actors can walk behind.
+* Bags: A short synonymn for inventory.
+
+## Stage setup
+
+To set up your stage for play you need to clear objects, load a background, set the floor, add any layers, actors and hotspots.
+
+A basic stage setup might look like this:
+
+    function setupStage ()
+        slime.reset ()
+        slime.background ("background.png")
+        slime.layer ("background.png", "layer.png", 50)
+        slime.floor ("floor.png")
+        addActors ()
+        addHotspots ()
+        slime.callback = myStageCallback
+    end
+
+    function myStageCallback (event, object)
+        if (event == "moved") then
+            if (object.name == "ego") then
+                -- The "ego" actor reached her destination.
+                -- object is an instance of the actor.
+            end
+        end
+        if (event == "interact") then
+            if (object.name == "spoon") then
+                -- An actor or hotspot was interacted with (you called slime.interact (x, y))
+                -- object is an instance of the actor or hotspot.
+            end
+        end
+    end
+
+![func](api/func.png) `slime.callback (event, object)`
+
+This callback notifies you when an actor has moved, or the player interacts something.
+
+**event**:  
+
+* moved: an actor was told to move and has reached their destination.
+* interact: an object was clicked on (via `interact (x, y)`).
+
+**object**:  
+
+The related actor or hotspot. When this is an actor from a "moved" event, you can access the `x/y` where the actor was told to move with:
+
+    object.clickedX
+    object.clickedY
+
+These may be different than the actor's actual `x` and `y` if the floor does not allow walking to the position exactly. In these cases the actor will try to get as close as possible, but you still want the clicked position to call the `interact (x, y)` function.
+
+![func](api/func.png) `slime.inventoryChanged (bag)`
+
+This callback notifies you when a bag's content has changed. The name of the bag is passed.
 
 ## Reset
 
@@ -121,38 +184,31 @@ This is for adding custom animations.
 * The `frames` and `delays` are the frames and delays for the animation.
 * If you give the `onLoop` value as a function, it will be called when the animation loops.
 
-![func](api/func.png) `slime.moveActor (name, x, y, callback)`
+![func](api/func.png) `slime.moveActor (name, x, y)`
 
-Move an actor by `name` to a point. There has to be a valid path to the destination. The `callback` is fired when the actor reaches the destination.
+Move an actor. There has to be a valid floor set for movement to find a path.
 
 Example:
 
-    local turnEgo = function() slime.turnActor("ego", "east") end
-    slime.moveActor("ego", 90, 34, turnEgo)
+    slime.moveActor("ego", 90, 34)
     
-![func](api/func.png) `slime.moveActorTo (name, target, callback)`
+![func](api/func.png) `slime.moveActorTo (name, target)`
 
-Move actor `name` to another actor `target`.
+Move an actor to another actor.
 
 ![func](api/func.png) `slime.turnActor (name, direction)`
 
 Turns an Actor to face a direction, one of `south`, `west`, `north` or `east`.
 
-Note that because movement is asyncronous, calling this while an actor is moving won't have any effect as their movement will override their facing direction. This can be solved by calling `turnActor` as a callback to `moveActor`.
-
 ## Hotspots
 
-![func](api/func.png) `slime.hotspot (name, callback, x, y, w, h [,data])`
+![func](api/func.png) `slime.hotspot (name, x, y, w, h)`
 
-Adds a hotspot to the stage. The `callback` will fire if the pointer is over the hotspot when `slime.interact` is called.
-
-The optional `data` value gets passed to your callback. This is useful for when you have multiple hotspots that all use the same callback function.
+Adds a hotspot to the stage.
 
 ![func](api/func.png) `slime.interact (x, y)`
 
-Check if any object is under `x/y` and fire it's handler.
-
-Returns `true` if the handler was fired.
+Interacts with all objects at `x/y`. This triggers an "interact" event in `slime.callback`.
 
 ![func](api/func.png) `slime.getObjects (x, y)`
 
@@ -210,11 +266,7 @@ Gets the contents of a bag as a table.
 
 Removes an item (`name`) from a `bag`.
 
-![func](api/func.png) `slime.inventoryChanged (bag)`
-
-This is a **callback** function that you can implement if you want to be notified whenever a bag content changed. The name of the bag that changed is passed.
-
-![func](api/func.png) `slime.bagButton (name, image, callback, x, y, w, h, data)`
+![func](api/func.png) `slime.bagButton (name, image, x, y)`
 
 Add a hotspot with an image that draws on screen. 
 

@@ -364,22 +364,14 @@ A hotspot is a region on the stage that the player can interact with. We create 
     function setupPrisonStage ()
         ...
         addHoleHotspot ()
-        
     end
 
     function addHoleHotspot ()
-
         local x, y, width, height = 92, 23, 8, 8
-        
-        local function holeInteract ()
-            slime.addSpeech ("ego", "I see a hole in the wall")
-        end
-        
-        slime.hotspot ("Hole", holeInteract, x, y, width, height)
-        
+        slime.hotspot ("hole", x, y, width, height)
     end
 
-The `holeInteract` function will fire when we interact with the hotspot. For that to happen we need to update the `mousepressed` callback:
+To make Ego say something when the player interacts (clicks) on the hole, we call `slime.interact` in `mousepressed`:
 
     function love.mousepressed(x, y, button)
         ...
@@ -387,53 +379,74 @@ The `holeInteract` function will fire when we interact with the hotspot. For tha
             slime.moveActor ("ego", x, y)
             slime.interact (x, y)
         end
-        
     end
+
+And we must subscribe to SLIME notifications:
+
+    function myStageCallback (event, object)
+        if (event == "interact") then
+            if (object.name == "hole") then
+                slime.addSpeech ("ego", "I see a hole in the wall")
+            end
+        end
+    end
+
+    function setupStage ()
+        ..
+        slime.callback = myStageCallback
+    end
+
+The `callback` is how we get notified when actors move or the player interacts with things on the stage. To keep our code neat we create a callback function for every stage in our game, this one is `myStageCallback`. When we set up our stage we assign `slime.callback = myStageCallback`. 
 
 ![screen 6](tutorial-images/screen6.gif)
 
-Ego moves and talks at the same time, not quite the effect we want. We want Ego to move first, then talk. `moveActor` takes a callback that fires when movement completes and we chain the `interact` call after moving:
+Ego moves and talks at the same time, not quite the effect we want. We want Ego to move first, then talk. Remove the `interact` call from `love.mousepressed` and add it to `myStageCallback`:
 
-    function love.mousepressed(x, y, button)
-        ...
-        slime.moveActor ("ego", x, y, function() slime.interact (x, y) end)
+    function myStageCallback (event, object)
+        if (event == "moved" and object.name == "ego") then
+            slime.interact (object.clickedX, object.clickedY)
+        end
+        if (event == "interact") then
+            if (object.name == "hole") then
+                slime.addSpeech ("ego", "I see a hole in the wall")
+            end
+        end
+    end
+
+`object.clickedX` provides the point where Ego was told to go (or get as close as possible as the floor allows). When done moving we can interact at `clickedX` and `clickedY`.
 
 ![screen 7](tutorial-images/screen7.gif)
-
-That looks better. This behavior also looks more natural when bagging inventory items.
-
 
 ## Bags
 
 Bags are used to store inventory items.
 
-We will now add a bowl to the stage, and when the player clicks on the bowl, add a bowl and a spoon to the bag. 
+We will now add a bowl and spoon to the stage, and when the player clicks on the bowl, move Ego towards it and put it in a bag. 
     
     function addBowlActor (x, y)
-
-        local function bowlHandler ( )
-            -- give ego a bowl and a spoon inventory items
-            slime.turnActor ("ego", "south")
-            slime.bagInsert ("ego", { ["name"] = "bowl", ["image"] = "images/bowl2.png" })
-            slime.bagInsert ("ego", { ["name"] = "spoon", ["image"] = "images/spoon.png" })
-            slime.actors["bowl"] = nil
-        end
-
-        local bowl = slime.actor("bowl")
-        slime.addImage ("bowl", "images/bowl1.png")
-        bowl.callback = bowlHandler
+        local bowl = slime.actor("bowl and spoon")
+        slime.addImage ("bowl and spoon", "images/bowl1.png")
         bowl.x = x
         bowl.y = y
-        
     end
 
-A couple new functions pop up here, we have `turnActor` which faces Ego south (so the actor's back isn't facing the player when picking up the bowl), `bagInsert` which stores items in the bag named "ego", and we remove the stage bowl by setting the actor with a key of "bowl" to nil.
-
-Of course we need to call this in our stage setup:
+    function myStageCallback (event, object)
+        ...
+        if (event == "interact") then
+            if (object.name == "bowl and spoon") then
+                slime.turnActor ("ego", "south")
+                slime.bagInsert ("ego", { ["name"] = "bowl", ["image"] = "images/bowl2.png" })
+                slime.bagInsert ("ego", { ["name"] = "spoon", ["image"] = "images/spoon.png" })
+                -- Remove the bowl and spoon actor from the stage
+                slime.actors["bowl and spoon"] = nil
+            end
+            ...
 
     function setupPrisonStage ()
         ..
         addBowlActor (65, 37)
+
+A couple new functions pop up here, we have `turnActor` which faces Ego south (so the actor's back isn't facing the player when picking up the bowl), `bagInsert` which stores items in the bag named "ego", and we remove the bowl actor from the stage.
 
 You will see the SLIME debug log says "Added bowl to bag ego". This is the first step to carrying items in your game!
 
@@ -450,22 +463,14 @@ Hold on to your socks!
     -- (global variable) Clicks below this point skip actor movement
     bagPosition = 86
 
-    -- Handle bag clicks
-    function bagHandler (data)
-        slime.log ("bag click callback for " .. data.name)
-    end
-
-    -- Build bag buttons
     function slime.inventoryChanged ( )
         slime.bagButtons = { }
         for counter, item in pairs(slime.bagContents("ego")) do
-            local data = { ["name"] = item.name }
-            local w, h = item.image:getDimensions ()
-            slime.bagButton (item.name, item.image, bagHandler, counter * 10, bagPosition, w, h, data)
+            slime.bagButton (item.name, item.image, counter * 10, bagPosition)
         end
     end
 
-And skip actor movement if the mouse was clicked in the "bag position" zone:
+And skip actor movement if the mouse was clicked in the "bag" zone:
 
     function love.mousepressed(x, y, button)
         ...
@@ -473,7 +478,7 @@ And skip actor movement if the mouse was clicked in the "bag position" zone:
             slime.interact (x, y)
         else
             -- Move Ego then interact with any objects
-            slime.moveActor ("ego", x, y, function() slime.interact (x, y) end)
+            slime.moveActor ("ego", x, y)
         end
 
 ![screen 8](tutorial-images/screen8.gif)
@@ -482,10 +487,9 @@ Nice work, Ego!
 
 But what just happened? 
 
-1. On the `inventoryChanged` callback we build the `bagButtons` table.
-2. We leverage the `data` parameter so we can identify it later in the callback.
-
-SLIME will draw the button images for us, and our calls to `interact` will fire their callbacks.
+1. On the `inventoryChanged` callback we clear and add `bagButtons`. Where you position these is up to you.
+2. SLIME draws the buttons for us.
+3. `slime.callback` notifies us with an "interact" event when the player clicks on a button. Just like a hotspot.
 
 # TODO
 

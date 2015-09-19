@@ -6,7 +6,7 @@ bagPosition = 86
 function love.load()
     -- Nearest image interpolation (pixel graphics, no anti-aliasing)
     love.graphics.setDefaultFilter("nearest", "nearest", 1)
-    setupPrisonStage()
+    setupStage()
 end
 
 function love.draw ()
@@ -29,7 +29,7 @@ end
 
 -- **
 
-function setupPrisonStage ()
+function setupStage ()
 
     -- Clear the stage
     slime.reset ()
@@ -53,6 +53,8 @@ function setupPrisonStage ()
     addHoleHotspot ()
     
     addBowlActor (65, 37)
+    
+    slime.callback = myStageCallback
     
 end
 
@@ -143,7 +145,7 @@ function love.mousepressed(x, y, button)
             slime.interact (x, y)
         else
             -- Move Ego then interact with any objects
-            slime.moveActor ("ego", x, y, function() slime.interact (x, y) end)
+            slime.moveActor ("ego", x, y)
         end
 
     end
@@ -210,47 +212,56 @@ function addHoleHotspot ()
 
     local x, y, width, height = 92, 23, 8, 8
 
-    local function holeInteract ()
-        slime.addSpeech ("ego", "I see a hole in the wall")
-    end
-    
-    slime.hotspot ("Hole", holeInteract, x, y, width, height)
+    slime.hotspot ("hole", x, y, width, height)
     
 end
 
 -- **
 
+function myStageCallback (event, object)
+
+    if (event == "moved" and object.name == "ego") then
+        slime.interact (object.clickedX, object.clickedY)
+    end
+    
+    if (event == "interact") then
+    
+        slime.log ("Interacted with " .. object.name)
+    
+        -- give ego a bowl and a spoon inventory items
+        if (object.name == "bowl and spoon") then
+            -- Face Ego to the player
+            slime.turnActor ("ego", "south")
+            -- Add items to Ego's bag
+            slime.bagInsert ("ego", { ["name"] = "bowl", ["image"] = "images/bowl2.png" })
+            slime.bagInsert ("ego", { ["name"] = "spoon", ["image"] = "images/spoon.png" })
+            -- Remove the bowl and spoon actor from the stage
+            slime.actors["bowl and spoon"] = nil
+        end
+        
+        -- Look at the hole in the wall
+        if (object.name == "hole") then
+            slime.addSpeech ("ego", "I see a hole in the wall")
+        end
+    
+    end
+    
+end
+
 function addBowlActor (x, y)
 
-    local function bowlHandler ( )
-        -- give ego a bowl and a spoon inventory items
-        slime.turnActor ("ego", "south")
-        slime.bagInsert ("ego", { ["name"] = "bowl", ["image"] = "images/bowl2.png" })
-        slime.bagInsert ("ego", { ["name"] = "spoon", ["image"] = "images/spoon.png" })
-        slime.actors["bowl"] = nil
-    end
-
-    local bowl = slime.actor("bowl")
-    slime.addImage ("bowl", "images/bowl1.png")
-    bowl.callback = bowlHandler
+    local bowl = slime.actor("bowl and spoon")
+    slime.addImage ("bowl and spoon", "images/bowl1.png")
     bowl.x = x
     bowl.y = y
     
 end
 
--- **
+-- *
 
--- Handle bag clicks
-function bagHandler (data)
-    slime.log ("bag click callback for " .. data.name)
-end
-
--- Build bag buttons
-function slime.inventoryChanged ( )
+function slime.inventoryChanged (bag)
     slime.bagButtons = { }
     for counter, item in pairs(slime.bagContents("ego")) do
-        local data = { ["name"] = item.name }
-        local w, h = item.image:getDimensions ()
-        slime.bagButton (item.name, item.image, bagHandler, counter * 10, bagPosition, w, h, data)
+        slime.bagButton (item.name, item.image, counter * 10, bagPosition)
     end
 end
