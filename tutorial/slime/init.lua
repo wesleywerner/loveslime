@@ -173,7 +173,7 @@ function slime.actor (name, x, y, staticImage)
         ["w"] = w,
         ["h"] = h,
         ["base"] = {0, 0},                  -- image draw offset vs actor x/y
-        ["image"] = staticImage,            -- a static image of this actor.
+        ["image"] = nil,                    -- a static image of this actor.
         ["animations"] = { },
         ["direction"] = "south",
         ["action"] = "idle",
@@ -194,6 +194,10 @@ function slime.actor (name, x, y, staticImage)
         table.insert(slime.actors, newActor)
     else
         slime.actors[name] = newActor
+    end
+    
+    if (staticImage) then
+        slime.addImage (name, staticImage)
     end
     
     return newActor

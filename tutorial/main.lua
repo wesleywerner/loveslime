@@ -54,10 +54,7 @@ function setupStage ()
     slime.hotspot ("hole", x, y, width, height)
 
     -- Bowl and spoon
-    local bowl = slime.actor("bowl and spoon")
-    slime.addImage ("bowl and spoon", "images/bowl1.png")
-    bowl.x = 65
-    bowl.y = 37
+    local bowl = slime.actor("bowl and spoon", 65, 37, "images/bowl1.png")
     
     slime.callback = myStageCallback
     
@@ -68,11 +65,7 @@ end
 function addEgoActor (x, y)
 
     -- Add an actor named "ego"
-    local ego = slime.actor ("ego")
-    
-    -- Position the actor
-    ego.x = x
-    ego.y = y
+    local ego = slime.actor ("ego", x, y)
     
     -- The time between actor steps. More delay means slower steps.
     ego.movedelay = 0.05
@@ -162,9 +155,7 @@ end
 function addCellDoor (x, y)
 
     -- Add the door as an actor
-    local cellDoor = slime.actor("door")
-    cellDoor.x = x
-    cellDoor.y = y
+    local cellDoor = slime.actor("door", x, y)
 
     -- Sprite size and frames
     local frameWidth, frameHeight = 9, 30

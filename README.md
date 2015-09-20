@@ -142,17 +142,18 @@ The `baseline` is the y-position a character needs to be behind in order to be h
 
 Actors are items on your stage that may move or talk, like people, animals or robots. They can also be inanimate objects that may not move or talk but are animated, like doors, toasters and computers.
 
-![func](api/func.png) `slime.actor (name)`
+![func](api/func.png) `slime.actor (name, x, y [, staticImage])`
 
-Adds and returns an actor to the stage. After this call you need to give the actor a position and image/animation for it to become visible on the stage. These properties are available:
+Adds an actor to the stage. The actor object is returned:
 
-    actor.x = 50
-    actor.y = 50
-    actor.speechcolor = {255, 255, 255}     -- Set the speech color for this actor as {red, green, blue}
+    local boss = slime.actor ("Big Boss", 100, 100)
+    boss.speechcolor = {255, 0, 0}     -- Set the speech color for this actor as {red, green, blue}
+
+The `staticImage` is optional, and only useful for non-animated actors.
 
 ![func](api/func.png) `slime.addImage (name, image)`
 
-Sets a static (non-animated) image as an actor's sprite.
+Sets a static (non-animated) image as an actor's sprite. This is the same like passing a `staticImage` to `slime.actor`.
 
 ![func](api/func.png) `slime.idleAnimation (name, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])`  
 ![func](api/func.png) `slime.walkAnimation (name, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])`  

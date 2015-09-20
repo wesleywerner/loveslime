@@ -154,7 +154,7 @@ end
 slime.actors = {}
 slime.tilesets = {}
 
-function slime.actor (name)
+function slime.actor (name, x, y, staticImage)
 
     -- Add an actor to the stage.
     -- Allows adding the same actor name multiple times, but only
@@ -167,8 +167,8 @@ function slime.actor (name)
     
     local newActor = {
         ["name"] = name,
-        ["x"] = 0,
-        ["y"] = 0,
+        ["x"] = x,
+        ["y"] = y,
         ["direction recalc delay"] = 0,     -- delay direction calc counter.
         ["w"] = w,
         ["h"] = h,
@@ -194,6 +194,10 @@ function slime.actor (name)
         table.insert(slime.actors, newActor)
     else
         slime.actors[name] = newActor
+    end
+    
+    if (staticImage) then
+        slime.addImage (name, staticImage)
     end
     
     return newActor
