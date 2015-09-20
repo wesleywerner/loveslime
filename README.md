@@ -271,6 +271,16 @@ Removes an item (`name`) from a `bag`.
 
 Add a hotspot with an image that draws on screen. 
 
+## Cursors
+
+![func](api/func.png) `slime.setCursor (name, image, scale, hotx, hoty)`
+
+Set a hardware cursor with scale applied.
+
+When you set a cursor, the `name` is passed back as the `event` parameter to `slime.callback()`. This makes it easy to check if the player is using a key on a door.
+
+Call with no parameters to set the default cursor.
+
 ## Settings
 
 SLIME offers these settings to customize your game:
