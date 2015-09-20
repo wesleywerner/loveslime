@@ -85,26 +85,17 @@ Background:
 
 And this is how we use them:
 
-    function setupPrisonStage ()
-
-        -- Clear the stage
+    function setupStage ()
         slime.reset()
-
-        -- Add the background
         slime.background("images/cell-background.png")
-        
-        -- Add our main actor, Ego
         local ego = slime.actor("ego")
         ego.x = 70
         ego.y = 50
-        
     end
-
-To start our game in this prison stage, well simply call the stage function on load:
 
     function love.load()
         ...
-        setupPrisonStage()
+        setupStage()
     end
     
 When we run this in L&Ouml;VE we see our background and a white sprite where our actor "Ego" stand. Ego has no animations set yet so she displays with a placeholder. 
@@ -216,7 +207,7 @@ Floor mask (defines walkable areas):
 
 We update up stage setup function:
 
-    function setupPrisonStage ()
+    function setupStage ()
         ...
         slime.floor("images/cell-floor-open.png")
 
@@ -253,7 +244,7 @@ Layer mask (defines walk-behind areas):
 
 We update our stage setup function:  
 
-    function setupPrisonStage ()
+    function setupStage ()
         ...
         slime.layer("images/cell-background.png", "images/cell-layer.png", 50)
         
@@ -333,7 +324,7 @@ Finally, I added two helper functions `closeCellDoor ()` and `openCellDoor ()` t
 
 Here is our complete stage function with the door:
 
-    function setupPrisonStage ()
+    function setupStage ()
 
         -- Clear the stage
         slime.reset()
@@ -361,12 +352,8 @@ Here is our complete stage function with the door:
 
 A hotspot is a region on the stage that the player can interact with. We create a new hotspot for the hole in the wall, when the player interacts we make Ego say something.
 
-    function setupPrisonStage ()
+    function setupStage ()
         ...
-        addHoleHotspot ()
-    end
-
-    function addHoleHotspot ()
         local x, y, width, height = 92, 23, 8, 8
         slime.hotspot ("hole", x, y, width, height)
     end
@@ -421,13 +408,14 @@ Ego moves and talks at the same time, not quite the effect we want. We want Ego 
 
 Bags are used to store inventory items.
 
-We will now add a bowl and spoon to the stage, and when the player clicks on the bowl, move Ego towards it and put it in a bag. 
+Let's add a "bowl and spoon" actor to the stage, when the player clicks on the bowl, move Ego towards it and put it in a bag. 
     
-    function addBowlActor (x, y)
+    function setupStage ()
+        ..
         local bowl = slime.actor("bowl and spoon")
         slime.addImage ("bowl and spoon", "images/bowl1.png")
-        bowl.x = x
-        bowl.y = y
+        bowl.x = 65
+        bowl.y = 37
     end
 
     function myStageCallback (event, object)
@@ -441,10 +429,6 @@ We will now add a bowl and spoon to the stage, and when the player clicks on the
                 slime.actors["bowl and spoon"] = nil
             end
             ...
-
-    function setupPrisonStage ()
-        ..
-        addBowlActor (65, 37)
 
 A couple new functions pop up here, we have `turnActor` which faces Ego south (so the actor's back isn't facing the player when picking up the bowl), `bagInsert` which stores items in the bag named "ego", and we remove the bowl actor from the stage.
 

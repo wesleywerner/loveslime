@@ -50,9 +50,14 @@ function setupStage ()
     addCellDoor (50, 49)
     
     -- Hole in the wall
-    addHoleHotspot ()
-    
-    addBowlActor (65, 37)
+    local x, y, width, height = 92, 23, 8, 8
+    slime.hotspot ("hole", x, y, width, height)
+
+    -- Bowl and spoon
+    local bowl = slime.actor("bowl and spoon")
+    slime.addImage ("bowl and spoon", "images/bowl1.png")
+    bowl.x = 65
+    bowl.y = 37
     
     slime.callback = myStageCallback
     
@@ -208,16 +213,6 @@ end
 
 -- **
 
-function addHoleHotspot ()
-
-    local x, y, width, height = 92, 23, 8, 8
-
-    slime.hotspot ("hole", x, y, width, height)
-    
-end
-
--- **
-
 function myStageCallback (event, object)
 
     if (event == "moved" and object.name == "ego") then
@@ -248,17 +243,8 @@ function myStageCallback (event, object)
     
 end
 
-function addBowlActor (x, y)
-
-    local bowl = slime.actor("bowl and spoon")
-    slime.addImage ("bowl and spoon", "images/bowl1.png")
-    bowl.x = x
-    bowl.y = y
-    
-end
-
--- *
-
+-- Clear and reposition the clickable buttons for the bag (inventory)
+-- when it has items added or removed.
 function slime.inventoryChanged (bag)
     slime.bagButtons = { }
     for counter, item in pairs(slime.bagContents("ego")) do
