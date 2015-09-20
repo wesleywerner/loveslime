@@ -475,6 +475,8 @@ But what just happened?
 2. SLIME draws the buttons for us.
 3. `slime.callback` notifies us with an "interact" event when the player clicks on a button. Just like a hotspot.
 
+## 
+
 # TODO
 
 Tutorial sections still in progress

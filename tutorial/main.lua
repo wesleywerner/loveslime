@@ -27,8 +27,6 @@ function love.keypressed(key, isrepeat)
     end
 end
 
--- **
-
 function setupStage ()
 
     -- Clear the stage
@@ -59,8 +57,6 @@ function setupStage ()
     slime.callback = myStageCallback
     
 end
-
--- **
 
 function addEgoActor (x, y)
 
@@ -126,8 +122,6 @@ function addEgoActor (x, y)
                         
 end
 
--- **
-
 -- Left clicking moves our Ego actor, and interacts with objects.
 function love.mousepressed(x, y, button)
 
@@ -150,8 +144,6 @@ function love.mousepressed(x, y, button)
     
 end
 
-
--- **
 function addCellDoor (x, y)
 
     -- Add the door as an actor
@@ -206,13 +198,13 @@ end
 
 function myStageCallback (event, object)
 
+    slime.log (event .. " on " .. object.name)
+
     if (event == "moved" and object.name == "ego") then
         slime.interact (object.clickedX, object.clickedY)
     end
     
     if (event == "interact") then
-    
-        slime.log ("Interacted with " .. object.name)
     
         -- give ego a bowl and a spoon inventory items
         if (object.name == "bowl and spoon") then
@@ -229,7 +221,16 @@ function myStageCallback (event, object)
         if (object.name == "hole") then
             slime.addSpeech ("ego", "I see a hole in the wall")
         end
+        
+        -- Set the cursor when interacting on bag items
+        if (object.name == "spoon") then
+            slime.setCursor (object.name, object.image, scale, 0, 0)
+        end
     
+    end
+    
+    if (event == "spoon" and object.name == "door") then
+        slime.addSpeech ("ego", "The spoon won't open this door")
     end
     
 end
@@ -242,3 +243,6 @@ function slime.inventoryChanged (bag)
         slime.bagButton (item.name, item.image, counter * 10, bagPosition)
     end
 end
+
+-- **
+
