@@ -66,6 +66,7 @@ function slime.reset ()
     slime.hotspots = {}
     slime.astar = nil
     slime.statusText = nil
+    slime.cursorName = nil
 end
 
 function slime.callback (event, object)
@@ -670,7 +671,6 @@ function slime.bagInsert (bag, object)
 
     -- load the image data
     if type(object.image) == "string" then
-        print("replacing item image with load - " .. object.name)
         object.image = love.graphics.newImage(object.image)
     end
 
@@ -864,9 +864,25 @@ function slime.interact (x, y)
     if (not objects) then return end
     
     for i, object in pairs(objects) do
-        slime.callback ("interact", object)
+        slime.callback (slime.cursorName or "interact", object)
     end
     
+end
+
+-- Set a hardware cursor with scale applied.
+function slime.setCursor (name, image, scale, hotx, hoty)
+
+    slime.cursorName = name
+    local cursor = nil
+    if (image) then
+        local w, h = image:getDimensions ()
+        local cursorCanvas = love.graphics.newCanvas (w * scale, h * scale)
+        cursorCanvas:renderTo(function()
+                love.graphics.draw (image, 0, 0, 0, scale, scale)
+            end)
+        cursor = love.mouse.newCursor (cursorCanvas:getImageData(), hotx, hoty)
+    end
+    love.mouse.setCursor (cursor)
 end
 
 --        _      _                 
