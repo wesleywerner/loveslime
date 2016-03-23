@@ -57,16 +57,16 @@ slime.settings = {
     ["speech font size"] = 10
     }
 
-function slime.reset ()
-    slime.counters = {}
-    slime.backgrounds = {}
-    slime.actors = {}
-    slime.layers = {}
-    slime.debug.log = {}
-    slime.hotspots = {}
-    slime.astar = nil
-    slime.statusText = nil
-    slime.cursorName = nil
+function slime.reset (self)
+    self.counters = {}
+    self.backgrounds = {}
+    self.actors = {}
+    self.layers = {}
+    self.debug.log = {}
+    self.hotspots = {}
+    self.astar = nil
+    self.statusText = nil
+    self.cursorName = nil
 end
 
 function slime.callback (event, object)
@@ -81,7 +81,7 @@ end
 
 slime.backgrounds = {}
 
-function slime.background (backgroundfilename, delay)
+function slime.background (self, backgroundfilename, delay)
 
     -- Add a background to the stage, drawn at x, y for the given delay
     -- before drawing the next available background.
@@ -94,35 +94,35 @@ function slime.background (backgroundfilename, delay)
         ["delay"] = delay
         }
     
-    table.insert(slime.backgrounds, newBackground)
+    table.insert(self.backgrounds, newBackground)
     
     -- default to the first background
-    if (#slime.backgrounds == 1) then
-        slime.counters["background index"] = 1
-        slime.counters["background delay"] = delay
+    if (#self.backgrounds == 1) then
+        self.counters["background index"] = 1
+        self.counters["background delay"] = delay
     end
 end
 
 -- Set the floor mask that determines walkable areas.
-function slime.floor (floorfilename)
-    slime.handler = SlimeMapHandler()
+function slime.floor (self, floorfilename)
+    self.handler = SlimeMapHandler()
     floorimage = love.graphics.newImage(floorfilename)
-    slime.handler:convert(floorimage)
-    slime.astar = AStar(slime.handler)
+    self.handler:convert(floorimage)
+    self.astar = AStar(self.handler)
 end
 
-function slime.updateBackground (dt)
+function slime.updateBackground (self, dt)
 
     -- Rotates to the next background if there is one and delay expired.
     
-    if (#slime.backgrounds <= 1) then
+    if (#self.backgrounds <= 1) then
         -- skip background rotation if there is one or none
         return
     end
 
-    local index = slime.counters["background index"]
-    local background = slime.backgrounds[index]
-    local timer = slime.counters["background delay"]
+    local index = self.counters["background index"]
+    local background = self.backgrounds[index]
+    local timer = self.counters["background delay"]
     
     if (timer == nil or background == nil) then
         -- start a new timer
@@ -133,15 +133,15 @@ function slime.updateBackground (dt)
         -- this timer has expired
         if (timer < 0) then
             -- move to the next index (with wrapping)
-            index = (index == #slime.backgrounds) and 1 or index + 1
-            if (slime.backgrounds[index]) then
-                timer = slime.backgrounds[index].delay
+            index = (index == #self.backgrounds) and 1 or index + 1
+            if (self.backgrounds[index]) then
+                timer = self.backgrounds[index].delay
             end
         end
     end
 
-    slime.counters["background index"] = index
-    slime.counters["background delay"] = timer
+    self.counters["background index"] = index
+    self.counters["background delay"] = timer
 
 end
 
@@ -155,7 +155,7 @@ end
 slime.actors = {}
 slime.tilesets = {}
 
-function slime.actor (name, x, y, staticImage)
+function slime.actor (self, name, x, y, staticImage)
 
     -- Add an actor to the stage.
     -- Allows adding the same actor name multiple times, but only
@@ -191,64 +191,64 @@ function slime.actor (name, x, y, staticImage)
         end
     end
     
-    if (slime.actors[name]) then
-        table.insert(slime.actors, newActor)
+    if (self.actors[name]) then
+        table.insert(self.actors, newActor)
     else
-        slime.actors[name] = newActor
+        self.actors[name] = newActor
     end
     
     if (staticImage) then
-        slime.addImage (name, staticImage)
+        self:addImage (name, staticImage)
     end
     
     return newActor
 end
 
 -- Helper functions to batch build actor animations
-function slime.idleAnimation (name, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
-    slime.prefabAnimation ("idle", name, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
+function slime.idleAnimation (self, name, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
+    self:prefabAnimation ("idle", name, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
 end
 
-function slime.walkAnimation (name, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
-    slime.prefabAnimation ("walk", name, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
+function slime.walkAnimation (self, name, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
+    self:prefabAnimation ("walk", name, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
 end
 
-function slime.talkAnimation (name, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
-    slime.prefabAnimation ("talk", name, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
+function slime.talkAnimation (self, name, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
+    self:prefabAnimation ("talk", name, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
 end
 
 -- Create a prefabricated animation sequence of the cardinal directions.
 -- Use the south direction (facing the player) as default if none of the other directions are given.
-function slime.prefabAnimation (prefix, name, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
+function slime.prefabAnimation (self, prefix, name, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
 
-    slime.addAnimation (name, prefix .. " south", tileset, w, h, south, southd)
-    slime.addAnimation (name, prefix .. " west", tileset, w, h, west or south, westd or southd)
-    slime.addAnimation (name, prefix .. " north", tileset, w, h, north or south, northd or southd)
+    self:addAnimation (name, prefix .. " south", tileset, w, h, south, southd)
+    self:addAnimation (name, prefix .. " west", tileset, w, h, west or south, westd or southd)
+    self:addAnimation (name, prefix .. " north", tileset, w, h, north or south, northd or southd)
 
     -- if the east animations is empty, flip the west animation if there is one
     if (not east and west) then
-        local eastAnim = slime.addAnimation (name, prefix .. " east", tileset, w, h, east or west, eastd or westd)
+        local eastAnim = self:addAnimation (name, prefix .. " east", tileset, w, h, east or west, eastd or westd)
         eastAnim:flipH()
     else
-        slime.addAnimation (name, prefix .. " east", tileset, w, h, east or south, eastd or southd)
+        self:addAnimation (name, prefix .. " east", tileset, w, h, east or south, eastd or southd)
     end
 end
 
 -- Create a custom animation.
-function slime.addAnimation (name, key, tileset, w, h, frames, delays, onLoop)
+function slime.addAnimation (self, name, key, tileset, w, h, frames, delays, onLoop)
 
-    local actor = slime.actors[name]
+    local actor = self.actors[name]
     
     if (not actor) then
-        slime.log ("Add animation failed: no actor named " .. name)
+        self:log ("Add animation failed: no actor named " .. name)
         return
     end
     
     -- cache tileset image to save loading duplicate images
-    local image = slime.tilesets[tileset]
-    if (not slime.tilesets[tileset]) then
+    local image = self.tilesets[tileset]
+    if (not self.tilesets[tileset]) then
         image = love.graphics.newImage(tileset)
-        slime.tilesets[tileset] = image
+        self.tilesets[tileset] = image
     end
 
     -- default actor hotspot to centered at the base of the image
@@ -271,12 +271,12 @@ function slime.addAnimation (name, key, tileset, w, h, frames, delays, onLoop)
 end
 
 -- Set the animation of an actor
-function slime.setAnimation (name, key)
+function slime.setAnimation (self, name, key)
 
-    local actor = slime.actors[name]
+    local actor = self.actors[name]
     
     if (not actor) then
-        slime.log ("Set animation failed: no actor named " .. name)
+        self:log ("Set animation failed: no actor named " .. name)
     else
         actor.customAnimationKey = key
     end
@@ -284,12 +284,12 @@ function slime.setAnimation (name, key)
 end
 
 -- Set a static image as an actor's sprite.
-function slime.addImage (name, image)
+function slime.addImage (self, name, image)
 
-    local actor = slime.actors[name]
+    local actor = self.actors[name]
     
     if (not actor) then
-        slime.log ("Add image failed: no actor named " .. name)
+        self:log ("Add image failed: no actor named " .. name)
     else
         image = love.graphics.newImage(image)
         actor.image = image
@@ -300,11 +300,11 @@ function slime.addImage (name, image)
     
 end
 
-function slime.drawActor (actor)
+function slime.drawActor (self, actor)
 
     local animation = actor:getAnim()
     if (animation) then
-        local tileset = slime.tilesets[animation["tileset"]]
+        local tileset = self.tilesets[animation["tileset"]]
         animation["animation"]:draw(tileset, actor.x - actor.base[1], actor.y - actor.base[2])
     elseif (actor.image) then
         love.graphics.draw(actor.image, actor.x - actor.base[1], actor.y - actor.base[2])
@@ -314,9 +314,9 @@ function slime.drawActor (actor)
 
 end
 
-function slime.turnActor (name, direction)
+function slime.turnActor (self, name, direction)
 
-    local actor = slime.actors[name]
+    local actor = self.actors[name]
 
     if (actor) then
         actor.direction = direction
@@ -324,33 +324,33 @@ function slime.turnActor (name, direction)
     
 end
 
-function slime.moveActor (name, x, y)
+function slime.moveActor (self, name, x, y)
 
     -- Move an actor to point xy using A Star path finding
     
-    if (slime.astar == nil) then 
-        slime.log("No walkable area defined")
+    if (self.astar == nil) then 
+        self:log("No walkable area defined")
         return 
     end
         
-    local actor = slime.actors[name]
+    local actor = self.actors[name]
 
     if (actor == nil) then
-        slime.log("No actor named " .. name)
+        self:log("No actor named " .. name)
     else
         -- Our path runs backwards so we can pop the points off the stack
         local start = { x = actor.x, y = actor.y }
         local goal = { x = x, y = y }
         
         -- If the goal is on a solid block find the nearest open node.
-        if (slime.handler:nodeBlocking(goal)) then
-            goal = slime.findNearestOpenPoint (goal)
+        if (self.handler:nodeBlocking(goal)) then
+            goal = self:findNearestOpenPoint (goal)
         end
         
         -- Calculate a path
-        local path = slime.astar:findPath(goal, start)
+        local path = self.astar:findPath(goal, start)
         if (path == nil) then
-            slime.log("no actor path found")
+            self:log("no actor path found")
         else
             actor.clickedX = x
             actor.clickedY = y
@@ -359,9 +359,9 @@ function slime.moveActor (name, x, y)
             actor.action = "walk"
             -- Calculate actor direction immediately
             actor.lastx, actor.lasty = actor.x, actor.y
-            actor.direction = slime.calculateDirection(actor.x, actor.y, x, y)
+            actor.direction = self:calculateDirection(actor.x, actor.y, x, y)
             -- Output debug
-            slime.log("move " .. name .. " to " .. x .. " : " .. y)
+            self:log("move " .. name .. " to " .. x .. " : " .. y)
         end
     end
 end
@@ -370,10 +370,10 @@ end
 -- Use the bresenham line algorithm to project four lines from the goal:
 -- (S, W, N, E) and find the first open node on each line.
 -- We then choose the point with the shortest distance from the goal.
-function slime.findNearestOpenPoint (point)
+function slime.findNearestOpenPoint (self, point)
 
     -- Get the dimensions of the walkable floor map.
-    local size = slime.handler:size()
+    local size = self.handler:size()
     
     -- Define the cardinal direction to test against relative to the point.
     local directions = {
@@ -395,7 +395,7 @@ function slime.findNearestOpenPoint (point)
                 findNearestPoint = false
             else
                 goal = table.remove(walkTheLine)
-                findNearestPoint = slime.handler:nodeBlocking(goal)
+                findNearestPoint = self.handler:nodeBlocking(goal)
             end
         end
         -- math.sqrt( (x2 - x1)^2 + (y2 - y1)^2 )
@@ -412,18 +412,18 @@ function slime.findNearestOpenPoint (point)
 end
 
 -- Move an actor to another actor
-function slime.moveActorTo (name, target)
+function slime.moveActorTo (self, name, target)
 
-    local targetActor = slime.actors[target]
+    local targetActor = self.actors[target]
     
     if (targetActor) then
-        slime.moveActor (name, targetActor.x, targetActor.y)
+        self:moveActor (name, targetActor.x, targetActor.y)
     else
-        slime.log("no actor named " .. target)
+        self:log("no actor named " .. target)
     end
 end
 
-function slime.moveActorOnPath (actor, dt)
+function slime.moveActorOnPath (self, actor, dt)
     if (actor.path and #actor.path > 0) then
         -- Check if the actor's speed is set to delay movement.
         -- If no speed is set, we move on every update.
@@ -448,20 +448,20 @@ function slime.moveActorOnPath (actor, dt)
             actor["direction recalc delay"] = actor["direction recalc delay"] - 1
             if (actor["direction recalc delay"] <= 0) then
                 actor["direction recalc delay"] = 5
-                actor.direction = slime.calculateDirection(actor.lastx, actor.lasty, actor.x, actor.y)
+                actor.direction = self:calculateDirection(actor.lastx, actor.lasty, actor.x, actor.y)
                 actor.lastx, actor.lasty = actor.x, actor.y
             end
         end
         
         if (#actor.path == 0) then
             actor.action = "idle"
-            slime.callback ("moved", actor)
+            self.callback ("moved", actor)
         end
     end
 end
 
 -- Return the nearest cardinal direction represented by the angle of movement.
-function slime.calculateDirection (x1, y1, x2, y2)
+function slime.calculateDirection (self, x1, y1, x2, y2)
 
     -- function angle(x1, y1, x2, y2)
     --     local ang = math.atan2(y2 - y1, x2 - x1) * 180 / math.pi
@@ -537,37 +537,37 @@ slime.speech = { }
 
 
 -- Make an actor say something
-function slime.addSpeech (name, text)
+function slime.addSpeech (self, name, text)
 
     local newSpeech = {
-        ["actor"] = slime.actors[name],
+        ["actor"] = self.actors[name],
         ["text"] = text,
         ["time"] = 3
         }
         
     if (not newSpeech.actor) then
-        slime.log("Speech failed: No actor named " .. name)
+        self:log("Speech failed: No actor named " .. name)
         return
     end
     
-    table.insert(slime.speech, newSpeech)
+    table.insert(self.speech, newSpeech)
 
 end
 
 
 -- Checks if there is an actor talking.
-function slime.someoneTalking ()
+function slime.someoneTalking (self)
 
-    return (#slime.speech > 0)
+    return (#self.speech > 0)
 
 end
 
 -- Skips the current speech
-function slime.skipSpeech ( )
+function slime.skipSpeech (self)
 
-    local spc = slime.speech[1]
+    local spc = self.speech[1]
     if (spc) then
-        table.remove(slime.speech, 1)
+        table.remove(self.speech, 1)
         spc.actor.action = "idle"
     end
 
@@ -585,7 +585,7 @@ end
 
 slime.layers = {}
 
-function slime.layer (background, mask, baseline)
+function slime.layer (self, background, mask, baseline)
 
     local source = love.graphics.newImage(background)
     local mask = love.graphics.newImage(mask)
@@ -595,11 +595,11 @@ function slime.layer (background, mask, baseline)
         ["baseline"] = baseline
         }
     
-    table.insert(slime.layers, newLayer)
+    table.insert(self.layers, newLayer)
     
     -- Order the layers by their baselines.
     -- This is important for when we draw the layers.
-    table.sort(slime.layers, function (a, b) return a.baseline < b.baseline end )
+    table.sort(self.layers, function (a, b) return a.baseline < b.baseline end )
     
 end
 
@@ -638,9 +638,9 @@ end
 
 slime.hotspots = { }
 
-function slime.hotspot(name, x, y, w, h)
+function slime.hotspot(self, name, x, y, w, h)
 
-    table.insert(slime.hotspots, {
+    table.insert(self.hotspots, {
         ["name"] = name, 
         ["x"] = x, 
         ["y"] = y, 
@@ -667,7 +667,7 @@ function slime.inventoryChanged ( )
 end
 
 -- Add an item to a bag.
-function slime.bagInsert (bag, object)
+function slime.bagInsert (self, bag, object)
 
     -- load the image data
     if type(object.image) == "string" then
@@ -675,45 +675,45 @@ function slime.bagInsert (bag, object)
     end
 
     -- Add the inventory item under "name"
-    if (not slime.bags[bag]) then slime.bags[bag] = { } end
-    local inv = slime.bags[bag]
+    if (not self.bags[bag]) then self.bags[bag] = { } end
+    local inv = self.bags[bag]
     table.insert(inv, object)
-    slime.inventoryChanged (bag)
+    self.inventoryChanged (bag)
     
-    slime.log ("Added " .. object.name .. " to bag \"" .. bag .. "\"")
+    self:log ("Added " .. object.name .. " to bag \"" .. bag .. "\"")
 
 end
 
 -- Get items from a bag.
-function slime.bagContents (bag)
+function slime.bagContents (self, bag)
 
-    return slime.bags[bag] or { }
+    return self.bags[bag] or { }
 
 end
 
 -- Remove an item from a bag.
-function slime.bagRemove (bag, name)
+function slime.bagRemove (self, bag, name)
 
-    local inv = slime.bags[bag]
+    local inv = self.bags[bag]
     if (inv) then 
         for i, item in pairs(inv) do
             if (item.name == name) then
                 table.remove(inv, i)
-                slime.log ("Removed " .. name .. " from bag \"" .. bag .. "\"")
-                slime.inventoryChanged (bag)
+                self:log ("Removed " .. name .. " from bag \"" .. bag .. "\"")
+                self.inventoryChanged (bag)
             end
         end
     end
     
 end
 
-function slime.bagButton (name, image, x, y)
+function slime.bagButton (self, name, image, x, y)
 
     if type(image) == "string" then image = love.graphics.newImage(image) end
     
     local w, h = image:getDimensions ()
     
-    table.insert(slime.bagButtons, {
+    table.insert(self.bagButtons, {
         ["name"] = name,
         ["image"] = image,
         ["x"] = x,
@@ -732,13 +732,13 @@ end
 --   | (_| | | | (_| |\ V  V / 
 --    \__,_|_|  \__,_| \_/\_/  
 
-function slime.update (dt)
+function slime.update (self, dt)
 
-    slime.updateBackground(dt)
+    self:updateBackground(dt)
     
     -- Update animations
-    for iactor, actor in pairs(slime.actors) do
-        slime.moveActorOnPath (actor, dt)
+    for iactor, actor in pairs(self.actors) do
+        self:moveActorOnPath (actor, dt)
         local anim = actor:getAnim()
         if (anim and anim["animation"]) then
             anim["animation"]:update(dt)
@@ -746,11 +746,11 @@ function slime.update (dt)
     end
     
     -- Update the speech display time.
-    if (#slime.speech > 0) then
-        local spc = slime.speech[1]
+    if (#self.speech > 0) then
+        local spc = self.speech[1]
         spc.time = spc.time - dt
         if (spc.time < 0) then
-            slime.skipSpeech()
+            self:skipSpeech()
         else
             spc.actor.action = "talk"
         end
@@ -758,12 +758,12 @@ function slime.update (dt)
 
 end
 
-function slime.draw (scale)
+function slime.draw (self, scale)
 
     scale = scale or 1
 
     -- Background
-    local bg = slime.backgrounds[slime.counters["background index"]]
+    local bg = self.backgrounds[self.counters["background index"]]
     if (bg) then
         love.graphics.draw(bg.image, 0, 0)
     end
@@ -772,10 +772,10 @@ function slime.draw (scale)
     -- layers are ordered by their baselines: smaller values first.
     -- for each layer, draw the actors above it, then draw the layer.
     local maxBaseline = 0
-    for i, layer in pairs(slime.layers) do
-        for iactor, actor in pairs(slime.actors) do
+    for i, layer in pairs(self.layers) do
+        for iactor, actor in pairs(self.actors) do
             if (actor.y) < layer.baseline then
-                slime.drawActor(actor)
+                self:drawActor(actor)
             end
         end
         love.graphics.draw(layer.image, 0, 0)
@@ -783,67 +783,67 @@ function slime.draw (scale)
     end
 
     -- draw actors above all the baselines
-    for iactor, actor in pairs(slime.actors) do
+    for iactor, actor in pairs(self.actors) do
         if (actor.y) >= maxBaseline then
-            slime.drawActor(actor)
+            self:drawActor(actor)
         end
     end
     
     -- Bag Buttons
-    for counter, button in pairs(slime.bagButtons) do
+    for counter, button in pairs(self.bagButtons) do
         love.graphics.draw (button.image, button.x, button.y)
     end
     
     -- status text
-    if (slime.statusText) then
-        love.graphics.setFont(love.graphics.newFont(slime.settings["status font size"]))
-        love.graphics.printf(slime.statusText, 0, slime.settings["status position"], love.window.getWidth() / scale, "center")
+    if (self.statusText) then
+        love.graphics.setFont(love.graphics.newFont(self.settings["status font size"]))
+        love.graphics.printf(self.statusText, 0, self.settings["status position"], love.window.getWidth() / scale, "center")
     end
     
     -- Draw Speech
-    if (#slime.speech > 0) then
-        local spc = slime.speech[1]
+    if (#self.speech > 0) then
+        local spc = self.speech[1]
         -- Store the original color
         local r, g, b, a = love.graphics.getColor()
         -- Set a new speech color
         love.graphics.setColor(spc.actor.speechcolor)
-        love.graphics.setFont(love.graphics.newFont(slime.settings["speech font size"]))
-        love.graphics.printf(spc.text, 0, slime.settings["speech position"], love.window.getWidth() / scale, "center")
+        love.graphics.setFont(love.graphics.newFont(self.settings["speech font size"]))
+        love.graphics.printf(spc.text, 0, self.settings["speech position"], love.window.getWidth() / scale, "center")
         -- Restore original color
         love.graphics.setColor(r, g, b, a)
     end
     
-    slime.outlineStageElements()
+    self:outlineStageElements()
 
 end
 
 -- Set a status text
-function slime.status (text)
+function slime.status (self, text)
 
-    slime.statusText = text
+    self.statusText = text
 
 end
 
 -- Gets the object under xy.
-function slime.getObjects (x, y)
+function slime.getObjects (self, x, y)
 
     local objects = { }
 
-    for iactor, actor in pairs(slime.actors) do
+    for iactor, actor in pairs(self.actors) do
         if (x >= actor.x - actor.base[1] and x <= actor.x - actor.base[1] + actor.w) and 
             (y >= actor.y - actor.base[2] and y <= actor.y - actor.base[2] + actor.h) then
             table.insert(objects, actor)
         end
     end
     
-    for ihotspot, hotspot in pairs(slime.hotspots) do
+    for ihotspot, hotspot in pairs(self.hotspots) do
         if (x >= hotspot.x and x <= hotspot.x + hotspot.w) and
             (y >= hotspot.y and y <= hotspot.y + hotspot.h) then
             table.insert(objects, hotspot)
         end
     end
     
-    for ihotspot, hotspot in pairs(slime.bagButtons) do
+    for ihotspot, hotspot in pairs(self.bagButtons) do
         if (x >= hotspot.x and x <= hotspot.x + hotspot.w) and
             (y >= hotspot.y and y <= hotspot.y + hotspot.h) then
             table.insert(objects, hotspot)
@@ -858,21 +858,21 @@ function slime.getObjects (x, y)
     
 end
 
-function slime.interact (x, y)
+function slime.interact (self, x, y)
 
-    local objects = slime.getObjects(x, y)
+    local objects = self:getObjects(x, y)
     if (not objects) then return end
     
     for i, object in pairs(objects) do
-        slime.callback (slime.cursorName or "interact", object)
+        self.callback (self.cursorName or "interact", object)
     end
     
 end
 
 -- Set a hardware cursor with scale applied.
-function slime.setCursor (name, image, scale, hotx, hoty)
+function slime.setCursor (self, name, image, scale, hotx, hoty)
 
-    slime.cursorName = name
+    self.cursorName = name
     local cursor = nil
     if (image) then
         local w, h = image:getDimensions ()
@@ -895,18 +895,18 @@ end
 
 slime.debug = { ["enabled"] = true, ["log"] = {} }
 
-function slime.log (text)
+function slime.log (self, text)
     -- add a debug log entry
-    table.insert(slime.debug.log, text)
-    if (#slime.debug.log > 10) then table.remove(slime.debug.log, 1) end
+    table.insert(self.debug.log, text)
+    if (#self.debug.log > 10) then table.remove(self.debug.log, 1) end
 end
 
-slime.debugdraw = function ( )
+function slime.debugdraw (self)
 
-    if (not slime.debug["enabled"]) then return end
+    if (not self.debug["enabled"]) then return end
     
     -- get the debug overlay image
-    local debugOverlay = slime.debug["overlay"]
+    local debugOverlay = self.debug["overlay"]
     
     -- remember the original colour
     local r, g, b, a = love.graphics.getColor( )
@@ -922,7 +922,7 @@ slime.debugdraw = function ( )
                 love.graphics.setFont( love.graphics.newFont( 12 ))
                 love.graphics.print("SLIME DEBUG ON", 12, h - 26)
             end)
-        slime.debug["overlay"] = debugOverlay
+        self.debug["overlay"] = debugOverlay
     end
 
     -- draw the overlay
@@ -933,15 +933,15 @@ slime.debugdraw = function ( )
     love.graphics.print(tostring(love.timer.getFPS()) .. " fps", 12, 10)
 
     -- print background info
-    if (slime.counters["background index"] and slime.counters["background delay"]) then
-        love.graphics.print("background #" .. slime.counters["background index"] .. " showing for " .. string.format("%.1f", slime.counters["background delay"]) .. "s", 60, 10)
+    if (self.counters["background index"] and self.counters["background delay"]) then
+        love.graphics.print("background #" .. self.counters["background index"] .. " showing for " .. string.format("%.1f", self.counters["background delay"]) .. "s", 60, 10)
     end
     
     -- print info of everything under the pointer
     -- TODO
     
     -- log texts
-    for i, n in pairs(slime.debug.log) do
+    for i, n in pairs(self.debug.log) do
         love.graphics.setColor(0, 0, 0, 128)
         love.graphics.print(n, 11, 21 + (10 * i))
         love.graphics.setColor(0, 255, 0, 128)
@@ -953,33 +953,33 @@ slime.debugdraw = function ( )
     
 end
 
-function slime.outlineStageElements()
+function slime.outlineStageElements(self)
 
-    if (not slime.debug["enabled"]) then return end
+    if (not self.debug["enabled"]) then return end
     
     local r, g, b, a = love.graphics.getColor( )
     
     -- draw baselines for layers
     love.graphics.setColor(255, 0, 0, 64)
-    for i, layer in pairs(slime.layers) do
+    for i, layer in pairs(self.layers) do
         love.graphics.line( 0, layer.baseline, love.window.getHeight(), layer.baseline)
     end
     
     -- draw outlines of hotspots
     love.graphics.setColor(0, 0, 255, 64)
-    for ihotspot, hotspot in pairs(slime.hotspots) do
+    for ihotspot, hotspot in pairs(self.hotspots) do
         love.graphics.rectangle("line", hotspot.x, hotspot.y, hotspot.w, hotspot.h)
     end
     
     -- Outline bag buttons
     love.graphics.setColor(255, 0, 255, 64)
-    for counter, button in pairs(slime.bagButtons) do
+    for counter, button in pairs(self.bagButtons) do
         love.graphics.rectangle("line", button.x, button.y, button.w, button.h)
     end    
 
     -- draw outlines of actors
     love.graphics.setColor(0, 255, 0, 64)
-    for iactor, actor in pairs(slime.actors) do
+    for iactor, actor in pairs(self.actors) do
         love.graphics.rectangle("line", actor.x - actor.base[1], actor.y - actor.base[2], actor.w, actor.h)
         love.graphics.circle("line", actor.x, actor.y, 1, 6)
     end
