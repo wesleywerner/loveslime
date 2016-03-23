@@ -2,6 +2,8 @@
 
 In this tutorial we will make a point-and-click adventure with L&Ouml;VE and the SLIME library. Keep the [SLIME API reference](http://wesleywerner.github.io/loveslime/) handy.
 
+> To make a proper method call, use obj:method() which is 'syntactical sugar' for obj.method(obj)
+
 ## Set up your game
 
 To start we create our game directory and copy the `slime` library into the directory. We also touch the files `main.lua`and `conf.lua`.
@@ -23,12 +25,12 @@ Leading by example, here is the starting code:
     end
 
     function love.draw()
-        slime.draw()
-        slime.debugdraw()
+        slime:draw()
+        slime:debugdraw()
     end
 
     function love.update(dt)
-        slime.update(dt)
+        slime:update(dt)
     end
 
     function love.keypressed(key, isrepeat)
@@ -45,11 +47,11 @@ Leading by example, here is the starting code:
         t.window.height = 96
     end
 
-That gets you up and running. The main calls are `slime.update` and `slime.draw`, while the auxillary `slime.debugdraw` call is recommended while creating your game - It prints a useful overlay detailing events and borders around stage elements.
+That gets you up and running. The main calls are `slime:update` and `slime:draw`, while the auxillary `slime:debugdraw` call is recommended while creating your game - It prints a useful overlay detailing events and borders around stage elements.
 
 ## Drawing bigger
 
-Notice our window width and height? Our pixel art is small and we will tell L&Ouml;VE to scale it up for us when drawing to the screen. By setting the `setDefaultFilter` to "nearest", the scaled pixels won't alias and blur into each other.
+Our pixel art is small and we will tell L&Ouml;VE to scale it up for us when drawing to the screen. By setting the `setDefaultFilter` to "nearest", the scaled pixels won't alias and blur into each other.
 
 Let us scale our drawing up 4 times. We use a global `scale` for convenient re-use:
 
@@ -69,9 +71,9 @@ We tell L&Ouml;VE to scale itself using the `graphics.scale` function. SLIME als
     function love.draw()
         love.graphics.push()
         love.graphics.scale(scale)
-        slime.draw(scale)
+        slime:draw(scale)
         love.graphics.pop()
-        slime.debugdraw()
+        slime:debugdraw()
     end
 
 ## First Stage
@@ -86,9 +88,9 @@ Background:
 And this is how we use them:
 
     function setupStage ()
-        slime.reset()
-        slime.background("images/cell-background.png")
-        local ego = slime.actor("ego")
+        slime:reset()
+        slime:background("images/cell-background.png")
+        local ego = slime:actor("ego")
         ego.x = 70
         ego.y = 50
     end
@@ -123,7 +125,7 @@ We create a function that takes a position and creates the actor with animations
     function addEgoActor (x, y)
 
         -- Add an actor named "ego"
-        local ego = slime.actor("ego")
+        local ego = slime:actor("ego")
         
         -- Position the actor
         ego.x = x
@@ -148,7 +150,7 @@ We create a function that takes a position and creates the actor with animations
         local northDelays = 1
         local eastFrames = nil
         local eastDelays = nil        
-        slime.idleAnimation (
+        slime:idleAnimation (
             "ego", "images/ego.png",
             tileWidth, tileHeight,
             southFrames, southDelays,
@@ -163,7 +165,7 @@ We create a function that takes a position and creates the actor with animations
         local westDelays = 0.2
         local northFrames = {'18-21', 1}
         local northDelays = 0.2
-        slime.walkAnimation (
+        slime:walkAnimation (
             "ego", "images/ego.png",
             tileWidth, tileHeight,
             southFrames, southDelays,
@@ -178,7 +180,7 @@ We create a function that takes a position and creates the actor with animations
         local westDelays = 0.2
         local northFrames = {'15-17', 1}
         local northDelays = 0.2
-        slime.talkAnimation (
+        slime:talkAnimation (
             "ego", "images/ego.png",
             tileWidth, tileHeight,
             southFrames, southDelays,
@@ -209,7 +211,7 @@ We update up stage setup function:
 
     function setupStage ()
         ...
-        slime.floor("images/cell-floor-open.png")
+        slime:floor("images/cell-floor-open.png")
 
 Then we have to hook into L&Ouml;VE's mouse callback so when the player clicks, we tell SLIME to move Ego:
 
@@ -222,7 +224,7 @@ Then we have to hook into L&Ouml;VE's mouse callback so when the player clicks, 
 
         -- Left mouse button
         if button == "l" then
-            slime.moveActor ("ego", x, y)
+            slime:moveActor ("ego", x, y)
         end
         
     end
@@ -246,7 +248,7 @@ We update our stage setup function:
 
     function setupStage ()
         ...
-        slime.layer("images/cell-background.png", "images/cell-layer.png", 50)
+        slime:layer("images/cell-background.png", "images/cell-layer.png", 50)
         
 We need to give the background image because the layer is a cut-out from the background, the mask defines where to cut. And the baseline `50` means that if any actor is behind (under) `50` pixels, it is behind the layer.
 
@@ -265,7 +267,7 @@ Following the "actor as a function" approach:
     function addCellDoor (x, y)
 
         -- Add the door as an actor
-        local cellDoor = slime.actor("door")
+        local cellDoor = slime:actor("door")
         cellDoor.x = x
         cellDoor.y = y
 
@@ -281,40 +283,40 @@ Following the "actor as a function" approach:
         
         -- Keep the door open after the opening animation played.
         local function onOpeningLoop ()
-            slime.setAnimation ("door", "open")
+            slime:setAnimation ("door", "open")
         end
         
         -- Keep the door closed after the closing animation played.
         local function onClosingLoop ()
-            slime.setAnimation ("door", "closed")
+            slime:setAnimation ("door", "closed")
         end
         
         -- Add the animations. Both the closing and opening have callbacks set.
-        slime.addAnimation ("door", "closing", "images/cell-door.png", frameWidth, frameHeight, closingFrames, animationDelay, onClosingLoop)
-        slime.addAnimation ("door", "closed", "images/cell-door.png", frameWidth, frameHeight, closedFrame, animationDelay)
-        slime.addAnimation ("door", "opening", "images/cell-door.png", frameWidth, frameHeight, openingFrames, animationDelay, onOpeningLoop)
-        slime.addAnimation ("door", "open", "images/cell-door.png", frameWidth, frameHeight, openFrame, animationDelay)
+        slime:addAnimation ("door", "closing", "images/cell-door.png", frameWidth, frameHeight, closingFrames, animationDelay, onClosingLoop)
+        slime:addAnimation ("door", "closed", "images/cell-door.png", frameWidth, frameHeight, closedFrame, animationDelay)
+        slime:addAnimation ("door", "opening", "images/cell-door.png", frameWidth, frameHeight, openingFrames, animationDelay, onOpeningLoop)
+        slime:addAnimation ("door", "open", "images/cell-door.png", frameWidth, frameHeight, openFrame, animationDelay)
         
         -- Start off closed
-        slime.setAnimation ("door", "closed")
+        slime:setAnimation ("door", "closed")
 
     end
 
     function openCellDoor ()
 
-        slime.setAnimation ("door", "opening")
-        slime.floor("images/cell-floor-open.png")
+        slime:setAnimation ("door", "opening")
+        slime:floor("images/cell-floor-open.png")
 
     end
 
     function closeCellDoor ()
 
-        slime.setAnimation ("door", "closing")
-        slime.floor("images/cell-floor-closed.png")
+        slime:setAnimation ("door", "closing")
+        slime:floor("images/cell-floor-closed.png")
 
     end
 
-If you noticed in the `addCellDoor` function, we do not use the the "idle" or "walk" animations. We add custom animations using `addAnimation`, and then we set the starting animation (albeit a single framed one) with `slime.setAnimation ("door", "closed")`.
+If you noticed in the `addCellDoor` function, we do not use the the "idle" or "walk" animations. We add custom animations using `addAnimation`, and then we set the starting animation (albeit a single framed one) with `slime:setAnimation ("door", "closed")`.
 
 The "closing" and "opening" animations also receive a "onLoop" callback: when the animation ends we use `setAnimation` to fix the door in it's closed or open state. We do this otherwise the animation will loop, and that will just look silly.
 
@@ -327,16 +329,16 @@ Here is our complete stage function with the door:
     function setupStage ()
 
         -- Clear the stage
-        slime.reset()
+        slime:reset()
 
         -- Add the background
-        slime.background("images/cell-background.png")
+        slime:background("images/cell-background.png")
         
         -- Apply the walk-behind layer
-        slime.layer("images/cell-background.png", "images/cell-layer.png", 50)
+        slime:layer("images/cell-background.png", "images/cell-layer.png", 50)
         
         -- Set the floor
-        slime.floor("images/cell-floor-closed.png")
+        slime:floor("images/cell-floor-closed.png")
         
         -- Add our main actor
         addEgoActor (70, 50)
@@ -355,16 +357,16 @@ A hotspot is a region on the stage that the player can interact with. We create 
     function setupStage ()
         ...
         local x, y, width, height = 92, 23, 8, 8
-        slime.hotspot ("hole", x, y, width, height)
+        slime:hotspot ("hole", x, y, width, height)
     end
 
-To make Ego say something when the player interacts (clicks) on the hole, we call `slime.interact` in `mousepressed`:
+To make Ego say something when the player interacts (clicks) on the hole, we call `slime:interact` in `mousepressed`:
 
     function love.mousepressed(x, y, button)
         ...
         if button == "l" then
-            slime.moveActor ("ego", x, y)
-            slime.interact (x, y)
+            slime:moveActor ("ego", x, y)
+            slime:interact (x, y)
         end
     end
 
@@ -373,7 +375,7 @@ And we must subscribe to SLIME notifications:
     function myStageCallback (event, object)
         if (event == "interact") then
             if (object.name == "hole") then
-                slime.addSpeech ("ego", "I see a hole in the wall")
+                slime:addSpeech ("ego", "I see a hole in the wall")
             end
         end
     end
@@ -391,11 +393,11 @@ Ego moves and talks at the same time, not quite the effect we want. We want Ego 
 
     function myStageCallback (event, object)
         if (event == "moved" and object.name == "ego") then
-            slime.interact (object.clickedX, object.clickedY)
+            slime:interact (object.clickedX, object.clickedY)
         end
         if (event == "interact") then
             if (object.name == "hole") then
-                slime.addSpeech ("ego", "I see a hole in the wall")
+                slime:addSpeech ("ego", "I see a hole in the wall")
             end
         end
     end
@@ -412,8 +414,8 @@ Let's add a "bowl and spoon" actor to the stage, when the player clicks on the b
     
     function setupStage ()
         ..
-        local bowl = slime.actor("bowl and spoon")
-        slime.addImage ("bowl and spoon", "images/bowl1.png")
+        local bowl = slime:actor("bowl and spoon")
+        slime:addImage ("bowl and spoon", "images/bowl1.png")
         bowl.x = 65
         bowl.y = 37
     end
@@ -422,11 +424,11 @@ Let's add a "bowl and spoon" actor to the stage, when the player clicks on the b
         ...
         if (event == "interact") then
             if (object.name == "bowl and spoon") then
-                slime.turnActor ("ego", "south")
-                slime.bagInsert ("ego", { ["name"] = "bowl", ["image"] = "images/bowl2.png" })
-                slime.bagInsert ("ego", { ["name"] = "spoon", ["image"] = "images/spoon.png" })
+                slime:turnActor ("ego", "south")
+                slime:bagInsert ("ego", { ["name"] = "bowl", ["image"] = "images/bowl2.png" })
+                slime:bagInsert ("ego", { ["name"] = "spoon", ["image"] = "images/spoon.png" })
                 -- Remove the bowl and spoon actor from the stage
-                slime.actors["bowl and spoon"] = nil
+                slime:actors["bowl and spoon"] = nil
             end
             ...
 
@@ -438,9 +440,9 @@ You will see the SLIME debug log says "Added bowl to bag ego". This is the first
 
 Each game differs how inventory is displayed, and all that control is in your hands. All you need to know is:
 
-* The `slime.bagContents("ego")` function gets you the contents of the "ego" bag.
+* The `slime:bagContents("ego")` function gets you the contents of the "ego" bag.
 * The `slime.inventoryChanged (bag)` callback notifies you when a bag contents has changed.
-* The `slime.bagButton ( )` function adds an interactive hotspot for bag items.
+* The `slime:bagButton ( )` function adds an interactive hotspot for bag items.
 
 Hold on to your socks!
 
@@ -449,8 +451,8 @@ Hold on to your socks!
 
     function slime.inventoryChanged ( )
         slime.bagButtons = { }
-        for counter, item in pairs(slime.bagContents("ego")) do
-            slime.bagButton (item.name, item.image, counter * 10, bagPosition)
+        for counter, item in pairs(slime:bagContents("ego")) do
+            slime:bagButton (item.name, item.image, counter * 10, bagPosition)
         end
     end
 
@@ -459,10 +461,10 @@ And skip actor movement if the mouse was clicked in the "bag" zone:
     function love.mousepressed(x, y, button)
         ...
         if (y > bagPosition) then 
-            slime.interact (x, y)
+            slime:interact (x, y)
         else
             -- Move Ego then interact with any objects
-            slime.moveActor ("ego", x, y)
+            slime:moveActor ("ego", x, y)
         end
 
 ![screen 8](tutorial-images/screen8.gif)
