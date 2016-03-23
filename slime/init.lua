@@ -13,7 +13,7 @@ local slime = {
   _LICENSE     = [[
     MIT LICENSE
 
-    Copyright (c) 2011 Enrique García Cota
+    Copyright (c) 2016 Wesley Werner
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the
