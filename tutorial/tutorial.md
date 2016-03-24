@@ -477,13 +477,34 @@ But what just happened?
 2. SLIME draws the buttons for us.
 3. `slime.callback` notifies us with an "interact" event when the player clicks on a button. Just like a hotspot.
 
-## 
+## Using inventory items on hotspots
+
+Now that we receive the interact event for the spoon object in `slime.callback`, we can tell slime to wield the inventory item as a cursor.
+
+    function slime.callback (event, object)
+        ...
+
+        -- Set the cursor when interacting on bag items
+        if (object.name == "spoon") then
+            slime:setCursor (object.name, object.image, scale, 0, 0)
+        end
+    end
+    
+This changes the mouse cursor to the spoon image. What is more, any time after after you call `slime:interact (x, y)`, instead of the "interact" event you will get a "spoon" event, along with the object clicked on.
+
+    slime.callback (event, object)
+        -- event is the cursor name
+        if (event == "spoon" and object.name == "door") then
+            slime:addSpeech ("ego", "The spoon won't open this door")
+        end
+    end
+
+Call `slime:setCursor()` with no arguments to use the default cursor.
 
 # TODO
 
 Tutorial sections still in progress
 
-* Using inventory items on hotspots
 * Adding NPCs
 * A dialogue example
 

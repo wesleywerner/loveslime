@@ -142,6 +142,11 @@ function love.mousepressed(x, y, button)
 
     end
     
+    -- Right clicks uses the default cursor
+    if button == "r" then
+        slime:setCursor()
+    end
+    
 end
 
 function addCellDoor (x, y)
