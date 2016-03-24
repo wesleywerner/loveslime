@@ -19,6 +19,7 @@ The name is an acronym for "SLUDGE to L&Ouml;VE Inspired Mimicry Environment".
 
 **TODO**  
 
+* Document slime.setAnimation (self, name, key)
 * Replace the `addAnimation` callback with a serializable solution
 * Tutorial
 * Tidy function parameter names
@@ -185,6 +186,10 @@ This is for adding custom animations.
 * The `frames` and `delays` are the frames and delays for the animation.
 * If you give the `onLoop` value as a function, it will be called when the animation loops.
 
+**Returns**
+
+The Anim8 animation object.
+
 ![func](api/func.png) `slime.moveActor (name, x, y)`
 
 Move an actor. There has to be a valid floor set for movement to find a path.
@@ -289,6 +294,19 @@ SLIME offers these settings to customize your game:
     slime.settings["status font size"] = 12     -- The font size for status text
     slime.settings["speech position"] = 0       -- The Y position to print speech
     slime.settings["speech font size"] = 10     -- The font size for speech
+
+---
+
+# CODE SNIPPETS
+
+## Flip the frames on a custom animation
+
+The `addAnimation` call returns the Anim8 object which has flip functions:
+
+    local myanim = slime:addAnimation("ego", "dig", "images/ego.png", tileSize, tileSize, {"22-25", 1}, 0.2)
+    myanim:flipH()  -- flips horizontally
+    myanim:flipV()  -- flips vertically
+
 
 ---
 
