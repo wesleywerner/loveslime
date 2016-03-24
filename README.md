@@ -7,6 +7,29 @@ The name is an acronym for "SLUDGE to L&Ouml;VE Inspired Mimicry Environment".
 **Status:** In Development  
 **Version:** 0.1  
 
+---
+
+1. [Features](#features)
+1. [Thanks](#thanks)
+1. [API Reference](#slime-api)
+    1. [Notes and Terminology](#notes)
+    1. [Stage setup](#stage-setup)
+    1. [Reset](#reset)
+    1. [Backgrounds](#backgrounds)
+    1. [Layers](#layers)
+    1. [Actors](#actors)
+    1. [Hotspots](#hotspots)
+    1. [Status](#status)
+    1. [Drawing](#drawing)
+    1. [Speech](#speech)
+    1. [Bags](#bags)
+    1. [Cursors](#cursors)
+    1. [Settings](#settings)
+1. [Code Snippets](#code-snippets)
+1. [License](#license)
+
+---
+
 # Features
 
 * Animated backgrounds
@@ -236,7 +259,7 @@ Update animated backgrounds, actor movements and animations.
 
 Draw the scene to the display. The `scale` parameter defaults to 1, and is only needed if you called `love.graphics.scale` before calling this function.
 
-## Actor Speech
+## Speech
 
 You can queue multiple speeches at once, the actor animation will change to "talk" and the words will print on screen.
 
