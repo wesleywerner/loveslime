@@ -44,6 +44,10 @@ function setupStage ()
     -- Add our main actor
     addEgoActor (70, 50)
     
+    -- Ego animation using the spoon to dig
+    local tileSize = 12
+    slime:addAnimation("ego", "dig", "images/ego.png", tileSize, tileSize, {"22-25", 1}, 0.2, nil):flipH()
+    
     -- Add the cell door
     addCellDoor (50, 49)
     
@@ -164,20 +168,10 @@ function addCellDoor (x, y)
     local openingFrames = {"1-31", 1}
     local closingFrames = {"31-1", 1}
     
-    -- Keep the door open after the opening animation played.
-    local function onOpeningLoop ()
-        slime:setAnimation ("door", "open")
-    end
-    
-    -- Keep the door closed after the closing animation played.
-    local function onClosingLoop ()
-        slime:setAnimation ("door", "closed")
-    end
-    
     -- Add the animations. Both the closing and opening have callbacks set.
-    slime:addAnimation ("door", "closing", "images/cell-door.png", frameWidth, frameHeight, closingFrames, animationDelay, onClosingLoop)
+    slime:addAnimation ("door", "closing", "images/cell-door.png", frameWidth, frameHeight, closingFrames, animationDelay)
     slime:addAnimation ("door", "closed", "images/cell-door.png", frameWidth, frameHeight, closedFrame, animationDelay)
-    slime:addAnimation ("door", "opening", "images/cell-door.png", frameWidth, frameHeight, openingFrames, animationDelay, onOpeningLoop)
+    slime:addAnimation ("door", "opening", "images/cell-door.png", frameWidth, frameHeight, openingFrames, animationDelay)
     slime:addAnimation ("door", "open", "images/cell-door.png", frameWidth, frameHeight, openFrame, animationDelay)
     
     -- Start off closed
@@ -238,6 +232,12 @@ function myStageCallback (event, object)
         slime:addSpeech ("ego", "The spoon won't open this door")
     end
     
+    if (event == "spoon" and object.name == "hole") then
+        slime:turnActor ("ego", "east")
+        slime:setAnimation ("ego", "dig")
+    end
+    
+    
 end
 
 -- Clear and reposition the clickable buttons for the bag (inventory)
@@ -247,6 +247,30 @@ function slime.inventoryChanged (bag)
     for counter, item in pairs(slime:bagContents("ego")) do
         slime:bagButton (item.name, item.image, counter * 10, bagPosition)
     end
+end
+
+function slime.animationLooped (actor, key, counter)
+    
+    if actor == "ego" then
+        if key == "dig" and counter == 3 then
+            slime:setAnimation("ego", nil)
+        end
+    end
+    
+    if actor == "door" then
+        
+        -- Keep the door closed after the closing animation played.
+        if key == "closing" then
+            slime:setAnimation ("door", "closed")
+        end
+        
+        -- Keep the door open after the opening animation played.
+        if key == "opening" then
+            slime:setAnimation ("door", "open")
+        end
+        
+    end
+    
 end
 
 -- **

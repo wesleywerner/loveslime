@@ -72,6 +72,9 @@ end
 function slime.callback (event, object)
 end
 
+function slime.animationLooped (actor, key, counter)
+end
+
 --                       _      
 --    ___  ___ ___ _ __ (_) ___ 
 --   / __|/ __/ _ \ '_ \| |/ __|
@@ -204,6 +207,15 @@ function slime.actor (self, name, x, y, staticImage)
     return newActor
 end
 
+-- Internal callback fired on any animation loop
+function slime.internalAnimationLoop (anim, counter)
+    anim.slimeloopcounter = anim.slimeloopcounter + 1
+    if anim.slimeloopcounter > 255 then
+        anim.slimeloopcounter = 0
+    end
+    slime.animationLooped (anim.slimeactor, anim.slimeanimationkey, anim.slimeloopcounter)
+end
+
 -- Helper functions to batch build actor animations
 function slime.idleAnimation (self, name, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
     self:prefabAnimation ("idle", name, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
@@ -235,7 +247,7 @@ function slime.prefabAnimation (self, prefix, name, tileset, w, h, south, southd
 end
 
 -- Create a custom animation.
-function slime.addAnimation (self, name, key, tileset, w, h, frames, delays, onLoop)
+function slime.addAnimation (self, name, key, tileset, w, h, frames, delays)
 
     local actor = self.actors[name]
     
@@ -257,7 +269,10 @@ function slime.addAnimation (self, name, key, tileset, w, h, frames, delays, onL
     actor["base"] = { w/2, h }
     
     local g = anim8.newGrid(w, h, image:getWidth(), image:getHeight())
-    local animation = anim8.newAnimation(g(unpack(frames)), delays, onLoop)
+    local animation = anim8.newAnimation(g(unpack(frames)), delays, slime.internalAnimationLoop)
+    animation.slimeactor = name
+    animation.slimeanimationkey = key
+    animation.slimeloopcounter = 0
     
     actor.animations[key] = { 
         ["tileset"] = tileset,
@@ -279,8 +294,11 @@ function slime.setAnimation (self, name, key)
         self:log ("Set animation failed: no actor named " .. name)
     else
         actor.customAnimationKey = key
+        -- reset the animation counter
+        local anim = actor:getAnim()
+        if anim and anim["animation"] then anim["animation"].slimeloopcounter = 0 end
     end
-    
+        
 end
 
 -- Set a static image as an actor's sprite.
