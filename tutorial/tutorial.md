@@ -280,22 +280,20 @@ Following the "actor as a function" approach:
         -- A series of frames that open or close the door
         local openingFrames = {"1-31", 1}
         local closingFrames = {"31-1", 1}
-        
-        -- Keep the door open after the opening animation played.
-        local function onOpeningLoop ()
-            slime:setAnimation ("door", "open")
-        end
-        
-        -- Keep the door closed after the closing animation played.
-        local function onClosingLoop ()
-            slime:setAnimation ("door", "closed")
-        end
-        
+
         -- Add the animations. Both the closing and opening have callbacks set.
-        slime:addAnimation ("door", "closing", "images/cell-door.png", frameWidth, frameHeight, closingFrames, animationDelay, onClosingLoop)
-        slime:addAnimation ("door", "closed", "images/cell-door.png", frameWidth, frameHeight, closedFrame, animationDelay)
-        slime:addAnimation ("door", "opening", "images/cell-door.png", frameWidth, frameHeight, openingFrames, animationDelay, onOpeningLoop)
-        slime:addAnimation ("door", "open", "images/cell-door.png", frameWidth, frameHeight, openFrame, animationDelay)
+        slime:addAnimation ("door", "closing", 
+            "images/cell-door.png", frameWidth, frameHeight, 
+            closingFrames, animationDelay)
+        slime:addAnimation ("door", "closed", 
+            "images/cell-door.png", frameWidth, frameHeight, 
+            closedFrame, animationDelay)
+        slime:addAnimation ("door", "opening", 
+            "images/cell-door.png", frameWidth, frameHeight, 
+            openingFrames, animationDelay)
+        slime:addAnimation ("door", "open", 
+            "images/cell-door.png", frameWidth, frameHeight, 
+            openFrame, animationDelay)
         
         -- Start off closed
         slime:setAnimation ("door", "closed")
@@ -316,15 +314,33 @@ Following the "actor as a function" approach:
 
     end
 
+    function slime.animationLooped (actor, key, counter)
+    
+        if actor == "door" then
+            
+            -- Keep the door closed after the closing animation played.
+            if key == "closing" then
+                slime:setAnimation ("door", "closed")
+            end
+            
+            -- Keep the door open after the opening animation played.
+            if key == "opening" then
+                slime:setAnimation ("door", "open")
+            end
+            
+        end
+        
+    end
+
 If you noticed in the `addCellDoor` function, we do not use the the "idle" or "walk" animations. We add custom animations using `addAnimation`, and then we set the starting animation (albeit a single framed one) with `slime:setAnimation ("door", "closed")`.
 
-The "closing" and "opening" animations also receive a "onLoop" callback: when the animation ends we use `setAnimation` to fix the door in it's closed or open state. We do this otherwise the animation will loop, and that will just look silly.
+To prevent the door animations from looping, we hook into the `slime.animationLooped` callback, and set the door to the single-framed open or closed animations.
 
-Finally, I added two helper functions `closeCellDoor ()` and `openCellDoor ()` to easily set the door animation and toggle the floor mask so that actors can walk out. We will use these functions very soon.
+Finally, I added two helper functions `closeCellDoor` and `openCellDoor` to easily set the door animation and toggle the floor mask so that actors can walk out. We will use these functions very soon.
 
-![floor closed mask](images/cell-floor-closed.png)  
+![floor closed mask](images/cell-floor-closed.png) ![floor open mask](images/cell-floor-open.png)  
 
-Here is our complete stage function with the door:
+Here is our updated stage setup:
 
     function setupStage ()
 

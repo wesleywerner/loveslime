@@ -14,6 +14,7 @@ The name is an acronym for "SLUDGE to L&Ouml;VE Inspired Mimicry Environment".
 1. [API Reference](#slime-api)
     1. [Notes and Terminology](#notes)
     1. [Stage setup](#stage-setup)
+    1. [Callbacks](#callbacks)
     1. [Reset](#reset)
     1. [Backgrounds](#backgrounds)
     1. [Layers](#layers)
@@ -43,7 +44,6 @@ The name is an acronym for "SLUDGE to L&Ouml;VE Inspired Mimicry Environment".
 **TODO**  
 
 * Document slime.setAnimation (self, name, key)
-* Replace the `addAnimation` callback with a serializable solution
 * Tutorial
 * Tidy function parameter names
 
@@ -112,6 +112,10 @@ A basic stage setup might look like this:
         end
     end
 
+## Callbacks
+
+These SLIME callbacks trigger on certain game events.
+
 ![func](api/func.png) `slime.callback (event, object)`
 
 This callback notifies you when an actor has moved, or the player interacts something.
@@ -133,6 +137,22 @@ These may be different than the actor's actual `x` and `y` if the floor does not
 ![func](api/func.png) `slime.inventoryChanged (bag)`
 
 This callback notifies you when a bag's content has changed. The name of the bag is passed.
+
+![func](api/func.png) `slime.animationLooped (actor, key, counter)`
+
+Called when an actor's animation loops. 
+
+**actor**:
+
+This is the name of the actor whose animation has looped.
+
+**key**:
+
+This is the key of the animation that looped.
+
+**counter**:
+
+This is the number of times the animation has looped.
 
 ## Reset
 
@@ -199,7 +219,7 @@ Notes:
 * Only `south` and `southd` parameters are mandatory. If the rest are omitted then south will be used as the default for all directions.
 * If a `west` parameter is given, and `east` is `nil` or omitted, then the west animation will automatically be mirrored and used for the `east`.
 
-![func](api/func.png) `slime.addAnimation (name, key, tileset, w, h, frames, delays [,onLoop])`  
+![func](api/func.png) `slime.addAnimation (name, key, tileset, w, h, frames, delays)`  
 
 This is for adding custom animations.
 
@@ -207,7 +227,6 @@ This is for adding custom animations.
 * The `key` is the animation key.
 * The `w` and `h` are the width and height of each frame.
 * The `frames` and `delays` are the frames and delays for the animation.
-* If you give the `onLoop` value as a function, it will be called when the animation loops.
 
 **Returns**
 
@@ -330,6 +349,21 @@ The `addAnimation` call returns the Anim8 object which has flip functions:
     myanim:flipH()  -- flips horizontally
     myanim:flipV()  -- flips vertically
 
+## One shot animations
+
+To animate an actor once, like an opening door, hook into the Animation Looped callback:
+
+
+    function slime.animationLooped (actor, key, counter)
+        
+        -- Keep the door closed after the closing animation played.
+        if actor == "door" and key == "closing" then
+            slime:setAnimation ("door", "closed")
+        end
+        
+    end
+
+Of course this assume you have added a "door" actor with the "closing" and "closed" custom animations.
 
 ---
 
