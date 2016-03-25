@@ -1,55 +1,31 @@
 slime = require ("slime")
 
--- Clicks below this point skip actor movement
-bagPosition = 86
+-- Begin defining our game stage, a jail cell
+local cell = {}
 
-function love.load()
-    -- Nearest image interpolation (pixel graphics, no anti-aliasing)
-    love.graphics.setDefaultFilter("nearest", "nearest", 1)
-    setupStage()
-end
-
-function love.draw ()
-    love.graphics.push ()
-    love.graphics.scale (scale)
-    slime:draw (scale)
-    love.graphics.pop ()
-    slime:debugdraw ()
-end
-
-function love.update(dt)
-    slime:update(dt)
-end
-
-function love.keypressed(key, isrepeat)
-    if key == "escape" then
-        love.event.quit()
-    end
-end
-
-function setupStage ()
+function cell.setup ()
 
     -- Clear the stage
-    slime:reset ()
+    slime:reset()
 
     -- Add the background
-    slime:background ("images/cell-background.png")
+    slime:background("images/cell-background.png")
     
     -- Apply the walk-behind layer
-    slime:layer ("images/cell-background.png", "images/cell-layer.png", 50)
+    slime:layer("images/cell-background.png", "images/cell-layer.png", 50)
     
     -- Set the floor
-    slime:floor ("images/cell-floor-closed.png")
+    slime:floor("images/cell-floor-closed.png")
     
     -- Add our main actor
-    addEgoActor (70, 50)
+    cell.addEgoActor(70, 50)
     
     -- Add the cell door
-    addCellDoor (50, 49)
+    cell.addCellDoor(50, 49)
     
     -- Hole in the wall
     local x, y, width, height = 92, 23, 8, 8
-    slime:hotspot ("hole", x, y, width, height)
+    slime:hotspot("hole", x, y, width, height)
 
     -- Bowl and spoon
     local bowl = slime:actor("bowl and spoon")
@@ -57,14 +33,17 @@ function setupStage ()
     bowl.y = 37
     bowl:setImage("images/bowl1.png")
     
-    slime.callback = myStageCallback
+    -- Hook into the slime callbacks
+    slime.callback = cell.callback
+    slime.inventoryChanged = cell.inventoryChanged
+    slime.animationLooped = cell.animationLooped
     
 end
 
-function addEgoActor (x, y)
+function cell.addEgoActor (x, y)
 
     -- Add an actor named "ego"
-    local ego = slime:actor ("ego", x, y)
+    local ego = slime:actor("ego", x, y)
     
     -- The time between actor steps. More delay means slower steps.
     ego.movedelay = 0.05
@@ -119,38 +98,8 @@ function addEgoActor (x, y)
 
 end
 
--- Left clicking moves our Ego actor, and interacts with objects.
-function love.mousepressed(x, y, button)
 
-    -- Adjust for scale
-    x = math.floor(x / scale)
-    y = math.floor(y / scale)
-
-    -- Left mouse button
-    if button == "l" then
-    
-        -- The point is in our bag inventory area
-        if (y > bagPosition) then 
-            slime:interact (x, y)
-        else
-            if slime:someoneTalking() then
-                slime:skipSpeech()
-            else
-                -- Move Ego then interact with any objects
-                slime:moveActor ("ego", x, y)
-            end
-        end
-
-    end
-    
-    -- Right clicks uses the default cursor
-    if button == "r" then
-        slime:setCursor()
-    end
-    
-end
-
-function addCellDoor (x, y)
+function cell.addCellDoor (x, y)
 
     -- Add the door as an actor
     local cellDoor = slime:actor("door", x, y)
@@ -172,30 +121,30 @@ function addCellDoor (x, y)
     doorAnim:define("open", openFrame)
         
     -- Start off closed
-    slime:setAnimation ("door", "closed")
+    slime:setAnimation("door", "closed")
 
 end
 
-function openCellDoor ()
+function cell.openCellDoor ()
 
-    slime:setAnimation ("door", "opening")
+    slime:setAnimation("door", "opening")
     slime:floor("images/cell-floor-open.png")
 
 end
 
-function closeCellDoor ()
+function cell.closeCellDoor ()
 
-    slime:setAnimation ("door", "closing")
+    slime:setAnimation("door", "closing")
     slime:floor("images/cell-floor-closed.png")
 
 end
 
-function myStageCallback (event, object)
+function cell.callback (event, object)
 
-    slime:log (event .. " on " .. object.name)
+    slime:log(event .. " on " .. object.name)
 
     if (event == "moved" and object.name == "ego") then
-        slime:interact (object.clickedX, object.clickedY)
+        slime:interact(object.clickedX, object.clickedY)
     end
     
     if (event == "interact") then
@@ -203,50 +152,49 @@ function myStageCallback (event, object)
         -- give ego a bowl and a spoon inventory items
         if (object.name == "bowl and spoon") then
             -- Face Ego to the player
-            slime:turnActor ("ego", "south")
+            slime:turnActor("ego", "south")
             -- Add items to Ego's bag
-            slime:bagInsert ("ego", { ["name"] = "bowl", ["image"] = "images/bowl2.png" })
-            slime:bagInsert ("ego", { ["name"] = "spoon", ["image"] = "images/spoon.png" })
+            slime:bagInsert("ego", { ["name"] = "bowl", ["image"] = "images/bowl2.png" })
+            slime:bagInsert("ego", { ["name"] = "spoon", ["image"] = "images/spoon.png" })
             -- Remove the bowl and spoon actor from the stage
             slime.actors["bowl and spoon"] = nil
         end
         
         -- Look at the hole in the wall
         if (object.name == "hole") then
-            slime:addSpeech ("ego", "I see a hole in the wall")
+            slime:addSpeech("ego", "I see a hole in the wall")
         end
         
         -- Set the cursor when interacting on bag items
         if (object.name == "spoon") then
-            slime:setCursor (object.name, object.image, scale, 0, 0)
+            slime:setCursor(object.name, object.image, scale, 0, 0)
         end
     
     end
     
     if (event == "spoon" and object.name == "door") then
-        slime:addSpeech ("ego", "The spoon won't open this door")
+        slime:addSpeech("ego", "The spoon won't open this door")
     end
     
     if (event == "spoon" and object.name == "hole") then
-        slime:turnActor ("ego", "east")
-        slime:setAnimation ("ego", "dig")
+        slime:turnActor("ego", "east")
+        slime:setAnimation("ego", "dig")
     end
     
 end
 
 -- Clear and reposition the clickable buttons for the bag (inventory)
 -- when it has items added or removed.
-function slime.inventoryChanged (bag)
+function cell.inventoryChanged (bag)
     slime.bagButtons = { }
     for counter, item in pairs(slime:bagContents("ego")) do
-        slime:bagButton (item.name, item.image, counter * 10, bagPosition)
+        slime:bagButton(item.name, item.image, counter * 10, bagPosition)
     end
 end
 
-function slime.animationLooped (actor, key, counter)
+function cell.animationLooped (actor, key, counter)
     
     if actor == "ego" then
-        slime:log(actor .. " " .. key .. " " .. tostring(counter))
         if key == "dig" and counter == 3 then
             slime:setAnimation("ego", nil)
         end
@@ -256,14 +204,74 @@ function slime.animationLooped (actor, key, counter)
         
         -- Keep the door closed after the closing animation played.
         if key == "closing" then
-            slime:setAnimation ("door", "closed")
+            slime:setAnimation("door", "closed")
         end
         
         -- Keep the door open after the opening animation played.
         if key == "opening" then
-            slime:setAnimation ("door", "open")
+            slime:setAnimation("door", "open")
         end
         
+    end
+    
+end
+
+-- Handle Love events
+
+-- Clicks below this point skip actor movement
+bagPosition = 86
+
+function love.load ()
+    -- Nearest image interpolation (pixel graphics, no anti-aliasing)
+    love.graphics.setDefaultFilter("nearest", "nearest", 1)
+    cell.setup()
+end
+
+function love.draw ()
+    love.graphics.push()
+    love.graphics.scale(scale)
+    slime:draw(scale)
+    love.graphics.pop()
+    slime:debugdraw()
+end
+
+function love.update (dt)
+    slime:update(dt)
+end
+
+function love.keypressed (key, isrepeat)
+    if key == "escape" then
+        love.event.quit()
+    end
+end
+
+-- Left clicking moves our Ego actor, and interacts with objects.
+function love.mousepressed (x, y, button)
+
+    -- Adjust for scale
+    x = math.floor(x / scale)
+    y = math.floor(y / scale)
+
+    -- Left mouse button
+    if button == "l" then
+    
+        -- The point is in our bag inventory area
+        if (y > bagPosition) then 
+            slime:interact(x, y)
+        else
+            if slime:someoneTalking() then
+                slime:skipSpeech()
+            else
+                -- Move Ego then interact with any objects
+                slime:moveActor("ego", x, y)
+            end
+        end
+
+    end
+    
+    -- Right clicks uses the default cursor
+    if button == "r" then
+        slime:setCursor()
     end
     
 end
