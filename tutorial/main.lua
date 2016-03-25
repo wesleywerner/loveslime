@@ -44,10 +44,6 @@ function setupStage ()
     -- Add our main actor
     addEgoActor (70, 50)
     
-    -- Ego animation using the spoon to dig
-    local tileSize = 12
-    slime:addAnimation("ego", "dig", "images/ego.png", tileSize, tileSize, {"22-25", 1}, 0.2, nil):flipH()
-    
     -- Add the cell door
     addCellDoor (50, 49)
     
@@ -59,7 +55,7 @@ function setupStage ()
     local bowl = slime:actor("bowl and spoon")
     bowl.x = 65
     bowl.y = 37
-    bowl:Image("images/bowl1.png")
+    bowl:setImage("images/bowl1.png")
     
     slime.callback = myStageCallback
     
@@ -73,60 +69,54 @@ function addEgoActor (x, y)
     -- The time between actor steps. More delay means slower steps.
     ego.movedelay = 0.05
 
-    -- Set the actor's idle animation parameters.
-    -- The idle animation plays when the actor is not walking or talking.
-    -- This is a simple two-frame animation: Open eyes, then a blink every 3 seconds.
-    -- If we do not give East facing frames, the West frame will be
-    -- flipped for us automatically. So let us take advantage of that.
+    -- create a new animation pack for ego using a tileset of 12x12 frames
+    local egoAnim = ego:tileset("images/ego.png", {w=12, h=12})
     
-    local tileWidth = 12
-    local tileHeight = 12
+    -- Idle animation
+    -- The idle animation plays when the actor is not walking or talking:
+    -- a simple two-frame animation: Open eyes, and blink.
+    
     local southFrames = {'11-10', 1}
     local southDelays = {3, 0.2}
     local westFrames = {'3-2', 1}
     local westDelays = {3, 0.2}
     local northFrames = {18, 1}
     local northDelays = 1
-    local eastFrames = nil
-    local eastDelays = nil
-    slime:idleAnimation (
-        "ego", "images/ego.png",
-        tileWidth, tileHeight,
-        southFrames, southDelays,
-        westFrames, westDelays,
-        northFrames, northDelays,
-        eastFrames, eastDelays )
+    
+    egoAnim:define("idle south", southFrames, southDelays)
+    egoAnim:define("idle west", westFrames, westDelays)
+    egoAnim:define("idle north", northFrames, northDelays)
+    egoAnim:define("idle east", westFrames, westDelays):flip()
 
     -- Walk animation
-    local southFrames = {'11-14', 1}
-    local southDelays = 0.2
-    local westFrames = {'6-3', 1}
-    local westDelays = 0.2
-    local northFrames = {'18-21', 1}
-    local northDelays = 0.2
-    slime:walkAnimation (
-        "ego", "images/ego.png",
-        tileWidth, tileHeight,
-        southFrames, southDelays,
-        westFrames, westDelays,
-        northFrames, northDelays,
-        eastFrames, eastDelays )
-        
+    southFrames = {'11-14', 1}
+    southDelays = 0.2
+    westFrames = {'6-3', 1}
+    westDelays = 0.2
+    northFrames = {'18-21', 1}
+    northDelays = 0.2
+    
+    egoAnim:define("walk south", southFrames, southDelays)
+    egoAnim:define("walk west", westFrames, westDelays)
+    egoAnim:define("walk north", northFrames, northDelays)
+    egoAnim:define("walk east", westFrames, westDelays):flip()
+
     -- Talk animation
-    local southFrames = {'15-17', 1}
-    local southDelays = 0.2
-    local westFrames = {'7-9', 1}
-    local westDelays = 0.2
-    local northFrames = {'15-17', 1}
-    local northDelays = 0.2
-    slime:talkAnimation (
-        "ego", "images/ego.png",
-        tileWidth, tileHeight,
-        southFrames, southDelays,
-        westFrames, westDelays,
-        northFrames, northDelays,
-        eastFrames, eastDelays )
-                        
+    southFrames = {'15-17', 1}
+    southDelays = 0.2
+    westFrames = {'7-9', 1}
+    westDelays = 0.2
+    northFrames = {'15-17', 1}
+    northDelays = 0.2
+
+    egoAnim:define("talk south", southFrames, southDelays)
+    egoAnim:define("talk west", westFrames, westDelays)
+    egoAnim:define("talk north", northFrames, northDelays)
+    egoAnim:define("talk east", westFrames, westDelays):flip()
+    
+    -- Ego animation using the spoon to dig
+    egoAnim:define("dig", {"22-25", 1}, 0.2):flip()
+
 end
 
 -- Left clicking moves our Ego actor, and interacts with objects.
@@ -143,8 +133,12 @@ function love.mousepressed(x, y, button)
         if (y > bagPosition) then 
             slime:interact (x, y)
         else
-            -- Move Ego then interact with any objects
-            slime:moveActor ("ego", x, y)
+            if slime:someoneTalking() then
+                slime:skipSpeech()
+            else
+                -- Move Ego then interact with any objects
+                slime:moveActor ("ego", x, y)
+            end
         end
 
     end
@@ -161,7 +155,7 @@ function addCellDoor (x, y)
     -- Add the door as an actor
     local cellDoor = slime:actor("door", x, y)
 
-    -- Sprite size and frames
+    -- Sprite frames
     local frameWidth, frameHeight = 9, 30
     local animationDelay = 0.05
     -- A single frame that shows the door as open or closed
@@ -171,12 +165,12 @@ function addCellDoor (x, y)
     local openingFrames = {"1-31", 1}
     local closingFrames = {"31-1", 1}
     
-    -- Add the animations. Both the closing and opening have callbacks set.
-    slime:addAnimation ("door", "closing", "images/cell-door.png", frameWidth, frameHeight, closingFrames, animationDelay)
-    slime:addAnimation ("door", "closed", "images/cell-door.png", frameWidth, frameHeight, closedFrame, animationDelay)
-    slime:addAnimation ("door", "opening", "images/cell-door.png", frameWidth, frameHeight, openingFrames, animationDelay)
-    slime:addAnimation ("door", "open", "images/cell-door.png", frameWidth, frameHeight, openFrame, animationDelay)
-    
+    local doorAnim = cellDoor:tileset("images/cell-door.png", {w=9, h=30})
+    doorAnim:define("closing", closingFrames, animationDelay)
+    doorAnim:define("closed", closedFrame)
+    doorAnim:define("opening", openingFrames, animationDelay)
+    doorAnim:define("open", openFrame)
+        
     -- Start off closed
     slime:setAnimation ("door", "closed")
 
@@ -195,8 +189,6 @@ function closeCellDoor ()
     slime:floor("images/cell-floor-closed.png")
 
 end
-
--- **
 
 function myStageCallback (event, object)
 
@@ -240,7 +232,6 @@ function myStageCallback (event, object)
         slime:setAnimation ("ego", "dig")
     end
     
-    
 end
 
 -- Clear and reposition the clickable buttons for the bag (inventory)
@@ -255,6 +246,7 @@ end
 function slime.animationLooped (actor, key, counter)
     
     if actor == "ego" then
+        slime:log(actor .. " " .. key .. " " .. tostring(counter))
         if key == "dig" and counter == 3 then
             slime:setAnimation("ego", nil)
         end
@@ -275,6 +267,3 @@ function slime.animationLooped (actor, key, counter)
     end
     
 end
-
--- **
-

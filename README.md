@@ -186,51 +186,48 @@ The `baseline` is the y-position a character needs to be behind in order to be h
 
 Actors are items on your stage that may move or talk, like people, animals or robots. They can also be inanimate objects that may not move or talk but are animated, like doors, toasters and computers.
 
-![func](api/func.png) `slime.actor (name, x, y [, staticImage])`
+![func](api/func.png) `slime.actor (name, x, y)`
 
 Adds an actor to the stage. The actor object is returned:
 
     local boss = slime.actor ("Big Boss", 100, 100)
     boss.speechcolor = {255, 0, 0}     -- Set the speech color for this actor as {red, green, blue}
 
-The `staticImage` is optional, and only useful for non-animated actors.
+![func](api/func.png) `actor:setImage (path)`
 
-![func](api/func.png) `slime.addImage (name, image)`
+Sets a static (non-animated) image as the actor's sprite.
 
-Sets a static (non-animated) image as an actor's sprite. This is the same like passing a `staticImage` to `slime.actor`.
+![func](api/func.png) `actor:newAnim (tileset, size)`  
 
-![func](api/func.png) `slime.idleAnimation (name, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])`  
-![func](api/func.png) `slime.walkAnimation (name, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])`  
-![func](api/func.png) `slime.talkAnimation (name, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])`  
+Creates a new animation pack for the actor, and returns the animation object used to define animation frames.
 
-These are helper functions that in turn call `addAnimation` with the `keys` "idle", "walk" and "talk" respectively. 
+  * The `tileset` is the path to the image file.
+  * The `size` is the width and height of each frame as `{w, h}`.
 
-  * The `name` of the actor that was created via `slime.actor`
-  * The `tileset` is a file name.
-  * The `w` and `h` are the width and height of each frame.
-  * The `south` and `southd` are the frames and delays for the south-facing animation.
-  * The other directions are optional but recommended. `SOUTH` will be used as default if none of the other directions are given.
+    local egoAnim = ego:newAnim("images/ego.png", {w=12, h=12})
 
-The format of the `south` frames and delays follow the [anim8 library](https://github.com/kikito/anim8) convention. I recommend you go over there to read about the Frames format.
+![func](api/func.png) `animation:define (key, frames, delays)`  
 
-Notes:
+Defines an animation by a key and frames.
 
-* The `tileset` is a file name to the image tileset, they are cached for re-use. Multiple actors who use the same tileset will re-use the cached copies.
-* Only `south` and `southd` parameters are mandatory. If the rest are omitted then south will be used as the default for all directions.
-* If a `west` parameter is given, and `east` is `nil` or omitted, then the west animation will automatically be mirrored and used for the `east`.
+    local southFrames = {'11-10', 1}
+    local southDelays = {3, 0.2}
+    egoAnim:define("walk south", southFrames, southDelays)
 
-![func](api/func.png) `slime.addAnimation (name, key, tileset, w, h, frames, delays)`  
+The format of the frames and delays follow the [anim8 library](https://github.com/kikito/anim8) convention. I recommend you go over there to read about the Frames format.
 
-This is for adding custom animations.
+You can also mirror frames to create new animations for opposing directions:
 
-* The `name` of the actor that was created via `slime.actor`
-* The `key` is the animation key.
-* The `w` and `h` are the width and height of each frame.
-* The `frames` and `delays` are the frames and delays for the animation.
+    -- create an east facing animation by flipping the west frames
+    egoAnim:define("walk east", westFrames, westDelays):flip()
 
-**Returns**
+### Special Animation Keys
 
-The Anim8 animation object.
+Actor animations with these keys will automatically be used by the SLIME engine, where <direction> is replaced where the actor's facing, south, west, east or north.
+
+* "idle south": The actor is not speaking or walking. They are idle.
+* "walk south": The actor is moving.
+* "talk south": The actor is speaking.
 
 ![func](api/func.png) `slime.moveActor (name, x, y)`
 

@@ -201,87 +201,100 @@ function slime.actor (self, name, x, y)
     end
     
     -- set actor image method
-    newActor.Image = slime.Image
+    newActor.setImage = slime.setImage
+    
+    -- set the actor new animation method
+    newActor.tileset = slime.tileset
+    
+    -- set slime host reference
+    newActor.host = self
     
     return newActor
 end
 
 -- Internal callback fired on any animation loop
-function slime.internalAnimationLoop (anim, counter)
-    anim.slimeloopcounter = anim.slimeloopcounter + 1
-    if anim.slimeloopcounter > 255 then
-        anim.slimeloopcounter = 0
+function slime.internalAnimationLoop (frames, counter)
+    local pack = frames.pack
+    pack.loopcounter = pack.loopcounter + 1
+    if pack.loopcounter > 255 then
+        pack.loopcounter = 0
     end
-    slime.animationLooped (anim.slimeactor, anim.slimeanimationkey, anim.slimeloopcounter)
+    slime.animationLooped (pack.actor.name, pack.key, pack.loopcounter)
 end
 
--- Helper functions to batch build actor animations
-function slime.idleAnimation (self, name, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
-    self:prefabAnimation ("idle", name, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
-end
 
-function slime.walkAnimation (self, name, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
-    self:prefabAnimation ("walk", name, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
-end
-
-function slime.talkAnimation (self, name, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
-    self:prefabAnimation ("talk", name, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
-end
-
--- Create a prefabricated animation sequence of the cardinal directions.
--- Use the south direction (facing the player) as default if none of the other directions are given.
-function slime.prefabAnimation (self, prefix, name, tileset, w, h, south, southd, west, westd, north, northd, east, eastd)
-
-    self:addAnimation (name, prefix .. " south", tileset, w, h, south, southd)
-    self:addAnimation (name, prefix .. " west", tileset, w, h, west or south, westd or southd)
-    self:addAnimation (name, prefix .. " north", tileset, w, h, north or south, northd or southd)
-
-    -- if the east animations is empty, flip the west animation if there is one
-    if (not east and west) then
-        local eastAnim = self:addAnimation (name, prefix .. " east", tileset, w, h, east or west, eastd or westd)
-        eastAnim:flipH()
-    else
-        self:addAnimation (name, prefix .. " east", tileset, w, h, east or south, eastd or southd)
-    end
-end
-
--- Create a custom animation.
-function slime.addAnimation (self, name, key, tileset, w, h, frames, delays)
-
-    local actor = self.actors[name]
-    
-    if (not actor) then
-        self:log ("Add animation failed: no actor named " .. name)
-        return
-    end
+-- Cache a tileset image in slime, or return an already cached one.
+function slime.cache (self, path)
     
     -- cache tileset image to save loading duplicate images
-    local image = self.tilesets[tileset]
-    if (not self.tilesets[tileset]) then
-        image = love.graphics.newImage(tileset)
-        self.tilesets[tileset] = image
+    local image = self.tilesets[path]
+    
+    if not image then
+        image = love.graphics.newImage(path)
+        self.tilesets[path] = image
     end
+    
+    return image
+    
+end
+
+
+-- Helper method to add an animation to an actor
+function slime.tileset (self, tileset, size)
+    
+    local actor = self
+    
+    -- cache tileset image to save loading duplicate images
+    actor.host:cache(tileset)
 
     -- default actor hotspot to centered at the base of the image
-    actor["w"] = w
-    actor["h"] = h
-    actor["base"] = { w/2, h }
+    actor["w"] = size.w
+    actor["h"] = size.h
+    actor["base"] = { size.w / 2, size.h }
     
-    local g = anim8.newGrid(w, h, image:getWidth(), image:getHeight())
-    local animation = anim8.newAnimation(g(unpack(frames)), delays, slime.internalAnimationLoop)
-    animation.slimeactor = name
-    animation.slimeanimationkey = key
-    animation.slimeloopcounter = 0
+    return { actor = actor, tileset = tileset, size = size, define = slime.define }
+
+end
+
+-- A helper method to define frames against an animation object.
+function slime.define (self, key, frames, delays)
+
+    local anim = self
     
-    actor.animations[key] = { 
-        ["tileset"] = tileset,
-        ["animation"] = animation
-        }
+    local pack = {
+        actor = anim.actor, 
+        key = key, 
+        tileset = anim.tileset, 
+        loopcounter = 0,
+        flip = slime.animationPackFlip}
     
-    --actor.customAnimationKey = key
+    local image = anim.actor.host:cache(anim.tileset)
     
-    return animation
+    local g = anim8.newGrid(
+        anim.size.w, 
+        anim.size.h, 
+        image:getWidth(), 
+        image:getHeight())
     
+    pack.frames = anim8.newAnimation(
+        g(unpack(frames)), 
+        delays or 1,
+        slime.internalAnimationLoop)
+    
+    -- circular ref back
+    pack.frames.pack = pack
+        
+    -- store this animation object in the actor's animation table
+    anim.actor.animations[key] = pack
+    
+    return pack
+    
+end
+
+
+-- Helper method to flip defined animations
+function slime.animationPackFlip (self)
+    self.frames:flipH()
 end
 
 -- Set the animation of an actor
@@ -295,13 +308,13 @@ function slime.setAnimation (self, name, key)
         actor.customAnimationKey = key
         -- reset the animation counter
         local anim = actor:getAnim()
-        if anim and anim["animation"] then anim["animation"].slimeloopcounter = 0 end
+        if anim then anim.loopcounter = 0 end
     end
         
 end
 
 -- Set a static image as an actor's sprite.
-function slime.Image (self, image)
+function slime.setImage (self, image)
 
     local actor = self
     
@@ -319,10 +332,11 @@ end
 
 function slime.drawActor (self, actor)
 
-    local animation = actor:getAnim()
-    if (animation) then
-        local tileset = self.tilesets[animation["tileset"]]
-        animation["animation"]:draw(tileset, actor.x - actor.base[1], actor.y - actor.base[2])
+    local anim = actor:getAnim()
+    
+    if anim then
+        local tileset = self:cache(anim.tileset)
+        anim.frames:draw(tileset, actor.x - actor.base[1], actor.y - actor.base[2])
     elseif (actor.image) then
         love.graphics.draw(actor.image, actor.x - actor.base[1], actor.y - actor.base[2])
     else
@@ -757,8 +771,8 @@ function slime.update (self, dt)
     for iactor, actor in pairs(self.actors) do
         self:moveActorOnPath (actor, dt)
         local anim = actor:getAnim()
-        if (anim and anim["animation"]) then
-            anim["animation"]:update(dt)
+        if anim then
+            anim.frames:update(dt)
         end
     end
     
