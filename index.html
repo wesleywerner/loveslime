@@ -29,7 +29,7 @@
     <div class="container">
       <section id="main_content">
         <h1>
-<a id="slime" class="anchor" href="#slime" aria-hidden="true"><span class="octicon octicon-link"></span></a>SLIME</h1>
+<a id="slime" class="anchor" href="#slime" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>SLIME</h1>
 
 <p>SLIME is a point-and-click adventure game library for LÖVE. It is inspired by the <a href="https://opensludge.github.io/">SLUDGE game engine</a>.</p>
 
@@ -38,8 +38,39 @@
 <p><strong>Status:</strong> In Development<br>
 <strong>Version:</strong> 0.1  </p>
 
+<hr>
+
+<ol>
+<li><a href="#features">Features</a></li>
+<li><a href="#thanks">Thanks</a></li>
+<li>
+<a href="#slime-api">API Reference</a>
+
+<ol>
+<li><a href="#notes">Notes and Terminology</a></li>
+<li><a href="#stage-setup">Stage setup</a></li>
+<li><a href="#callbacks">Callbacks</a></li>
+<li><a href="#reset">Reset</a></li>
+<li><a href="#backgrounds">Backgrounds</a></li>
+<li><a href="#layers">Layers</a></li>
+<li><a href="#actors">Actors</a></li>
+<li><a href="#hotspots">Hotspots</a></li>
+<li><a href="#status">Status</a></li>
+<li><a href="#drawing">Drawing</a></li>
+<li><a href="#speech">Speech</a></li>
+<li><a href="#bags">Bags</a></li>
+<li><a href="#cursors">Cursors</a></li>
+<li><a href="#settings">Settings</a></li>
+</ol>
+</li>
+<li><a href="#code-snippets">Code Snippets</a></li>
+<li><a href="#license">License</a></li>
+</ol>
+
+<hr>
+
 <h1>
-<a id="features" class="anchor" href="#features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Features</h1>
+<a id="features" class="anchor" href="#features" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Features</h1>
 
 <ul>
 <li>Animated backgrounds</li>
@@ -54,13 +85,13 @@
 <p><strong>TODO</strong>  </p>
 
 <ul>
-<li>Replace the <code>addAnimation</code> callback with a serializable solution</li>
+<li>Document slime.setAnimation (self, name, key)</li>
 <li>Tutorial</li>
 <li>Tidy function parameter names</li>
 </ul>
 
 <h1>
-<a id="thanks" class="anchor" href="#thanks" aria-hidden="true"><span class="octicon octicon-link"></span></a>Thanks</h1>
+<a id="thanks" class="anchor" href="#thanks" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Thanks</h1>
 
 <p>I want to thank these people for making use of their code:</p>
 
@@ -76,7 +107,7 @@
 <hr>
 
 <h1>
-<a id="slime-api" class="anchor" href="#slime-api" aria-hidden="true"><span class="octicon octicon-link"></span></a>SLIME API</h1>
+<a id="slime-api" class="anchor" href="#slime-api" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>SLIME API</h1>
 
 <p>This API reference lists the available functionality of SLIME. You should read the <a href="https://github.com/wesleywerner/loveslime/blob/master/tutorial/tutorial.md">SLIME tutorial</a> to see an example how these are used.</p>
 
@@ -86,7 +117,7 @@
 </code></pre>
 
 <h2>
-<a id="notes" class="anchor" href="#notes" aria-hidden="true"><span class="octicon octicon-link"></span></a>Notes</h2>
+<a id="notes" class="anchor" href="#notes" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Notes</h2>
 
 <ul>
 <li>The cardinal directions are oriented so that <code>SOUTH</code> points to the bottom of your screen, and <code>NORTH</code> to the top. So an actor facing <code>SOUTH</code> is looking at the player.</li>
@@ -94,7 +125,7 @@
 </ul>
 
 <h2>
-<a id="terminology" class="anchor" href="#terminology" aria-hidden="true"><span class="octicon octicon-link"></span></a>Terminology</h2>
+<a id="terminology" class="anchor" href="#terminology" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Terminology</h2>
 
 <ul>
 <li>Stage: A room or game screen.</li>
@@ -106,7 +137,7 @@
 </ul>
 
 <h2>
-<a id="stage-setup" class="anchor" href="#stage-setup" aria-hidden="true"><span class="octicon octicon-link"></span></a>Stage setup</h2>
+<a id="stage-setup" class="anchor" href="#stage-setup" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Stage setup</h2>
 
 <p>To set up your stage for play you need to clear objects, load a background, set the floor, add any layers, actors and hotspots.</p>
 
@@ -138,6 +169,11 @@ function myStageCallback (event, object)
 end
 </code></pre>
 
+<h2>
+<a id="callbacks" class="anchor" href="#callbacks" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Callbacks</h2>
+
+<p>These SLIME callbacks trigger on certain game events.</p>
+
 <p><img src="api/func.png" alt="func"> <code>slime.callback (event, object)</code></p>
 
 <p>This callback notifies you when an actor has moved, or the player interacts something.</p>
@@ -163,15 +199,31 @@ object.clickedY
 
 <p>This callback notifies you when a bag's content has changed. The name of the bag is passed.</p>
 
+<p><img src="api/func.png" alt="func"> <code>slime.animationLooped (actor, key, counter)</code></p>
+
+<p>Called when an actor's animation loops. </p>
+
+<p><strong>actor</strong>:</p>
+
+<p>This is the name of the actor whose animation has looped.</p>
+
+<p><strong>key</strong>:</p>
+
+<p>This is the key of the animation that looped.</p>
+
+<p><strong>counter</strong>:</p>
+
+<p>This is the number of times the animation has looped.</p>
+
 <h2>
-<a id="reset" class="anchor" href="#reset" aria-hidden="true"><span class="octicon octicon-link"></span></a>Reset</h2>
+<a id="reset" class="anchor" href="#reset" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Reset</h2>
 
 <p><img src="api/func.png" alt="func"> <code>slime.reset ()</code></p>
 
 <p>Clear the stage, actors and hotspots. Call this before setting up a new stage. Note that bags (inventories) are <em>not</em> cleared.</p>
 
 <h2>
-<a id="backgrounds" class="anchor" href="#backgrounds" aria-hidden="true"><span class="octicon octicon-link"></span></a>Backgrounds</h2>
+<a id="backgrounds" class="anchor" href="#backgrounds" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Backgrounds</h2>
 
 <p><img src="api/func.png" alt="func"> <code>slime.background (backgroundfilename, [, delay])</code></p>
 
@@ -182,7 +234,7 @@ object.clickedY
 <p>Set the floor where actors can walk. This is an image where black (<code>#000</code>) indicates non-walkable areas, and any other color for walkable.</p>
 
 <h2>
-<a id="layers" class="anchor" href="#layers" aria-hidden="true"><span class="octicon octicon-link"></span></a>Layers</h2>
+<a id="layers" class="anchor" href="#layers" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Layers</h2>
 
 <p>Layers define areas of your background where actors can walk behind.</p>
 
@@ -195,22 +247,23 @@ object.clickedY
 <p>The <code>baseline</code> is the y-position a character needs to be behind in order to be hidden by the layer.</p>
 
 <h2>
-<a id="actors" class="anchor" href="#actors" aria-hidden="true"><span class="octicon octicon-link"></span></a>Actors</h2>
+<a id="actors" class="anchor" href="#actors" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Actors</h2>
 
 <p>Actors are items on your stage that may move or talk, like people, animals or robots. They can also be inanimate objects that may not move or talk but are animated, like doors, toasters and computers.</p>
 
-<p><img src="api/func.png" alt="func"> <code>slime.actor (name)</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime.actor (name, x, y [, staticImage])</code></p>
 
-<p>Adds and returns an actor to the stage. After this call you need to give the actor a position and image/animation for it to become visible on the stage. These properties are available:</p>
+<p>Adds an actor to the stage. The actor object is returned:</p>
 
-<pre><code>actor.x = 50
-actor.y = 50
-actor.speechcolor = {255, 255, 255}     -- Set the speech color for this actor as {red, green, blue}
+<pre><code>local boss = slime.actor ("Big Boss", 100, 100)
+boss.speechcolor = {255, 0, 0}     -- Set the speech color for this actor as {red, green, blue}
 </code></pre>
+
+<p>The <code>staticImage</code> is optional, and only useful for non-animated actors.</p>
 
 <p><img src="api/func.png" alt="func"> <code>slime.addImage (name, image)</code></p>
 
-<p>Sets a static (non-animated) image as an actor's sprite.</p>
+<p>Sets a static (non-animated) image as an actor's sprite. This is the same like passing a <code>staticImage</code> to <code>slime.actor</code>.</p>
 
 <p><img src="api/func.png" alt="func"> <code>slime.idleAnimation (name, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])</code><br>
 <img src="api/func.png" alt="func"> <code>slime.walkAnimation (name, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])</code><br>
@@ -237,7 +290,7 @@ actor.speechcolor = {255, 255, 255}     -- Set the speech color for this actor a
 <li>If a <code>west</code> parameter is given, and <code>east</code> is <code>nil</code> or omitted, then the west animation will automatically be mirrored and used for the <code>east</code>.</li>
 </ul>
 
-<p><img src="api/func.png" alt="func"> <code>slime.addAnimation (name, key, tileset, w, h, frames, delays [,onLoop])</code>  </p>
+<p><img src="api/func.png" alt="func"> <code>slime.addAnimation (name, key, tileset, w, h, frames, delays)</code>  </p>
 
 <p>This is for adding custom animations.</p>
 
@@ -247,8 +300,11 @@ actor.speechcolor = {255, 255, 255}     -- Set the speech color for this actor a
 <li>The <code>key</code> is the animation key.</li>
 <li>The <code>w</code> and <code>h</code> are the width and height of each frame.</li>
 <li>The <code>frames</code> and <code>delays</code> are the frames and delays for the animation.</li>
-<li>If you give the <code>onLoop</code> value as a function, it will be called when the animation loops.</li>
 </ul>
+
+<p><strong>Returns</strong></p>
+
+<p>The Anim8 animation object.</p>
 
 <p><img src="api/func.png" alt="func"> <code>slime.moveActor (name, x, y)</code></p>
 
@@ -268,7 +324,7 @@ actor.speechcolor = {255, 255, 255}     -- Set the speech color for this actor a
 <p>Turns an Actor to face a direction, one of <code>south</code>, <code>west</code>, <code>north</code> or <code>east</code>.</p>
 
 <h2>
-<a id="hotspots" class="anchor" href="#hotspots" aria-hidden="true"><span class="octicon octicon-link"></span></a>Hotspots</h2>
+<a id="hotspots" class="anchor" href="#hotspots" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Hotspots</h2>
 
 <p><img src="api/func.png" alt="func"> <code>slime.hotspot (name, x, y, w, h)</code></p>
 
@@ -283,14 +339,14 @@ actor.speechcolor = {255, 255, 255}     -- Set the speech color for this actor a
 <p>Gets a table of objects under <code>x/y</code>, or <code>nil</code> if no object is found.</p>
 
 <h2>
-<a id="status" class="anchor" href="#status" aria-hidden="true"><span class="octicon octicon-link"></span></a>Status</h2>
+<a id="status" class="anchor" href="#status" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Status</h2>
 
 <p><img src="api/func.png" alt="func"> <code>slime.status (text)</code></p>
 
 <p>Set or unset the status bar text.</p>
 
 <h2>
-<a id="drawing" class="anchor" href="#drawing" aria-hidden="true"><span class="octicon octicon-link"></span></a>Drawing</h2>
+<a id="drawing" class="anchor" href="#drawing" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Drawing</h2>
 
 <p><img src="api/func.png" alt="func"> <code>slime.update (dt)</code></p>
 
@@ -301,7 +357,7 @@ actor.speechcolor = {255, 255, 255}     -- Set the speech color for this actor a
 <p>Draw the scene to the display. The <code>scale</code> parameter defaults to 1, and is only needed if you called <code>love.graphics.scale</code> before calling this function.</p>
 
 <h2>
-<a id="actor-speech" class="anchor" href="#actor-speech" aria-hidden="true"><span class="octicon octicon-link"></span></a>Actor Speech</h2>
+<a id="speech" class="anchor" href="#speech" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Speech</h2>
 
 <p>You can queue multiple speeches at once, the actor animation will change to "talk" and the words will print on screen.</p>
 
@@ -314,7 +370,7 @@ actor.speechcolor = {255, 255, 255}     -- Set the speech color for this actor a
 <p>Returns <code>true</code> if there is speech displaying.</p>
 
 <h2>
-<a id="bags" class="anchor" href="#bags" aria-hidden="true"><span class="octicon octicon-link"></span></a>Bags</h2>
+<a id="bags" class="anchor" href="#bags" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Bags</h2>
 
 <p>Bags are analogous to inventory. The bags system is very simple yet flexible: Each bag has a name and can hold multiple items. In this way it supports inventory for multiple actors.</p>
 
@@ -346,7 +402,18 @@ slime.bagInsert ("ego", theSpoon)
 <p>Add a hotspot with an image that draws on screen. </p>
 
 <h2>
-<a id="settings" class="anchor" href="#settings" aria-hidden="true"><span class="octicon octicon-link"></span></a>Settings</h2>
+<a id="cursors" class="anchor" href="#cursors" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Cursors</h2>
+
+<p><img src="api/func.png" alt="func"> <code>slime.setCursor (name, image, scale, hotx, hoty)</code></p>
+
+<p>Set a hardware cursor with scale applied.</p>
+
+<p>When you set a cursor, the <code>name</code> is passed back as the <code>event</code> parameter to <code>slime.callback()</code>. This makes it easy to check if the player is using a key on a door.</p>
+
+<p>Call with no parameters to set the default cursor.</p>
+
+<h2>
+<a id="settings" class="anchor" href="#settings" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Settings</h2>
 
 <p>SLIME offers these settings to customize your game:</p>
 
@@ -359,7 +426,39 @@ slime.settings["speech font size"] = 10     -- The font size for speech
 <hr>
 
 <h1>
-<a id="license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>LICENSE</h1>
+<a id="code-snippets" class="anchor" href="#code-snippets" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>CODE SNIPPETS</h1>
+
+<h2>
+<a id="flip-the-frames-on-a-custom-animation" class="anchor" href="#flip-the-frames-on-a-custom-animation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Flip the frames on a custom animation</h2>
+
+<p>The <code>addAnimation</code> call returns the Anim8 object which has flip functions:</p>
+
+<pre><code>local myanim = slime:addAnimation("ego", "dig", "images/ego.png", tileSize, tileSize, {"22-25", 1}, 0.2)
+myanim:flipH()  -- flips horizontally
+myanim:flipV()  -- flips vertically
+</code></pre>
+
+<h2>
+<a id="one-shot-animations" class="anchor" href="#one-shot-animations" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>One shot animations</h2>
+
+<p>To animate an actor once, like an opening door, hook into the Animation Looped callback:</p>
+
+<pre><code>function slime.animationLooped (actor, key, counter)
+
+    -- Keep the door closed after the closing animation played.
+    if actor == "door" and key == "closing" then
+        slime:setAnimation ("door", "closed")
+    end
+
+end
+</code></pre>
+
+<p>Of course this assume you have added a "door" actor with the "closing" and "closed" custom animations.</p>
+
+<hr>
+
+<h1>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>LICENSE</h1>
 
 <p>This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
