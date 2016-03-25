@@ -125,19 +125,48 @@ function cell.addCellDoor (x, y)
 
 end
 
-function cell.openCellDoor ()
 
+function cell.openCellDoor ()
     slime:setAnimation("door", "opening")
     slime:floor("images/cell-floor-open.png")
-
 end
+
 
 function cell.closeCellDoor ()
-
     slime:setAnimation("door", "closing")
     slime:floor("images/cell-floor-closed.png")
-
 end
+
+
+-- Picks up the spoon and place them in inventory
+function cell.pickUpSpoon ()
+    -- Face Ego to the player
+    slime:turnActor("ego", "south")
+    -- Add items to Ego's bag
+    slime:bagInsert("ego", { ["name"] = "bowl", ["image"] = "images/bowl2.png" })
+    slime:bagInsert("ego", { ["name"] = "spoon", ["image"] = "images/spoon.png" })
+    -- Remove the bowl and spoon actor from the stage
+    slime.actors["bowl and spoon"] = nil    
+end
+
+
+-- Picks up the cement dust
+function cell.pickUpDust ()
+    slime:bagInsert("ego", 
+        { ["name"] = "cement dust", ["image"] = "images/inv-dust.png" })
+    slime.actors["dust"] = nil    
+end
+
+
+-- Creates an animation of falling dust where ego digs into the wall
+function cell.addDustAnimation ()
+    local dustActor = slime:actor("dust", 96, 34)
+    local dustAnim = dustActor:tileset("images/dust.png", {w=5, h=6})
+    dustAnim:define("fall", {'1-14', 1}, 0.2)
+    dustAnim:define("still", {14, 1})
+    slime:setAnimation("dust", "fall")
+end
+
 
 function cell.callback (event, object)
 
@@ -147,41 +176,43 @@ function cell.callback (event, object)
         slime:interact(object.clickedX, object.clickedY)
     end
     
-    if (event == "interact") then
+    if event == "interact" then
     
         -- give ego a bowl and a spoon inventory items
-        if (object.name == "bowl and spoon") then
-            -- Face Ego to the player
-            slime:turnActor("ego", "south")
-            -- Add items to Ego's bag
-            slime:bagInsert("ego", { ["name"] = "bowl", ["image"] = "images/bowl2.png" })
-            slime:bagInsert("ego", { ["name"] = "spoon", ["image"] = "images/spoon.png" })
-            -- Remove the bowl and spoon actor from the stage
-            slime.actors["bowl and spoon"] = nil
+        if object.name == "bowl and spoon" then
+            cell.pickUpSpoon()
         end
         
         -- Look at the hole in the wall
-        if (object.name == "hole") then
+        if object.name == "hole" then
             slime:addSpeech("ego", "I see a hole in the wall")
         end
         
         -- Set the cursor when interacting on bag items
-        if (object.name == "spoon") then
+        if object.name == "spoon" then
             slime:setCursor(object.name, object.image, scale, 0, 0)
+        end
+        
+        if object.name == "dust" then
+            cell.pickUpDust()
         end
     
     end
     
-    if (event == "spoon" and object.name == "door") then
-        slime:addSpeech("ego", "The spoon won't open this door")
-    end
-    
-    if (event == "spoon" and object.name == "hole") then
-        slime:turnActor("ego", "east")
-        slime:setAnimation("ego", "dig")
+    if event == "spoon" then
+        if object.name == "door" then
+            slime:addSpeech("ego", "The spoon won't open this door")
+        end
+        if object.name == "hole" then
+            slime:turnActor("ego", "east")
+            slime:setAnimation("ego", "dig")
+            cell.addDustAnimation()
+            slime:setCursor()
+        end
     end
     
 end
+
 
 -- Clear and reposition the clickable buttons for the bag (inventory)
 -- when it has items added or removed.
@@ -192,13 +223,8 @@ function cell.inventoryChanged (bag)
     end
 end
 
+
 function cell.animationLooped (actor, key, counter)
-    
-    if actor == "ego" then
-        if key == "dig" and counter == 3 then
-            slime:setAnimation("ego", nil)
-        end
-    end
     
     if actor == "door" then
         
@@ -212,6 +238,11 @@ function cell.animationLooped (actor, key, counter)
             slime:setAnimation("door", "open")
         end
         
+    end
+    
+    if actor == "dust" then
+        slime:setAnimation("dust", "still")
+        slime:setAnimation("ego", nil)
     end
     
 end
@@ -237,6 +268,23 @@ end
 
 function love.update (dt)
     slime:update(dt)
+    
+    -- display hover over objects
+    local x, y = love.mouse.getPosition()
+    -- Adjust for scale
+    x = math.floor(x / scale)
+    y = math.floor(y / scale)
+    local objects = slime:getObjects(x, y)
+    if objects then
+        local items = ''
+        for _, hoverobject in pairs(objects) do
+            items = string.format("%s %s", hoverobject.name, items)
+        end
+        slime:status(items)
+    else
+        slime:status()
+    end
+    
 end
 
 function love.keypressed (key, isrepeat)
