@@ -431,7 +431,7 @@ Let's add a "bowl and spoon" actor to the stage, when the player clicks on the b
     function setupStage ()
         ..
         local bowl = slime:actor("bowl and spoon")
-        slime:addImage ("bowl and spoon", "images/bowl1.png")
+        bowl:Image("images/bowl1.png")
         bowl.x = 65
         bowl.y = 37
     end

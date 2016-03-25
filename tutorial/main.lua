@@ -56,7 +56,10 @@ function setupStage ()
     slime:hotspot ("hole", x, y, width, height)
 
     -- Bowl and spoon
-    local bowl = slime:actor("bowl and spoon", 65, 37, "images/bowl1.png")
+    local bowl = slime:actor("bowl and spoon")
+    bowl.x = 65
+    bowl.y = 37
+    bowl:Image("images/bowl1.png")
     
     slime.callback = myStageCallback
     

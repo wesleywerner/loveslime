@@ -158,7 +158,7 @@ end
 slime.actors = {}
 slime.tilesets = {}
 
-function slime.actor (self, name, x, y, staticImage)
+function slime.actor (self, name, x, y)
 
     -- Add an actor to the stage.
     -- Allows adding the same actor name multiple times, but only
@@ -200,9 +200,8 @@ function slime.actor (self, name, x, y, staticImage)
         self.actors[name] = newActor
     end
     
-    if (staticImage) then
-        self:addImage (name, staticImage)
-    end
+    -- set actor image method
+    newActor.Image = slime.Image
     
     return newActor
 end
@@ -302,12 +301,12 @@ function slime.setAnimation (self, name, key)
 end
 
 -- Set a static image as an actor's sprite.
-function slime.addImage (self, name, image)
+function slime.Image (self, image)
 
-    local actor = self.actors[name]
+    local actor = self
     
     if (not actor) then
-        self:log ("Add image failed: no actor named " .. name)
+        self:log ("slime.Image method should be called from an actor instance")
     else
         image = love.graphics.newImage(image)
         actor.image = image
