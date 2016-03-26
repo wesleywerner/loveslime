@@ -221,6 +221,10 @@ You can also mirror frames to create new animations for opposing directions:
     -- create an east facing animation by flipping the west frames
     egoAnim:define("walk east", westFrames, westDelays):flip()
 
+![property](api/prop.png) `actor.nozbuffer`
+
+Set this property to `true` if this actor draws above all layers.
+
 ### Special Animation Keys
 
 Actor animations with these keys will automatically be used by the SLIME engine, where <direction> is replaced where the actor's facing, south, west, east or north.

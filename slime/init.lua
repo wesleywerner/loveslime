@@ -815,7 +815,7 @@ function slime.draw (self, scale)
 
     -- draw actors above all the baselines
     for iactor, actor in pairs(self.actors) do
-        if (actor.y) >= maxBaseline then
+        if actor.y >= maxBaseline or actor.nozbuffer then
             self:drawActor(actor)
         end
     end
