@@ -1151,7 +1151,6 @@ function slime.updateChains (self, dt)
         -- remove expired links
         if expired then
             table.remove(chain, 1)
-            print(#chain, ' links remain')
         end
         
         -- remove empty chains
