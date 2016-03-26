@@ -1120,7 +1120,7 @@ function slime.updateChains (self, dt)
             elseif link.method == "anim" then
                 self:setAnimation(link.actor, link.key)
             elseif link.method == "func" then 
-                link.func(unpack(link.params))
+                link.func(unpack(link.params or {}))
             end
         end
         
