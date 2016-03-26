@@ -319,6 +319,58 @@ Removes an item (`name`) from a `bag`.
 
 Add a hotspot with an image that draws on screen. 
 
+
+## Chains
+
+Chains give you a way to script actor movement and dialogue in sequence. If your main actor needs to walk to a tree, says something witty, walk down to a pond and then jump in, chains allow you to script this.
+
+![func](api/func.png) `slime.chain()`  
+
+Creates and returns a new chain of events. Use this chain object to add the links to your chain. Links process in sequence, each waiting in turn until the one before it resolves.
+
+![func](api/func.png) `chain:image (actor, path)`  
+
+Calls `actor:setImage`. Resolves immediately.
+
+![func](api/func.png) `chain:move (actor, position)`  
+
+Calls `slime:moveActor` or `slime:moveActorTo`. Position may be a table of `{x, y}` or a string of another actor's name. Resolves when the given actor's movement path is emptied.
+
+Also note that this fires the `slime.callback` event for "moved" as usual, that is to say, chained actions behave like the player performed them.
+
+![func](api/func.png) `chain:turn (actor, direction)`  
+
+Calls `slime:turnActor`. Resolves immediately.
+
+![func](api/func.png) `chain:wait (duration)`  
+
+Waits at this link for a duration of seconds.
+
+![func](api/func.png) `chain:anim (actor, key)`  
+
+Calls `slime:setAnimation`. Resolves immediately.
+
+![func](api/func.png) `chain:floor (path)`  
+
+Calls `slime:floor`. Resolves immediately.
+
+![func](api/func.png) `chain:func (func, params)`  
+
+Calls the function `func` with the given parameters. Resolves immediately.
+
+![func](api/func.png) `chain:talk (actor, words)`  
+
+Calls `slime:addSpeech`. Resolves when the given actor is not busy speaking. If `slime:skipSpeech` is called while the actor is talking, then this link will be resolved.
+
+### Example Chain
+
+    local e = slime:chain()
+    e:move("ego", "light switch")
+    e:anim("ego", "flip the switch")
+    e:image("light", "light-on.png")
+    e:talk("ego", "Now I can see")
+
+
 ## Cursors
 
 ![func](api/func.png) `slime.setCursor (name, image, scale, hotx, hoty)`

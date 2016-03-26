@@ -485,6 +485,7 @@ function slime.moveActorOnPath (self, actor, dt)
         end
         
         if (#actor.path == 0) then
+            actor.path = nil
             actor.action = "idle"
             self.callback ("moved", actor)
         end
@@ -592,6 +593,13 @@ function slime.someoneTalking (self)
     return (#self.speech > 0)
 
 end
+
+
+-- Checks if specific actor is talking
+function slime.actorTalking (self, actor)
+    return self.speech[1] and self.speech[1].actor.name == actor
+end
+
 
 -- Skips the current speech
 function slime.skipSpeech (self)
@@ -786,6 +794,9 @@ function slime.update (self, dt)
             spc.actor.action = "talk"
         end
     end
+    
+    -- Update chained actions
+    self:updateChains(dt)
 
 end
 
@@ -1018,6 +1029,140 @@ function slime.outlineStageElements(self)
     love.graphics.setColor(r, g, b, a)
     
 end
+
+--      _           _           
+--  ___| |__   __ _(_)_ __  ___ 
+-- / __| '_ \ / _` | | '_ \/ __|
+--| (__| | | | (_| | | | | \__ \
+-- \___|_| |_|\__,_|_|_| |_|___/
+
+-- Provides ways to chain actions to run in sequence
+
+slime.chains = { queue={}, current=nil}
+
+function slime.chain(self)
+    
+    local thischain = {}
+    table.insert(self.chains.queue, thischain)
+    return {
+        ref = thischain,
+        image = slime.chainImage,
+        move = slime.chainMove,
+        turn = slime.chainTurn,
+        wait = slime.chainWait,
+        anim = slime.chainAnim,
+        floor = slime.chainFloor,
+        func = slime.chainFunc,
+        talk = slime.chainTalk,
+        }
+end
+
+function slime.chainImage (self, actor, path)
+    table.insert(self.ref, {method="image", actor=actor, path=path})
+end
+
+function slime.chainMove (self, actor, position)
+    table.insert(self.ref, {method="move", actor=actor, position=position})
+end
+
+function slime.chainTurn (self, actor, direction)
+    table.insert(self.ref, {method="turn", actor=actor, direction=direction})
+end
+
+function slime.chainWait (self, duration)
+    table.insert(self.ref, {method="wait", duration=duration})
+end
+
+function slime.chainAnim (self, actor, key)
+    table.insert(self.ref, {method="anim", actor=actor, key=key})
+end
+
+function slime.chainFloor (self, path)
+    table.insert(self.ref, {method="floor", path=path})
+end
+
+function slime.chainFunc (self, func, params)
+    table.insert(self.ref, {method="func", func=func, params=params})
+end
+
+function slime.chainTalk (self, actor, words)
+    table.insert(self.ref, {method="talk", actor=actor, words=words})
+end
+
+function slime.updateChains (self, dt)
+        
+    -- process the first link in each chain
+    for _, chain in pairs(self.chains.queue) do
+    
+        local link = chain[1]
+        local expired = false
+        
+        -- Action this link (one-time only)
+        if not link.processed then
+            link.processed = true
+            if link.method == "image" then
+                local actor = self.actors[link.actor]
+                actor:setImage(link.path)
+            elseif link.method == "floor" then
+                self:floor(link.path)
+            elseif link.method == "move" then
+                if type(link.position) == "string" then
+                    self:moveActorTo(link.actor, link.position)
+                else
+                    self:moveActor(link.actor, link.position.x, link.position.y)
+                end
+            elseif link.method == "turn" then
+                self:turnActor(link.actor, link.direction)
+            elseif link.method == "talk" then
+                self:addSpeech(link.actor, link.words)
+            elseif link.method == "wait" then
+                -- no action
+            elseif link.method == "anim" then
+                self:setAnimation(link.actor, link.key)
+            elseif link.method == "func" then 
+                link.func(unpack(link.params))
+            end
+        end
+        
+        -- Test if the link expires
+        if link.method == "image" then
+            expired = true
+        elseif link.method == "floor" then
+            expired = true
+        elseif link.method == "move" then
+            if not self.actors[link.actor].path then
+                expired = true
+            end
+        elseif link.method == "turn" then
+            expired = true
+        elseif link.method == "talk" then
+            if not self:actorTalking(link.actor) then
+                expired = true
+            end
+        elseif link.method == "wait" then
+            link.duration = link.duration - dt
+            expired = link.duration < 0
+        elseif link.method == "anim" then
+            expired = true
+        elseif link.method == "func" then
+            expired = true
+        end
+    
+        -- remove expired links
+        if expired then
+            table.remove(chain, 1)
+            print(#chain, ' links remain')
+        end
+        
+        -- remove empty chains
+        if #chain == 0 then
+            table.remove(self.chains.queue, 1)
+        end
+        
+    end
+    
+end
+
 
 return slime
 
