@@ -261,6 +261,13 @@ function slime.define (self, key, frames, delays, sounds)
 
     local anim = self
     
+    sounds = sounds or {}
+    for i, v in ipairs(sounds) do
+        if type(v) == "string" then
+            sounds[i] = love.audio.newSource(v, "static")
+        end
+    end
+    
     local pack = {
         actor = anim.actor, 
         key = key, 
@@ -1097,6 +1104,9 @@ function slime.chainTalk (self, actor, words)
 end
 
 function slime.chainSound (self, source)
+    if type(source) == "string" then
+        source = love.audio.newSource(source, "static")
+    end
     table.insert(self.ref, {method="sound", source=source})
 end
 
