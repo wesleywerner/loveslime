@@ -193,6 +193,10 @@ Adds an actor to the stage. The actor object is returned:
     local boss = slime.actor ("Big Boss", 100, 100)
     boss.speechcolor = {255, 0, 0}     -- Set the speech color for this actor as {red, green, blue}
 
+![func](api/func.png) `slime.removeActor (name)`  
+
+Removes the actor named `name`
+
 ![func](api/func.png) `actor:setImage (path)`
 
 Sets a static (non-animated) image as the actor's sprite.
@@ -206,7 +210,7 @@ Creates a new animation pack for the actor, and returns the animation object use
 
     local egoAnim = ego:newAnim("images/ego.png", {w=12, h=12})
 
-![func](api/func.png) `animation:define (key, frames, delays, sounds)`  
+![func](api/func.png) `animation:define (key, frames [, delays, sounds, offset])`  
 
 Defines an animation by a key and frames.
 
@@ -223,6 +227,8 @@ You can also mirror frames to create new animations for opposing directions:
     egoAnim:define("walk east", westFrames, westDelays):flip()
 
 The `sounds` parameter is an indexed table of sound sources, each sound plays when the corresponding frame position is drawn.
+
+The `offset` parameter is a table of `{x, y}` which displaces the drawing of frames. This is used in certain special cases, for example your actor has a certain animation with a different tileset size than it's normal frames. Switching to such an animtion makes the draw position jump since the center position of the larger frames don't line up to the normal frames. Compensate for this variation with the `offset` parameter.
 
 ![func](api/func.png) `slime:animationDuration(actor, key)`  
 

@@ -223,6 +223,14 @@ function slime.internalAnimationLoop (frames, counter)
 end
 
 
+
+function slime.removeActor (self, name)
+    if self.actors[name] then
+        self.actors[name] = nil
+    end
+end
+
+
 -- Cache a tileset image in slime, or return an already cached one.
 function slime.cache (self, path)
     
@@ -257,7 +265,7 @@ function slime.tileset (self, tileset, size)
 end
 
 -- A helper method to define frames against an animation object.
-function slime.define (self, key, frames, delays, sounds)
+function slime.define (self, key, frames, delays, sounds, offset)
 
     local anim = self
     
@@ -274,6 +282,7 @@ function slime.define (self, key, frames, delays, sounds)
         tileset = anim.tileset, 
         loopcounter = 0,
         sounds = sounds or {},
+        offset = offset or {x=0, y=0},
         flip = slime.animationPackFlip}
     
     local image = anim.actor.host:cache(anim.tileset)
@@ -358,9 +367,13 @@ function slime.drawActor (self, actor)
     
     if anim then
         local tileset = self:cache(anim.tileset)
-        anim.frames:draw(tileset, actor.x - actor.base[1], actor.y - actor.base[2])
+        anim.frames:draw(tileset,
+            actor.x - actor.base[1] + anim.offset.x,
+            actor.y - actor.base[2] + anim.offset.y)
     elseif (actor.image) then
-        love.graphics.draw(actor.image, actor.x - actor.base[1], actor.y - actor.base[2])
+        love.graphics.draw(actor.image,
+            actor.x - actor.base[1],
+            actor.y - actor.base[2])
     else
         love.graphics.rectangle ("fill", actor.x - actor.base[1], actor.y - actor.base[2], actor.w, actor.h)
     end
