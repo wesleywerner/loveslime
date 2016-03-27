@@ -321,6 +321,20 @@ function slime.setAnimation (self, name, key)
         
 end
 
+
+-- Gets the duration of a given animation
+function slime.animationDuration(self, actor, key)
+    local a = self.actors[actor]
+    if a then
+        local anim = a.animations[key]
+        if anim then
+            return anim.frames.totalDuration
+        end
+    end
+    return 0
+end
+
+
 -- Set a static image as an actor's sprite.
 function slime.setImage (self, image)
 

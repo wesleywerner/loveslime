@@ -224,6 +224,10 @@ You can also mirror frames to create new animations for opposing directions:
 
 The `sounds` parameter is an indexed table of sound sources, each sound plays when the corresponding frame position is drawn.
 
+![func](api/func.png) `slime:animationDuration(actor, key)`  
+
+Returns the duration of an animation.
+
 ![property](api/prop.png) `actor.nozbuffer`
 
 Set this property to `true` if this actor draws above all layers.
