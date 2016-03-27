@@ -927,7 +927,8 @@ function slime.setCursor (self, name, image, scale, hotx, hoty)
         cursorCanvas:renderTo(function()
                 love.graphics.draw (image, 0, 0, 0, scale, scale)
             end)
-        cursor = love.mouse.newCursor (cursorCanvas:getImageData(), hotx, hoty)
+        cursor = love.mouse.newCursor (cursorCanvas:getImageData(), 
+            hotx * scale, hoty * scale)
     end
     love.mouse.setCursor (cursor)
 end
