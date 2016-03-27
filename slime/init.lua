@@ -257,7 +257,7 @@ function slime.tileset (self, tileset, size)
 end
 
 -- A helper method to define frames against an animation object.
-function slime.define (self, key, frames, delays)
+function slime.define (self, key, frames, delays, sounds)
 
     local anim = self
     
@@ -266,6 +266,7 @@ function slime.define (self, key, frames, delays)
         key = key, 
         tileset = anim.tileset, 
         loopcounter = 0,
+        sounds = sounds or {},
         flip = slime.animationPackFlip}
     
     local image = anim.actor.host:cache(anim.tileset)
@@ -781,6 +782,10 @@ function slime.update (self, dt)
         local anim = actor:getAnim()
         if anim then
             anim.frames:update(dt)
+            local framesound = anim.sounds[anim.frames.position]
+            if framesound then
+                love.audio.play(framesound)
+            end
         end
     end
     
@@ -1054,6 +1059,7 @@ function slime.chain(self)
         floor = slime.chainFloor,
         func = slime.chainFunc,
         talk = slime.chainTalk,
+        sound = slime.chainSound,
         }
 end
 
@@ -1089,6 +1095,11 @@ function slime.chainTalk (self, actor, words)
     table.insert(self.ref, {method="talk", actor=actor, words=words})
 end
 
+function slime.chainSound (self, source)
+    table.insert(self.ref, {method="sound", source=source})
+end
+
+
 function slime.updateChains (self, dt)
         
     -- process the first link in each chain
@@ -1121,6 +1132,8 @@ function slime.updateChains (self, dt)
                 self:setAnimation(link.actor, link.key)
             elseif link.method == "func" then 
                 link.func(unpack(link.params or {}))
+            elseif link.method == "sound" then
+                love.audio.play(link.source)
             end
         end
         
@@ -1145,6 +1158,8 @@ function slime.updateChains (self, dt)
         elseif link.method == "anim" then
             expired = true
         elseif link.method == "func" then
+            expired = true
+        elseif link.method == "sound" then
             expired = true
         end
     

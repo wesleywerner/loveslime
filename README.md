@@ -206,13 +206,14 @@ Creates a new animation pack for the actor, and returns the animation object use
 
     local egoAnim = ego:newAnim("images/ego.png", {w=12, h=12})
 
-![func](api/func.png) `animation:define (key, frames, delays)`  
+![func](api/func.png) `animation:define (key, frames, delays, sounds)`  
 
 Defines an animation by a key and frames.
 
-    local southFrames = {'11-10', 1}
+    local southFrames = {'11-14', 1}
     local southDelays = {3, 0.2}
-    egoAnim:define("walk south", southFrames, southDelays)
+    local sounds = {[2] = love.audio.newSource("step.wav", "static")}
+    egoAnim:define("walk south", southFrames, southDelays, sounds)
 
 The format of the frames and delays follow the [anim8 library](https://github.com/kikito/anim8) convention. I recommend you go over there to read about the Frames format.
 
@@ -220,6 +221,8 @@ You can also mirror frames to create new animations for opposing directions:
 
     -- create an east facing animation by flipping the west frames
     egoAnim:define("walk east", westFrames, westDelays):flip()
+
+The `sounds` parameter is an indexed table of sound sources, each sound plays when the corresponding frame position is drawn.
 
 ![property](api/prop.png) `actor.nozbuffer`
 
@@ -362,13 +365,18 @@ Calls the function `func` with the given parameters. Resolves immediately.
 
 Calls `slime:addSpeech`. Resolves when the given actor is not busy speaking. If `slime:skipSpeech` is called while the actor is talking, then this link will be resolved.
 
+![func](api/func.png) `chain:sound (source)`
+
+Plays the given audio source. Resolves immediately.
+
 ### Example Chain
 
-    local e = slime:chain()
-    e:move("ego", "light switch")
-    e:anim("ego", "flip the switch")
-    e:image("light", "light-on.png")
-    e:talk("ego", "Now I can see")
+    local chain = slime:chain()
+    chain:move("ego", "light switch")
+    chain:anim("ego", "flip the switch")
+    chain:image("light", "light-on.png")
+    chain:sound(love.audio.newSource("sounds/switch.wav", "static"))
+    chain:talk("ego", "Now I can see")
 
 
 ## Cursors
