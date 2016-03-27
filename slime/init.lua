@@ -570,7 +570,7 @@ slime.speech = { }
 
 
 -- Make an actor say something
-function slime.addSpeech (self, name, text)
+function slime.say (self, name, text)
 
     local newSpeech = {
         ["actor"] = self.actors[name],
@@ -1126,7 +1126,7 @@ function slime.updateChains (self, dt)
             elseif link.method == "turn" then
                 self:turnActor(link.actor, link.direction)
             elseif link.method == "talk" then
-                self:addSpeech(link.actor, link.words)
+                self:say(link.actor, link.words)
             elseif link.method == "wait" then
                 -- no action
             elseif link.method == "anim" then

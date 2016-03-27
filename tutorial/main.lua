@@ -185,7 +185,7 @@ function cell.callback (event, object)
         
         -- Look at the hole in the wall
         if object.name == "hole" then
-            slime:addSpeech("ego", "I see a hole in the wall")
+            slime:say("ego", "I see a hole in the wall")
         end
         
         -- Set the cursor when interacting on bag items
@@ -201,7 +201,7 @@ function cell.callback (event, object)
     
     if event == "spoon" then
         if object.name == "door" then
-            slime:addSpeech("ego", "The spoon won't open this door")
+            slime:say("ego", "The spoon won't open this door")
         end
         if object.name == "hole" then
             slime:turnActor("ego", "east")

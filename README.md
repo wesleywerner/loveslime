@@ -286,11 +286,11 @@ Draw the scene to the display. The `scale` parameter defaults to 1, and is only 
 
 You can queue multiple speeches at once, the actor animation will change to "talk" and the words will print on screen.
 
-![func](api/func.png) `slime.addSpeech (name, text)`
+![func](api/func.png) `slime:say (name, words)`
 
-Queue a speech for an actor by `name`.
+Make an actor say something.
 
-![func](api/func.png) `slime.someoneTalking ()`
+![func](api/func.png) `slime:someoneTalking()`
 
 Returns `true` if there is speech displaying.
 
@@ -363,7 +363,7 @@ Calls the function `func` with the given parameters. Resolves immediately.
 
 ![func](api/func.png) `chain:talk (actor, words)`  
 
-Calls `slime:addSpeech`. Resolves when the given actor is not busy speaking. If `slime:skipSpeech` is called while the actor is talking, then this link will be resolved.
+Calls `slime:say`. Resolves when the given actor is not busy speaking. If `slime:skipSpeech` is called while the actor is talking, then this link will be resolved.
 
 ![func](api/func.png) `chain:sound (source)`
 

@@ -391,7 +391,7 @@ And we must subscribe to SLIME notifications:
     function myStageCallback (event, object)
         if (event == "interact") then
             if (object.name == "hole") then
-                slime:addSpeech ("ego", "I see a hole in the wall")
+                slime:say("ego", "I see a hole in the wall")
             end
         end
     end
@@ -413,7 +413,7 @@ Ego moves and talks at the same time, not quite the effect we want. We want Ego 
         end
         if (event == "interact") then
             if (object.name == "hole") then
-                slime:addSpeech ("ego", "I see a hole in the wall")
+                slime:("ego", "I see a hole in the wall")
             end
         end
     end
@@ -511,7 +511,7 @@ This changes the mouse cursor to the spoon image. What is more, any time after a
     slime.callback (event, object)
         -- event is the cursor name
         if (event == "spoon" and object.name == "door") then
-            slime:addSpeech ("ego", "The spoon won't open this door")
+            slime:("ego", "The spoon won't open this door")
         end
     end
 
