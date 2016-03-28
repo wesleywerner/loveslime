@@ -270,7 +270,7 @@ function slime.define (self, key, frames, delays, sounds, offset)
     local anim = self
     
     sounds = sounds or {}
-    for i, v in ipairs(sounds) do
+    for i, v in pairs(sounds) do
         if type(v) == "string" then
             sounds[i] = love.audio.newSource(v, "static")
         end
