@@ -1087,6 +1087,7 @@ function slime.chain(self)
     local thischain = {}
     table.insert(self.chains.queue, thischain)
     return {
+        slime = self,
         ref = thischain,
         image = slime.chainImage,
         move = slime.chainMove,
@@ -1116,8 +1117,13 @@ function slime.chainWait (self, duration)
     table.insert(self.ref, {method="wait", duration=duration})
 end
 
-function slime.chainAnim (self, actor, key)
+function slime.chainAnim (self, actor, key, wait)
     table.insert(self.ref, {method="anim", actor=actor, key=key})
+    -- if wait is true, wait for the duration of the animation
+    if wait then
+        local duration = self.slime:animationDuration(actor, key)
+        self:wait(duration)
+    end
 end
 
 function slime.chainFloor (self, path)

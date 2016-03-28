@@ -361,9 +361,20 @@ Calls `slime:turnActor`. Resolves immediately.
 
 Waits at this link for a duration of seconds.
 
-![func](api/func.png) `chain:anim (actor, key)`  
+![func](api/func.png) `chain:anim (actor, key [,wait])`  
 
 Calls `slime:setAnimation`. Resolves immediately.
+
+If `wait` is given as `true`, then the chain will wait for the duration of one animation loop.
+
+For example, this code:
+
+    chain:anim("ego", "throw dust")
+    chain:wait(slime:animationDuration("ego", "throw dust"))
+
+gives the same result as this line:
+
+    chain:anim("ego", "throw dust", true)
 
 ![func](api/func.png) `chain:floor (path)`  
 
