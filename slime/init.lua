@@ -1151,7 +1151,7 @@ function slime.updateChains (self, dt)
     -- process the first link in each chain
     for _, chain in pairs(self.chains.queue) do
     
-        local link = chain[1]
+        local link = chain[1] or {}
         local expired = false
         
         -- Action this link (one-time only)
@@ -1210,7 +1210,7 @@ function slime.updateChains (self, dt)
         end
     
         -- remove expired links
-        if expired then
+        if expired and #chain > 0 then
             table.remove(chain, 1)
         end
         
