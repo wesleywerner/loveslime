@@ -106,7 +106,7 @@ A basic stage setup might look like this:
         end
         if (event == "interact") then
             if (object.name == "spoon") then
-                -- An actor or hotspot was interacted with (you called slime.interact (x, y))
+                -- An actor or hotspot was interacted with (you called slime:interact (x, y))
                 -- object is an instance of the actor or hotspot.
             end
         end
@@ -268,9 +268,11 @@ Turns an Actor to face a direction, one of `south`, `west`, `north` or `east`.
 
 Adds a hotspot to the stage.
 
-![func](api/func.png) `slime.interact (x, y)`
+![func](api/func.png) `slime:interact (x, y)`
 
-Interacts with all objects at `x/y`. This triggers an "interact" event in `slime.callback`.
+Interacts with all objects at `x, y`. This triggers an "interact" event in `slime.callback`.
+
+Returns true if there are any objects at that position.
 
 ![func](api/func.png) `slime.getObjects (x, y)`
 

@@ -948,6 +948,8 @@ function slime.interact (self, x, y)
         self.callback (self.cursorName or "interact", object)
     end
     
+    return true
+    
 end
 
 -- Set a hardware cursor with scale applied.
