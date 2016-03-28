@@ -406,9 +406,9 @@ Call with no parameters to set the default cursor.
 SLIME offers these settings to customize your game:
 
     slime.settings["status position"] = 70      -- The Y position to print the built-in status text
-    slime.settings["status font size"] = 12     -- The font size for status text
+    slime.settings["status font"] = love.graphics.Font
     slime.settings["speech position"] = 0       -- The Y position to print speech
-    slime.settings["speech font size"] = 10     -- The font size for speech
+    slime.settings["speech font"] = love.graphics.Font
 
 ---
 

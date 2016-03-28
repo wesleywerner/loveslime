@@ -52,9 +52,9 @@ slime.counters = {}
 -- Store settings to customize the look of SLIME
 slime.settings = {
     ["status position"] = 70,
-    ["status font size"] = 12,
+    ["status font"] = love.graphics.newFont(12),
     ["speech position"] = 0,
-    ["speech font size"] = 10
+    ["speech font"] = love.graphics.newFont(10)
     }
 
 function slime.reset (self)
@@ -877,7 +877,7 @@ function slime.draw (self, scale)
     
     -- status text
     if (self.statusText) then
-        love.graphics.setFont(love.graphics.newFont(self.settings["status font size"]))
+        love.graphics.setFont(self.settings["status font"])
         love.graphics.printf(self.statusText, 0, self.settings["status position"], love.window.getWidth() / scale, "center")
     end
     
@@ -888,7 +888,7 @@ function slime.draw (self, scale)
         local r, g, b, a = love.graphics.getColor()
         -- Set a new speech color
         love.graphics.setColor(spc.actor.speechcolor)
-        love.graphics.setFont(love.graphics.newFont(self.settings["speech font size"]))
+        love.graphics.setFont(self.settings["speech font"])
         love.graphics.printf(spc.text, 0, self.settings["speech position"], love.window.getWidth() / scale, "center")
         -- Restore original color
         love.graphics.setColor(r, g, b, a)
