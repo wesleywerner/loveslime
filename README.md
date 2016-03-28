@@ -373,7 +373,7 @@ Calls `slime:floor`. Resolves immediately.
 
 Calls the function `func` with the given parameters. Resolves immediately.
 
-![func](api/func.png) `chain:talk (actor, words)`  
+![func](api/func.png) `chain:say (actor, words)`  
 
 Calls `slime:say`. Resolves when the given actor is not busy speaking. If `slime:skipSpeech` is called while the actor is talking, then this link will be resolved.
 
@@ -388,7 +388,7 @@ Plays the given audio source. Resolves immediately.
     chain:anim("ego", "flip the switch")
     chain:image("light", "light-on.png")
     chain:sound(love.audio.newSource("sounds/switch.wav", "static"))
-    chain:talk("ego", "Now I can see")
+    chain:say("ego", "Now I can see")
 
 
 ## Cursors

@@ -1095,7 +1095,7 @@ function slime.chain(self)
         anim = slime.chainAnim,
         floor = slime.chainFloor,
         func = slime.chainFunc,
-        talk = slime.chainTalk,
+        say = slime.chainSay,
         sound = slime.chainSound,
         }
 end
@@ -1128,7 +1128,7 @@ function slime.chainFunc (self, func, params)
     table.insert(self.ref, {method="func", func=func, params=params})
 end
 
-function slime.chainTalk (self, actor, words)
+function slime.chainSay (self, actor, words)
     table.insert(self.ref, {method="talk", actor=actor, words=words})
 end
 
