@@ -54,6 +54,7 @@
 <li><a href="#backgrounds">Backgrounds</a></li>
 <li><a href="#layers">Layers</a></li>
 <li><a href="#actors">Actors</a></li>
+<li><a href="#animations">Animations</a></li>
 <li><a href="#hotspots">Hotspots</a></li>
 <li><a href="#status">Status</a></li>
 <li><a href="#drawing">Drawing</a></li>
@@ -162,7 +163,7 @@ function myStageCallback (event, object)
     end
     if (event == "interact") then
         if (object.name == "spoon") then
-            -- An actor or hotspot was interacted with (you called slime.interact (x, y))
+            -- An actor or hotspot was interacted with (you called slime:interact (x, y))
             -- object is an instance of the actor or hotspot.
         end
     end
@@ -251,7 +252,7 @@ object.clickedY
 
 <p>Actors are items on your stage that may move or talk, like people, animals or robots. They can also be inanimate objects that may not move or talk but are animated, like doors, toasters and computers.</p>
 
-<p><img src="api/func.png" alt="func"> <code>slime.actor (name, x, y [, staticImage])</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime:actor (name, x, y)</code></p>
 
 <p>Adds an actor to the stage. The actor object is returned:</p>
 
@@ -259,52 +260,92 @@ object.clickedY
 boss.speechcolor = {255, 0, 0}     -- Set the speech color for this actor as {red, green, blue}
 </code></pre>
 
-<p>The <code>staticImage</code> is optional, and only useful for non-animated actors.</p>
+<p><img src="api/func.png" alt="func"> <code>slime:removeActor (name)</code>  </p>
 
-<p><img src="api/func.png" alt="func"> <code>slime.addImage (name, image)</code></p>
+<p>Removes the actor named <code>name</code></p>
 
-<p>Sets a static (non-animated) image as an actor's sprite. This is the same like passing a <code>staticImage</code> to <code>slime.actor</code>.</p>
+<p><img src="api/func.png" alt="func"> <code>actor:setImage (path)</code></p>
 
-<p><img src="api/func.png" alt="func"> <code>slime.idleAnimation (name, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])</code><br>
-<img src="api/func.png" alt="func"> <code>slime.walkAnimation (name, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])</code><br>
-<img src="api/func.png" alt="func"> <code>slime.talkAnimation (name, tileset, w, h, south, southd [, west, westd, north, northd, east, eastd])</code>  </p>
+<p>Sets a static (non-animated) image as the actor's sprite.</p>
 
-<p>These are helper functions that in turn call <code>addAnimation</code> with the <code>keys</code> "idle", "walk" and "talk" respectively. </p>
+<p><img src="api/prop.png" alt="property"> <code>actor.nozbuffer</code></p>
+
+<p>Set this property to <code>true</code> if this actor draws above all layers.</p>
+
+<h2>
+<a id="animations" class="anchor" href="#animations" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Animations</h2>
+
+<p>You define animations on actor objects.</p>
+
+<p><img src="api/func.png" alt="func"> <code>actor:tileset (path, {w, h})</code>  </p>
+
+<p>Loads a tileset for the actor, and returns the object used to define animation frames. The <code>size</code> is the width and height of each frame.</p>
+
+<pre><code>local tileset = ego:tileset("ego.png", {w=12, h=12})
+</code></pre>
+
+<p><img src="api/func.png" alt="func"> <code>{tileset}:define (key)</code>  </p>
+
+<p>Defines a new animation on a tileset object. This returns the object used to define animation frames.</p>
+
+<p><img src="api/func.png" alt="func"> <code>{animation}:frames (frames)</code><br>
+<img src="api/func.png" alt="func"> <code>{animation}:delays (delays)</code>  </p>
+
+<p>Sets the frames that make up an animation.</p>
+
+<p>The format of the <code>frames</code> and <code>delays</code> follow the <a href="https://github.com/kikito/anim8">anim8 library</a> convention. I recommend you go over there to read about the Frames format.</p>
+
+<pre><code>local tileset = ego:tileset("ego.png", {w=12, h=12})
+local anim = tileset:define("walk south")
+anim:frames({'1-5', 1)  -- frames 1 through 5 on the first row in the tileset
+anim:delays(0.2)        -- 0.2 seconds delay for all frames
+</code></pre>
+
+<p>The animation object can chain calls for cleaner code:</p>
+
+<pre><code>local tileset = ego:tileset("ego.png", {w=12, h=12})
+tileset:define("walk south"):frames({'1-5', 1):delays(0.2)
+tileset:define("walk north"):frames({'6-9', 1):delays(0.2)
+</code></pre>
+
+<p><img src="api/func.png" alt="func"> <code>{animation}:flip ()</code>  </p>
+
+<p>You can mirror an animation:</p>
+
+<pre><code>-- create an east facing animation by flipping west facing frames
+tileset:define("walk west"):frames({'10-15', 1):delays(0.2)
+tileset:define("walk east"):frames({'10-15', 1):delays(0.2):flip()
+</code></pre>
+
+<p><img src="api/func.png" alt="func"> <code>{animation}:sounds (sounds)</code>  </p>
+
+<p>The <code>sounds</code> function takes an indexed table of sound sources, each sound plays when the corresponding frame position is drawn.</p>
+
+<pre><code>-- play step.wav when frame 1 shows. Occurs every animation loop.
+tileset:define("walk west")
+    :frames({'10-15', 1)
+    :delays(0.2)
+    :sounds( {[1] = "step.wav"} )
+</code></pre>
+
+<p><img src="api/func.png" alt="func"> <code>{animation}:offset ({x, y})</code>  </p>
+
+<p>The <code>offset</code> function takes <code>{x, y}</code> which displaces the drawing of frames. This is used in special cases when your actor has a certain animation with a different tileset size than it's normal frames. Switching to such an animtion makes the draw position jump since the center of the larger frames don't line up with the normal frames. Compensate for this variation with the offset.</p>
+
+<p><img src="api/func.png" alt="func"> <code>slime:animationDuration(actor, key)</code>  </p>
+
+<p>Returns the duration of an animation in seconds. This value is the sum of all frame delays on an animation, and totals to one loop of the animation.</p>
+
+<h3>
+<a id="special-animation-keys" class="anchor" href="#special-animation-keys" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Special Animation Keys</h3>
+
+<p>Actor animations with these keys will automatically be used by the SLIME engine, where  is replaced where the actor's facing, south, west, east or north.</p>
 
 <ul>
-<li>The <code>name</code> of the actor that was created via <code>slime.actor</code>
-</li>
-<li>The <code>tileset</code> is a file name.</li>
-<li>The <code>w</code> and <code>h</code> are the width and height of each frame.</li>
-<li>The <code>south</code> and <code>southd</code> are the frames and delays for the south-facing animation.</li>
-<li>The other directions are optional but recommended. <code>SOUTH</code> will be used as default if none of the other directions are given.</li>
+<li>"idle south": The actor is not speaking or walking. They are idle.</li>
+<li>"walk south": The actor is moving.</li>
+<li>"talk south": The actor is speaking.</li>
 </ul>
-
-<p>The format of the <code>south</code> frames and delays follow the <a href="https://github.com/kikito/anim8">anim8 library</a> convention. I recommend you go over there to read about the Frames format.</p>
-
-<p>Notes:</p>
-
-<ul>
-<li>The <code>tileset</code> is a file name to the image tileset, they are cached for re-use. Multiple actors who use the same tileset will re-use the cached copies.</li>
-<li>Only <code>south</code> and <code>southd</code> parameters are mandatory. If the rest are omitted then south will be used as the default for all directions.</li>
-<li>If a <code>west</code> parameter is given, and <code>east</code> is <code>nil</code> or omitted, then the west animation will automatically be mirrored and used for the <code>east</code>.</li>
-</ul>
-
-<p><img src="api/func.png" alt="func"> <code>slime.addAnimation (name, key, tileset, w, h, frames, delays)</code>  </p>
-
-<p>This is for adding custom animations.</p>
-
-<ul>
-<li>The <code>name</code> of the actor that was created via <code>slime.actor</code>
-</li>
-<li>The <code>key</code> is the animation key.</li>
-<li>The <code>w</code> and <code>h</code> are the width and height of each frame.</li>
-<li>The <code>frames</code> and <code>delays</code> are the frames and delays for the animation.</li>
-</ul>
-
-<p><strong>Returns</strong></p>
-
-<p>The Anim8 animation object.</p>
 
 <p><img src="api/func.png" alt="func"> <code>slime.moveActor (name, x, y)</code></p>
 
@@ -330,9 +371,11 @@ boss.speechcolor = {255, 0, 0}     -- Set the speech color for this actor as {re
 
 <p>Adds a hotspot to the stage.</p>
 
-<p><img src="api/func.png" alt="func"> <code>slime.interact (x, y)</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime:interact (x, y)</code></p>
 
-<p>Interacts with all objects at <code>x/y</code>. This triggers an "interact" event in <code>slime.callback</code>.</p>
+<p>Interacts with all objects at <code>x, y</code>. This triggers an "interact" event in <code>slime.callback</code>.</p>
+
+<p>Returns true if there are any objects at that position.</p>
 
 <p><img src="api/func.png" alt="func"> <code>slime.getObjects (x, y)</code></p>
 
@@ -361,11 +404,11 @@ boss.speechcolor = {255, 0, 0}     -- Set the speech color for this actor as {re
 
 <p>You can queue multiple speeches at once, the actor animation will change to "talk" and the words will print on screen.</p>
 
-<p><img src="api/func.png" alt="func"> <code>slime.addSpeech (name, text)</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime:say (name, words)</code></p>
 
-<p>Queue a speech for an actor by <code>name</code>.</p>
+<p>Make an actor say something.</p>
 
-<p><img src="api/func.png" alt="func"> <code>slime.someoneTalking ()</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime:someoneTalking()</code></p>
 
 <p>Returns <code>true</code> if there is speech displaying.</p>
 
@@ -402,6 +445,77 @@ slime.bagInsert ("ego", theSpoon)
 <p>Add a hotspot with an image that draws on screen. </p>
 
 <h2>
+<a id="chains" class="anchor" href="#chains" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Chains</h2>
+
+<p>Chains give you a way to script actor movement and dialogue in sequence. If your main actor needs to walk to a tree, says something witty, walk down to a pond and then jump in, chains allow you to script this.</p>
+
+<p><img src="api/func.png" alt="func"> <code>slime.chain()</code>  </p>
+
+<p>Creates and returns a new chain of events. Use this chain object to add the links to your chain. Links process in sequence, each waiting in turn until the one before it resolves.</p>
+
+<p><img src="api/func.png" alt="func"> <code>chain:image (actor, path)</code>  </p>
+
+<p>Calls <code>actor:setImage</code>. Resolves immediately.</p>
+
+<p><img src="api/func.png" alt="func"> <code>chain:move (actor, position)</code>  </p>
+
+<p>Calls <code>slime:moveActor</code> or <code>slime:moveActorTo</code>. Position may be a table of <code>{x, y}</code> or a string of another actor's name. Resolves when the given actor's movement path is emptied.</p>
+
+<p>Also note that this fires the <code>slime.callback</code> event for "moved" as usual, that is to say, chained actions behave like the player performed them.</p>
+
+<p><img src="api/func.png" alt="func"> <code>chain:turn (actor, direction)</code>  </p>
+
+<p>Calls <code>slime:turnActor</code>. Resolves immediately.</p>
+
+<p><img src="api/func.png" alt="func"> <code>chain:wait (duration)</code>  </p>
+
+<p>Waits at this link for a duration of seconds.</p>
+
+<p><img src="api/func.png" alt="func"> <code>chain:anim (actor, key [,wait])</code>  </p>
+
+<p>Calls <code>slime:setAnimation</code>. Resolves immediately.</p>
+
+<p>If <code>wait</code> is given as <code>true</code>, then the chain will wait for the duration of one animation loop.</p>
+
+<p>For example, this code:</p>
+
+<pre><code>chain:anim("ego", "throw dust")
+chain:wait(slime:animationDuration("ego", "throw dust"))
+</code></pre>
+
+<p>gives the same result as this line:</p>
+
+<pre><code>chain:anim("ego", "throw dust", true)
+</code></pre>
+
+<p><img src="api/func.png" alt="func"> <code>chain:floor (path)</code>  </p>
+
+<p>Calls <code>slime:floor</code>. Resolves immediately.</p>
+
+<p><img src="api/func.png" alt="func"> <code>chain:func (func, params)</code>  </p>
+
+<p>Calls the function <code>func</code> with the given parameters. Resolves immediately.</p>
+
+<p><img src="api/func.png" alt="func"> <code>chain:say (actor, words)</code>  </p>
+
+<p>Calls <code>slime:say</code>. Resolves when the given actor is not busy speaking. If <code>slime:skipSpeech</code> is called while the actor is talking, then this link will be resolved.</p>
+
+<p><img src="api/func.png" alt="func"> <code>chain:sound (source)</code></p>
+
+<p>Plays the given audio source. Resolves immediately.</p>
+
+<h3>
+<a id="example-chain" class="anchor" href="#example-chain" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Example Chain</h3>
+
+<pre><code>local chain = slime:chain()
+chain:move("ego", "light switch")
+chain:anim("ego", "flip the switch")
+chain:image("light", "light-on.png")
+chain:sound(love.audio.newSource("sounds/switch.wav", "static"))
+chain:say("ego", "Now I can see")
+</code></pre>
+
+<h2>
 <a id="cursors" class="anchor" href="#cursors" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Cursors</h2>
 
 <p><img src="api/func.png" alt="func"> <code>slime.setCursor (name, image, scale, hotx, hoty)</code></p>
@@ -418,9 +532,9 @@ slime.bagInsert ("ego", theSpoon)
 <p>SLIME offers these settings to customize your game:</p>
 
 <pre><code>slime.settings["status position"] = 70      -- The Y position to print the built-in status text
-slime.settings["status font size"] = 12     -- The font size for status text
+slime.settings["status font"] = love.graphics.Font
 slime.settings["speech position"] = 0       -- The Y position to print speech
-slime.settings["speech font size"] = 10     -- The font size for speech
+slime.settings["speech font"] = love.graphics.Font
 </code></pre>
 
 <hr>
