@@ -19,6 +19,7 @@ The name is an acronym for "SLUDGE to L&Ouml;VE Inspired Mimicry Environment".
     1. [Backgrounds](#backgrounds)
     1. [Layers](#layers)
     1. [Actors](#actors)
+    1. [Animations](#animations)
     1. [Hotspots](#hotspots)
     1. [Status](#status)
     1. [Drawing](#drawing)
@@ -186,14 +187,14 @@ The `baseline` is the y-position a character needs to be behind in order to be h
 
 Actors are items on your stage that may move or talk, like people, animals or robots. They can also be inanimate objects that may not move or talk but are animated, like doors, toasters and computers.
 
-![func](api/func.png) `slime.actor (name, x, y)`
+![func](api/func.png) `slime:actor (name, x, y)`
 
 Adds an actor to the stage. The actor object is returned:
 
     local boss = slime.actor ("Big Boss", 100, 100)
     boss.speechcolor = {255, 0, 0}     -- Set the speech color for this actor as {red, green, blue}
 
-![func](api/func.png) `slime.removeActor (name)`  
+![func](api/func.png) `slime:removeActor (name)`  
 
 Removes the actor named `name`
 
@@ -201,42 +202,67 @@ Removes the actor named `name`
 
 Sets a static (non-animated) image as the actor's sprite.
 
-![func](api/func.png) `actor:newAnim (tileset, size)`  
-
-Creates a new animation pack for the actor, and returns the animation object used to define animation frames.
-
-  * The `tileset` is the path to the image file.
-  * The `size` is the width and height of each frame as `{w, h}`.
-
-    local egoAnim = ego:newAnim("images/ego.png", {w=12, h=12})
-
-![func](api/func.png) `animation:define (key, frames [, delays, sounds, offset])`  
-
-Defines an animation by a key and frames.
-
-    local southFrames = {'11-14', 1}
-    local southDelays = {3, 0.2}
-    local sounds = {[2] = love.audio.newSource("step.wav", "static")}
-    egoAnim:define("walk south", southFrames, southDelays, sounds)
-
-The format of the frames and delays follow the [anim8 library](https://github.com/kikito/anim8) convention. I recommend you go over there to read about the Frames format.
-
-You can also mirror frames to create new animations for opposing directions:
-
-    -- create an east facing animation by flipping the west frames
-    egoAnim:define("walk east", westFrames, westDelays):flip()
-
-The `sounds` parameter is an indexed table of sound sources, each sound plays when the corresponding frame position is drawn.
-
-The `offset` parameter is a table of `{x, y}` which displaces the drawing of frames. This is used in certain special cases, for example your actor has a certain animation with a different tileset size than it's normal frames. Switching to such an animtion makes the draw position jump since the center position of the larger frames don't line up to the normal frames. Compensate for this variation with the `offset` parameter.
-
-![func](api/func.png) `slime:animationDuration(actor, key)`  
-
-Returns the duration of an animation.
-
 ![property](api/prop.png) `actor.nozbuffer`
 
 Set this property to `true` if this actor draws above all layers.
+
+## Animations
+
+You define animations on actor objects.
+
+![func](api/func.png) `actor:tileset (path, {w, h})`  
+
+Loads a tileset for the actor, and returns the object used to define animation frames. The `size` is the width and height of each frame.
+
+    local tileset = ego:tileset("ego.png", {w=12, h=12})
+
+![func](api/func.png) `{tileset}:define (key)`  
+
+Defines a new animation on a tileset object. This returns the object used to define animation frames.
+
+![func](api/func.png) `{animation}:frames (frames)`  
+![func](api/func.png) `{animation}:delays (delays)`  
+
+Sets the frames that make up an animation.
+
+The format of the `frames` and `delays` follow the [anim8 library](https://github.com/kikito/anim8) convention. I recommend you go over there to read about the Frames format.
+
+    local tileset = ego:tileset("ego.png", {w=12, h=12})
+    local anim = tileset:define("walk south")
+    anim:frames({'1-5', 1)  -- frames 1 through 5 on the first row in the tileset
+    anim:delays(0.2)        -- 0.2 seconds delay for all frames
+
+The animation object can chain calls for cleaner code:
+
+    local tileset = ego:tileset("ego.png", {w=12, h=12})
+    tileset:define("walk south"):frames({'1-5', 1):delays(0.2)
+    tileset:define("walk north"):frames({'6-9', 1):delays(0.2)
+
+![func](api/func.png) `{animation}:flip ()`  
+
+You can mirror an animation:
+
+    -- create an east facing animation by flipping west facing frames
+    tileset:define("walk west"):frames({'10-15', 1):delays(0.2)
+    tileset:define("walk east"):frames({'10-15', 1):delays(0.2):flip()
+
+![func](api/func.png) `{animation}:sounds (sounds)`  
+
+The `sounds` function takes an indexed table of sound sources, each sound plays when the corresponding frame position is drawn.
+
+    -- play step.wav when frame 1 shows. Occurs every animation loop.
+    tileset:define("walk west")
+        :frames({'10-15', 1)
+        :delays(0.2)
+        :sounds( {[1] = "step.wav"} )
+
+![func](api/func.png) `{animation}:offset ({x, y})`  
+
+The `offset` function takes `{x, y}` which displaces the drawing of frames. This is used in special cases when your actor has a certain animation with a different tileset size than it's normal frames. Switching to such an animtion makes the draw position jump since the center of the larger frames don't line up with the normal frames. Compensate for this variation with the offset.
+
+![func](api/func.png) `slime:animationDuration(actor, key)`  
+
+Returns the duration of an animation in seconds. This value is the sum of all frame delays on an animation, and totals to one loop of the animation.
 
 ### Special Animation Keys
 
