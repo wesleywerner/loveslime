@@ -83,14 +83,6 @@
 <li>Bags (inventory)</li>
 </ul>
 
-<p><strong>TODO</strong>  </p>
-
-<ul>
-<li>Document slime.setAnimation (self, name, key)</li>
-<li>Tutorial</li>
-<li>Tidy function parameter names</li>
-</ul>
-
 <h1>
 <a id="thanks" class="anchor" href="#thanks" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Thanks</h1>
 
@@ -145,10 +137,10 @@
 <p>A basic stage setup might look like this:</p>
 
 <pre><code>function setupStage ()
-    slime.reset ()
-    slime.background ("background.png")
-    slime.layer ("background.png", "layer.png", 50)
-    slime.floor ("floor.png")
+    slime:reset ()
+    slime:background ("background.png")
+    slime:layer ("background.png", "layer.png", 50)
+    slime:floor ("floor.png")
     addActors ()
     addHotspots ()
     slime.callback = myStageCallback
@@ -219,18 +211,18 @@ object.clickedY
 <h2>
 <a id="reset" class="anchor" href="#reset" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Reset</h2>
 
-<p><img src="api/func.png" alt="func"> <code>slime.reset ()</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime:reset ()</code></p>
 
 <p>Clear the stage, actors and hotspots. Call this before setting up a new stage. Note that bags (inventories) are <em>not</em> cleared.</p>
 
 <h2>
 <a id="backgrounds" class="anchor" href="#backgrounds" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Backgrounds</h2>
 
-<p><img src="api/func.png" alt="func"> <code>slime.background (backgroundfilename, [, delay])</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime:background (backgroundfilename, [, delay])</code></p>
 
 <p>Add a background to the stage. <code>delay</code> sets how many milliseconds to display the background if multiple backgrounds are loaded, and may be omitted if only one background is set.</p>
 
-<p><img src="api/func.png" alt="func"> <code>slime.floor (floorfilename)</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime:floor (floorfilename)</code></p>
 
 <p>Set the floor where actors can walk. This is an image where black (<code>#000</code>) indicates non-walkable areas, and any other color for walkable.</p>
 
@@ -239,7 +231,7 @@ object.clickedY
 
 <p>Layers define areas of your background where actors can walk behind.</p>
 
-<p><img src="api/func.png" alt="func"> <code>slime.layer (background, mask, baseline)</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime:layer (background, mask, baseline)</code></p>
 
 <p>Add a walk-behind layer. The <code>background</code> is where to cut the layer from. The <code>mask</code> defines where to cut.</p>
 
@@ -256,7 +248,7 @@ object.clickedY
 
 <p>Adds an actor to the stage. The actor object is returned:</p>
 
-<pre><code>local boss = slime.actor ("Big Boss", 100, 100)
+<pre><code>local boss = slime:actor ("Big Boss", 100, 100)
 boss.speechcolor = {255, 0, 0}     -- Set the speech color for this actor as {red, green, blue}
 </code></pre>
 
@@ -271,6 +263,9 @@ boss.speechcolor = {255, 0, 0}     -- Set the speech color for this actor as {re
 <p><img src="api/prop.png" alt="property"> <code>actor.nozbuffer</code></p>
 
 <p>Set this property to <code>true</code> if this actor draws above all layers.</p>
+
+<pre><code>boss.nozbuffer = true
+</code></pre>
 
 <h2>
 <a id="animations" class="anchor" href="#animations" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Animations</h2>
@@ -339,35 +334,44 @@ tileset:define("walk west")
 <h3>
 <a id="special-animation-keys" class="anchor" href="#special-animation-keys" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Special Animation Keys</h3>
 
-<p>Actor animations with these keys will automatically be used by the SLIME engine, where  is replaced where the actor's facing, south, west, east or north.</p>
+<p>Actor animations with these keys will automatically be used by the SLIME engine. The direction an actor faces can be south, west, east or north.
+The actions that are special are:</p>
 
 <ul>
-<li>"idle south": The actor is not speaking or walking. They are idle.</li>
-<li>"walk south": The actor is moving.</li>
-<li>"talk south": The actor is speaking.</li>
+<li>idle: The actor is not speaking or walking. They are idle.</li>
+<li>walk: The actor is walking.</li>
+<li>talk: The actor is speaking.</li>
 </ul>
 
-<p><img src="api/func.png" alt="func"> <code>slime.moveActor (name, x, y)</code></p>
+<p>Here is a sample of combinations of actor animation names that are picked up by SLIME:</p>
+
+<ul>
+<li>"idle north"</li>
+<li>"walk east"</li>
+<li>"talk south"</li>
+</ul>
+
+<p><img src="api/func.png" alt="func"> <code>slime:moveActor (name, x, y)</code></p>
 
 <p>Move an actor. There has to be a valid floor set for movement to find a path.</p>
 
 <p>Example:</p>
 
-<pre><code>slime.moveActor("ego", 90, 34)
+<pre><code>slime:moveActor("ego", 90, 34)
 </code></pre>
 
-<p><img src="api/func.png" alt="func"> <code>slime.moveActorTo (name, target)</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime:moveActorTo (name, target)</code></p>
 
 <p>Move an actor to another actor.</p>
 
-<p><img src="api/func.png" alt="func"> <code>slime.turnActor (name, direction)</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime:turnActor (name, direction)</code></p>
 
 <p>Turns an Actor to face a direction, one of <code>south</code>, <code>west</code>, <code>north</code> or <code>east</code>.</p>
 
 <h2>
 <a id="hotspots" class="anchor" href="#hotspots" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Hotspots</h2>
 
-<p><img src="api/func.png" alt="func"> <code>slime.hotspot (name, x, y, w, h)</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime:hotspot (name, x, y, w, h)</code></p>
 
 <p>Adds a hotspot to the stage.</p>
 
@@ -377,25 +381,25 @@ tileset:define("walk west")
 
 <p>Returns true if there are any objects at that position.</p>
 
-<p><img src="api/func.png" alt="func"> <code>slime.getObjects (x, y)</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime:getObjects (x, y)</code></p>
 
 <p>Gets a table of objects under <code>x/y</code>, or <code>nil</code> if no object is found.</p>
 
 <h2>
 <a id="status" class="anchor" href="#status" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Status</h2>
 
-<p><img src="api/func.png" alt="func"> <code>slime.status (text)</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime:status (text)</code></p>
 
 <p>Set or unset the status bar text.</p>
 
 <h2>
 <a id="drawing" class="anchor" href="#drawing" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Drawing</h2>
 
-<p><img src="api/func.png" alt="func"> <code>slime.update (dt)</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime:update (dt)</code></p>
 
 <p>Update animated backgrounds, actor movements and animations.</p>
 
-<p><img src="api/func.png" alt="func"> <code>slime.draw ([scale])</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime:draw ([scale])</code></p>
 
 <p>Draw the scene to the display. The <code>scale</code> parameter defaults to 1, and is only needed if you called <code>love.graphics.scale</code> before calling this function.</p>
 
@@ -417,7 +421,7 @@ tileset:define("walk west")
 
 <p>Bags are analogous to inventory. The bags system is very simple yet flexible: Each bag has a name and can hold multiple items. In this way it supports inventory for multiple actors.</p>
 
-<p><img src="api/func.png" alt="func"> <code>slime.bagInsert (bag, object)</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime:bagInsert (bag, object)</code></p>
 
 <p>Inserts something into a bag.</p>
 
@@ -429,18 +433,18 @@ tileset:define("walk west")
 <p>Example:</p>
 
 <pre><code>local theSpoon = { ["name"] = "spoon" }
-slime.bagInsert ("ego", theSpoon)
+slime:bagInsert ("ego", theSpoon)
 </code></pre>
 
-<p><img src="api/func.png" alt="func"> <code>slime.bagContents (bag)</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime:bagContents (bag)</code></p>
 
 <p>Gets the contents of a bag as a table.</p>
 
-<p><img src="api/func.png" alt="func"> <code>slime.bagRemove (bag, name)</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime:bagRemove (bag, name)</code></p>
 
 <p>Removes an item (<code>name</code>) from a <code>bag</code>.</p>
 
-<p><img src="api/func.png" alt="func"> <code>slime.bagButton (name, image, x, y)</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime:bagButton (name, image, x, y)</code></p>
 
 <p>Add a hotspot with an image that draws on screen. </p>
 
@@ -449,7 +453,7 @@ slime.bagInsert ("ego", theSpoon)
 
 <p>Chains give you a way to script actor movement and dialogue in sequence. If your main actor needs to walk to a tree, says something witty, walk down to a pond and then jump in, chains allow you to script this.</p>
 
-<p><img src="api/func.png" alt="func"> <code>slime.chain()</code>  </p>
+<p><img src="api/func.png" alt="func"> <code>slime:chain()</code>  </p>
 
 <p>Creates and returns a new chain of events. Use this chain object to add the links to your chain. Links process in sequence, each waiting in turn until the one before it resolves.</p>
 
@@ -518,11 +522,11 @@ chain:say("ego", "Now I can see")
 <h2>
 <a id="cursors" class="anchor" href="#cursors" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Cursors</h2>
 
-<p><img src="api/func.png" alt="func"> <code>slime.setCursor (name, image, scale, hotx, hoty)</code></p>
+<p><img src="api/func.png" alt="func"> <code>slime:setCursor (name, image, scale, hotx, hoty)</code></p>
 
 <p>Set a hardware cursor with scale applied.</p>
 
-<p>When you set a cursor, the <code>name</code> is passed back as the <code>event</code> parameter to <code>slime.callback()</code>. This makes it easy to check if the player is using a key on a door.</p>
+<p>When you set a cursor, the <code>name</code> is passed back as the <code>event</code> parameter to <code>slime.callback</code>. This makes it easy to check if the player is using a key on a door.</p>
 
 <p>Call with no parameters to set the default cursor.</p>
 
