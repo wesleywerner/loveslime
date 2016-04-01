@@ -219,7 +219,7 @@ function slime.internalAnimationLoop (frames, counter)
     if pack.loopcounter > 255 then
         pack.loopcounter = 0
     end
-    slime.animationLooped (pack.actor.name, pack.key, pack.loopcounter)
+    slime.animationLooped (pack.anim.actor.name, pack.key, pack.loopcounter)
 end
 
 
@@ -260,58 +260,86 @@ function slime.tileset (self, tileset, size)
     actor["h"] = size.h
     actor["base"] = { size.w / 2, size.h }
     
-    return { actor = actor, tileset = tileset, size = size, define = slime.define }
+    return {
+        actor = actor,
+        tileset = tileset,
+        size = size,
+        define = slime.defineAnimation
+        }
 
 end
 
 -- A helper method to define frames against an animation object.
-function slime.define (self, key, frames, delays, sounds, offset)
-
-    local anim = self
+function slime.defineAnimation (self, key)
     
+    local pack = {
+        anim = self,
+        setFrames = slime.defineFrames,
+        setDelays = slime.defineDelays,
+        setSounds = slime.defineSounds,
+        setOffset = slime.defineOffset,
+        flip = slime.defineFlip,
+        --actor = self.anim.actor, 
+        key = key, 
+        --tileset = self.anim.tileset, 
+        loopcounter = 0,
+        sounds = {},
+        offset = {x=0, y=0}
+    }
+    
+    return pack
+    
+end
+
+function slime.defineFrames (self, frames)
+    self.framesDefinition = frames
+    return self
+end
+
+function slime.defineDelays (self, delays)
+
+    local image = self.anim.actor.host:cache(self.anim.tileset)
+    
+    local g = anim8.newGrid(
+        self.anim.size.w, 
+        self.anim.size.h, 
+        image:getWidth(), 
+        image:getHeight())
+    
+    self.frames = anim8.newAnimation(
+        g(unpack(self.framesDefinition)), 
+        delays or 1,
+        slime.internalAnimationLoop)
+    
+    -- circular ref back
+    self.frames.pack = self
+        
+    -- store this animation object in the actor's animation table
+    self.anim.actor.animations[self.key] = self
+
+    return self
+end
+
+function slime.defineSounds (self, sounds)
     sounds = sounds or {}
     for i, v in pairs(sounds) do
         if type(v) == "string" then
             sounds[i] = love.audio.newSource(v, "static")
         end
     end
-    
-    local pack = {
-        actor = anim.actor, 
-        key = key, 
-        tileset = anim.tileset, 
-        loopcounter = 0,
-        sounds = sounds or {},
-        offset = offset or {x=0, y=0},
-        flip = slime.animationPackFlip}
-    
-    local image = anim.actor.host:cache(anim.tileset)
-    
-    local g = anim8.newGrid(
-        anim.size.w, 
-        anim.size.h, 
-        image:getWidth(), 
-        image:getHeight())
-    
-    pack.frames = anim8.newAnimation(
-        g(unpack(frames)), 
-        delays or 1,
-        slime.internalAnimationLoop)
-    
-    -- circular ref back
-    pack.frames.pack = pack
-        
-    -- store this animation object in the actor's animation table
-    anim.actor.animations[key] = pack
-    
-    return pack
-    
+    self.sounds = sounds
+    return self
 end
 
+function slime.defineOffset (self, x, y)
+    self.offset = {x=x, y=y}
+    return self
+end
 
 -- Helper method to flip defined animations
-function slime.animationPackFlip (self)
+function slime.defineFlip (self)
     self.frames:flipH()
+    return self
 end
 
 -- Set the animation of an actor
@@ -366,7 +394,7 @@ function slime.drawActor (self, actor)
     local anim = actor:getAnim()
     
     if anim then
-        local tileset = self:cache(anim.tileset)
+        local tileset = self:cache(anim.anim.tileset)
         anim.frames:draw(tileset,
             actor.x - actor.base[1] + anim.offset.x,
             actor.y - actor.base[2] + anim.offset.y)
