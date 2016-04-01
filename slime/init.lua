@@ -204,7 +204,7 @@ function slime.actor (self, name, x, y)
     newActor.setImage = slime.setImage
     
     -- set the actor new animation method
-    newActor.tileset = slime.tileset
+    newActor.tileset = slime.defineTileset
     
     -- set slime host reference
     newActor.host = self
@@ -248,7 +248,7 @@ end
 
 
 -- Helper method to add an animation to an actor
-function slime.tileset (self, tileset, size)
+function slime.defineTileset (self, tileset, size)
     
     local actor = self
     
@@ -274,17 +274,15 @@ function slime.defineAnimation (self, key)
     
     local pack = {
         anim = self,
-        setFrames = slime.defineFrames,
-        setDelays = slime.defineDelays,
-        setSounds = slime.defineSounds,
-        setOffset = slime.defineOffset,
+        frames = slime.defineFrames,
+        delays = slime.defineDelays,
+        sounds = slime.defineSounds,
+        offset = slime.defineOffset,
         flip = slime.defineFlip,
-        --actor = self.anim.actor, 
         key = key, 
-        --tileset = self.anim.tileset, 
         loopcounter = 0,
-        sounds = {},
-        offset = {x=0, y=0}
+        _sounds = {},
+        _offset = {x=0, y=0}
     }
     
     return pack
@@ -306,13 +304,13 @@ function slime.defineDelays (self, delays)
         image:getWidth(), 
         image:getHeight())
     
-    self.frames = anim8.newAnimation(
+    self._frames = anim8.newAnimation(
         g(unpack(self.framesDefinition)), 
         delays or 1,
         slime.internalAnimationLoop)
     
     -- circular ref back
-    self.frames.pack = self
+    self._frames.pack = self
         
     -- store this animation object in the actor's animation table
     self.anim.actor.animations[self.key] = self
@@ -327,18 +325,18 @@ function slime.defineSounds (self, sounds)
             sounds[i] = love.audio.newSource(v, "static")
         end
     end
-    self.sounds = sounds
+    self._sounds = sounds
     return self
 end
 
 function slime.defineOffset (self, x, y)
-    self.offset = {x=x, y=y}
+    self._offset = {x=x, y=y}
     return self
 end
 
 -- Helper method to flip defined animations
 function slime.defineFlip (self)
-    self.frames:flipH()
+    self._frames:flipH()
     return self
 end
 
@@ -365,7 +363,7 @@ function slime.animationDuration(self, actor, key)
     if a then
         local anim = a.animations[key]
         if anim then
-            return anim.frames.totalDuration
+            return anim._frames.totalDuration
         end
     end
     return 0
@@ -395,9 +393,9 @@ function slime.drawActor (self, actor)
     
     if anim then
         local tileset = self:cache(anim.anim.tileset)
-        anim.frames:draw(tileset,
-            actor.x - actor.base[1] + anim.offset.x,
-            actor.y - actor.base[2] + anim.offset.y)
+        anim._frames:draw(tileset,
+            actor.x - actor.base[1] + anim._offset.x,
+            actor.y - actor.base[2] + anim._offset.y)
     elseif (actor.image) then
         love.graphics.draw(actor.image,
             actor.x - actor.base[1],
@@ -843,8 +841,8 @@ function slime.update (self, dt)
         self:moveActorOnPath (actor, dt)
         local anim = actor:getAnim()
         if anim then
-            anim.frames:update(dt)
-            local framesound = anim.sounds[anim.frames.position]
+            anim._frames:update(dt)
+            local framesound = anim._sounds[anim._frames.position]
             if framesound then
                 love.audio.play(framesound)
             end
