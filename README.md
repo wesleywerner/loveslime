@@ -42,12 +42,6 @@ The name is an acronym for "SLUDGE to L&Ouml;VE Inspired Mimicry Environment".
 * Actor Speech
 * Bags (inventory)
 
-**TODO**  
-
-* Document slime.setAnimation (self, name, key)
-* Tutorial
-* Tidy function parameter names
-
 # Thanks
 
 I want to thank these people for making use of their code:
@@ -89,10 +83,10 @@ To set up your stage for play you need to clear objects, load a background, set 
 A basic stage setup might look like this:
 
     function setupStage ()
-        slime.reset ()
-        slime.background ("background.png")
-        slime.layer ("background.png", "layer.png", 50)
-        slime.floor ("floor.png")
+        slime:reset ()
+        slime:background ("background.png")
+        slime:layer ("background.png", "layer.png", 50)
+        slime:floor ("floor.png")
         addActors ()
         addHotspots ()
         slime.callback = myStageCallback
@@ -157,17 +151,17 @@ This is the number of times the animation has looped.
 
 ## Reset
 
-![func](api/func.png) `slime.reset ()`
+![func](api/func.png) `slime:reset ()`
 
 Clear the stage, actors and hotspots. Call this before setting up a new stage. Note that bags (inventories) are _not_ cleared.
 
 ## Backgrounds
 
-![func](api/func.png) `slime.background (backgroundfilename, [, delay])`
+![func](api/func.png) `slime:background (backgroundfilename, [, delay])`
 
 Add a background to the stage. `delay` sets how many milliseconds to display the background if multiple backgrounds are loaded, and may be omitted if only one background is set.
 
-![func](api/func.png) `slime.floor (floorfilename)`
+![func](api/func.png) `slime:floor (floorfilename)`
 
 Set the floor where actors can walk. This is an image where black (`#000`) indicates non-walkable areas, and any other color for walkable.
 
@@ -175,7 +169,7 @@ Set the floor where actors can walk. This is an image where black (`#000`) indic
 
 Layers define areas of your background where actors can walk behind.
 
-![func](api/func.png) `slime.layer (background, mask, baseline)`
+![func](api/func.png) `slime:layer (background, mask, baseline)`
 
 Add a walk-behind layer. The `background` is where to cut the layer from. The `mask` defines where to cut.
 
@@ -191,7 +185,7 @@ Actors are items on your stage that may move or talk, like people, animals or ro
 
 Adds an actor to the stage. The actor object is returned:
 
-    local boss = slime.actor ("Big Boss", 100, 100)
+    local boss = slime:actor ("Big Boss", 100, 100)
     boss.speechcolor = {255, 0, 0}     -- Set the speech color for this actor as {red, green, blue}
 
 ![func](api/func.png) `slime:removeActor (name)`  
@@ -205,6 +199,8 @@ Sets a static (non-animated) image as the actor's sprite.
 ![property](api/prop.png) `actor.nozbuffer`
 
 Set this property to `true` if this actor draws above all layers.
+
+    boss.nozbuffer = true
 
 ## Animations
 
@@ -266,31 +262,38 @@ Returns the duration of an animation in seconds. This value is the sum of all fr
 
 ### Special Animation Keys
 
-Actor animations with these keys will automatically be used by the SLIME engine, where <direction> is replaced where the actor's facing, south, west, east or north.
+Actor animations with these keys will automatically be used by the SLIME engine. The direction an actor faces can be south, west, east or north.
+The actions that are special are:
 
-* "idle south": The actor is not speaking or walking. They are idle.
-* "walk south": The actor is moving.
-* "talk south": The actor is speaking.
+* idle: The actor is not speaking or walking. They are idle.
+* walk: The actor is walking.
+* talk: The actor is speaking.
 
-![func](api/func.png) `slime.moveActor (name, x, y)`
+Here is a sample of combinations of actor animation names that are picked up by SLIME:
+
+* "idle north"
+* "walk east"
+* "talk south"
+
+![func](api/func.png) `slime:moveActor (name, x, y)`
 
 Move an actor. There has to be a valid floor set for movement to find a path.
 
 Example:
 
-    slime.moveActor("ego", 90, 34)
+    slime:moveActor("ego", 90, 34)
     
-![func](api/func.png) `slime.moveActorTo (name, target)`
+![func](api/func.png) `slime:moveActorTo (name, target)`
 
 Move an actor to another actor.
 
-![func](api/func.png) `slime.turnActor (name, direction)`
+![func](api/func.png) `slime:turnActor (name, direction)`
 
 Turns an Actor to face a direction, one of `south`, `west`, `north` or `east`.
 
 ## Hotspots
 
-![func](api/func.png) `slime.hotspot (name, x, y, w, h)`
+![func](api/func.png) `slime:hotspot (name, x, y, w, h)`
 
 Adds a hotspot to the stage.
 
@@ -300,23 +303,23 @@ Interacts with all objects at `x, y`. This triggers an "interact" event in `slim
 
 Returns true if there are any objects at that position.
 
-![func](api/func.png) `slime.getObjects (x, y)`
+![func](api/func.png) `slime:getObjects (x, y)`
 
 Gets a table of objects under `x/y`, or `nil` if no object is found.
 
 ## Status
 
-![func](api/func.png) `slime.status (text)`
+![func](api/func.png) `slime:status (text)`
 
 Set or unset the status bar text.
 
 ## Drawing
 
-![func](api/func.png) `slime.update (dt)`
+![func](api/func.png) `slime:update (dt)`
 
 Update animated backgrounds, actor movements and animations.
 
-![func](api/func.png) `slime.draw ([scale])`
+![func](api/func.png) `slime:draw ([scale])`
 
 Draw the scene to the display. The `scale` parameter defaults to 1, and is only needed if you called `love.graphics.scale` before calling this function.
 
@@ -336,7 +339,7 @@ Returns `true` if there is speech displaying.
 
 Bags are analogous to inventory. The bags system is very simple yet flexible: Each bag has a name and can hold multiple items. In this way it supports inventory for multiple actors.
 
-![func](api/func.png) `slime.bagInsert (bag, object)`
+![func](api/func.png) `slime:bagInsert (bag, object)`
 
 Inserts something into a bag.
 
@@ -346,17 +349,17 @@ Inserts something into a bag.
 Example:
 
     local theSpoon = { ["name"] = "spoon" }
-    slime.bagInsert ("ego", theSpoon)
+    slime:bagInsert ("ego", theSpoon)
 
-![func](api/func.png) `slime.bagContents (bag)`
+![func](api/func.png) `slime:bagContents (bag)`
 
 Gets the contents of a bag as a table.
 
-![func](api/func.png) `slime.bagRemove (bag, name)`
+![func](api/func.png) `slime:bagRemove (bag, name)`
 
 Removes an item (`name`) from a `bag`.
 
-![func](api/func.png) `slime.bagButton (name, image, x, y)`
+![func](api/func.png) `slime:bagButton (name, image, x, y)`
 
 Add a hotspot with an image that draws on screen. 
 
@@ -365,7 +368,7 @@ Add a hotspot with an image that draws on screen.
 
 Chains give you a way to script actor movement and dialogue in sequence. If your main actor needs to walk to a tree, says something witty, walk down to a pond and then jump in, chains allow you to script this.
 
-![func](api/func.png) `slime.chain()`  
+![func](api/func.png) `slime:chain()`  
 
 Creates and returns a new chain of events. Use this chain object to add the links to your chain. Links process in sequence, each waiting in turn until the one before it resolves.
 
@@ -430,11 +433,11 @@ Plays the given audio source. Resolves immediately.
 
 ## Cursors
 
-![func](api/func.png) `slime.setCursor (name, image, scale, hotx, hoty)`
+![func](api/func.png) `slime:setCursor (name, image, scale, hotx, hoty)`
 
 Set a hardware cursor with scale applied.
 
-When you set a cursor, the `name` is passed back as the `event` parameter to `slime.callback()`. This makes it easy to check if the player is using a key on a door.
+When you set a cursor, the `name` is passed back as the `event` parameter to `slime.callback`. This makes it easy to check if the player is using a key on a door.
 
 Call with no parameters to set the default cursor.
 
