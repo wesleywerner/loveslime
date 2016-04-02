@@ -192,6 +192,10 @@ Adds an actor to the stage. The actor object is returned:
 
 Removes the actor named `name`
 
+![func](api/func.png) `slime:getActor (name)`  
+
+Gets the actor by name. 
+
 ![func](api/func.png) `actor:setImage (path)`
 
 Sets a static (non-animated) image as the actor's sprite.
