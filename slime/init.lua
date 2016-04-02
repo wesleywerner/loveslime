@@ -194,11 +194,7 @@ function slime.actor (self, name, x, y)
         end
     end
     
-    if (self.actors[name]) then
-        table.insert(self.actors, newActor)
-    else
-        self.actors[name] = newActor
-    end
+    table.insert(self.actors, newActor)
     
     -- set actor image method
     newActor.setImage = slime.setImage
@@ -211,6 +207,17 @@ function slime.actor (self, name, x, y)
     
     return newActor
 end
+
+
+-- Gets the actor by name
+function slime.getActor (self, name)
+    for _, actor in ipairs(self.actors) do
+        if actor.name == name then
+            return actor
+        end
+    end
+end
+
 
 -- Internal callback fired on any animation loop
 function slime.internalAnimationLoop (frames, counter)
@@ -225,8 +232,11 @@ end
 
 
 function slime.removeActor (self, name)
-    if self.actors[name] then
-        self.actors[name] = nil
+    for i, actor in ipairs(self.actors) do
+        if actor.name == name then
+            table.remove(self.actors, i)
+            return true
+        end
     end
 end
 
@@ -343,7 +353,7 @@ end
 -- Set the animation of an actor
 function slime.setAnimation (self, name, key)
 
-    local actor = self.actors[name]
+    local actor = self:getActor(name)
     
     if (not actor) then
         self:log ("Set animation failed: no actor named " .. name)
@@ -358,8 +368,8 @@ end
 
 
 -- Gets the duration of a given animation
-function slime.animationDuration(self, actor, key)
-    local a = self.actors[actor]
+function slime.animationDuration(self, name, key)
+    local a = self:getActor(name)
     if a then
         local anim = a.animations[key]
         if anim then
@@ -408,7 +418,7 @@ end
 
 function slime.turnActor (self, name, direction)
 
-    local actor = self.actors[name]
+    local actor = self:getActor(name)
 
     if (actor) then
         actor.direction = direction
@@ -425,7 +435,7 @@ function slime.moveActor (self, name, x, y)
         return 
     end
         
-    local actor = self.actors[name]
+    local actor = self:getActor(name)
 
     if (actor == nil) then
         self:log("No actor named " .. name)
@@ -506,7 +516,7 @@ end
 -- Move an actor to another actor
 function slime.moveActorTo (self, name, target)
 
-    local targetActor = self.actors[target]
+    local targetActor = self:getActor(target)
     
     if (targetActor) then
         self:moveActor (name, targetActor.x, targetActor.y)
@@ -633,7 +643,7 @@ slime.speech = { }
 function slime.say (self, name, text)
 
     local newSpeech = {
-        ["actor"] = self.actors[name],
+        ["actor"] = self:getActor(name),
         ["text"] = text,
         ["time"] = 3
         }
@@ -836,8 +846,13 @@ function slime.update (self, dt)
 
     self:updateBackground(dt)
     
+    -- Sort actors from top to bottom
+    table.sort(self.actors, function (a, b) 
+        return a.y - a.base[2] < b.y - b.base[2]
+        end )
+    
     -- Update animations
-    for iactor, actor in pairs(self.actors) do
+    for _, actor in pairs(self.actors) do
         self:moveActorOnPath (actor, dt)
         local anim = actor:getAnim()
         if anim then
@@ -880,7 +895,7 @@ function slime.draw (self, scale)
     -- for each layer, draw the actors above it, then draw the layer.
     local maxBaseline = 0
     for i, layer in pairs(self.layers) do
-        for iactor, actor in pairs(self.actors) do
+        for _, actor in ipairs(self.actors) do
             if (actor.y) < layer.baseline then
                 self:drawActor(actor)
             end
@@ -890,7 +905,7 @@ function slime.draw (self, scale)
     end
 
     -- draw actors above all the baselines
-    for iactor, actor in pairs(self.actors) do
+    for _, actor in ipairs(self.actors) do
         if actor.y >= maxBaseline or actor.nozbuffer then
             self:drawActor(actor)
         end
@@ -936,7 +951,7 @@ function slime.getObjects (self, x, y)
 
     local objects = { }
 
-    for iactor, actor in pairs(self.actors) do
+    for _, actor in pairs(self.actors) do
         if (x >= actor.x - actor.base[1] and x <= actor.x - actor.base[1] + actor.w) and 
             (y >= actor.y - actor.base[2] and y <= actor.y - actor.base[2] + actor.h) then
             table.insert(objects, actor)
@@ -1089,7 +1104,7 @@ function slime.outlineStageElements(self)
 
     -- draw outlines of actors
     love.graphics.setColor(0, 255, 0, 64)
-    for iactor, actor in pairs(self.actors) do
+    for _, actor in pairs(self.actors) do
         love.graphics.rectangle("line", actor.x - actor.base[1], actor.y - actor.base[2], actor.w, actor.h)
         love.graphics.circle("line", actor.x, actor.y, 1, 6)
     end
@@ -1187,7 +1202,7 @@ function slime.updateChains (self, dt)
         if not link.processed then
             link.processed = true
             if link.method == "image" then
-                local actor = self.actors[link.actor]
+                local actor = self:getActor(link.actor)
                 actor:setImage(link.path)
             elseif link.method == "floor" then
                 self:floor(link.path)
@@ -1219,9 +1234,10 @@ function slime.updateChains (self, dt)
             expired = true
         elseif link.method == "move" then
             -- skip link if not actor exists
-            if not self.actors[link.actor] then
+            local actor = self:getActor(link.actor)
+            if not actor then
                 expired = true
-            elseif not self.actors[link.actor].path then
+            elseif not actor.path then
                 expired = true
             end
         elseif link.method == "turn" then
