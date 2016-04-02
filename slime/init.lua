@@ -1131,7 +1131,10 @@ function slime.chainImage (self, actor, path)
     table.insert(self.ref, {method="image", actor=actor, path=path})
 end
 
-function slime.chainMove (self, actor, position)
+function slime.chainMove (self, actor, position, y)
+    if type(position) == "number" then
+        position = {x=position, y=y}
+    end
     table.insert(self.ref, {method="move", actor=actor, position=position})
 end
 
@@ -1215,7 +1218,10 @@ function slime.updateChains (self, dt)
         elseif link.method == "floor" then
             expired = true
         elseif link.method == "move" then
-            if not self.actors[link.actor].path then
+            -- skip link if not actor exists
+            if not self.actors[link.actor] then
+                expired = true
+            elseif not self.actors[link.actor].path then
                 expired = true
             end
         elseif link.method == "turn" then

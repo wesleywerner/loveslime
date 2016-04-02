@@ -275,7 +275,7 @@ Here is a sample of combinations of actor animation names that are picked up by 
 * "walk east"
 * "talk south"
 
-![func](api/func.png) `slime:moveActor (name, x, y)`
+![func](api/func.png) `slime:moveActor (name, x, y)`  
 
 Move an actor. There has to be a valid floor set for movement to find a path.
 
@@ -376,9 +376,10 @@ Creates and returns a new chain of events. Use this chain object to add the link
 
 Calls `actor:setImage`. Resolves immediately.
 
-![func](api/func.png) `chain:move (actor, position)`  
+![func](api/func.png) `chain:move (actor, x, y)`  
+![func](api/func.png) `chain:move (actor, target)`  
 
-Calls `slime:moveActor` or `slime:moveActorTo`. Position may be a table of `{x, y}` or a string of another actor's name. Resolves when the given actor's movement path is emptied.
+Calls `slime:moveActor` or `slime:moveActorTo`, depending which paramters are given. Target is a string of another actor's name. Resolves when the given actor's movement path is emptied.
 
 Also note that this fires the `slime.callback` event for "moved" as usual, that is to say, chained actions behave like the player performed them.
 
