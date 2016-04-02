@@ -61,7 +61,6 @@ function slime.reset (self)
     self.counters = {}
     self.backgrounds = {}
     self.actors = {}
-    self.layers = {}
     self.debug.log = {}
     self.hotspots = {}
     self.astar = nil
@@ -170,6 +169,7 @@ function slime.actor (self, name, x, y)
     local h = 10
     
     local newActor = {
+        ["isactor"] = true,
         ["name"] = name,
         ["x"] = x,
         ["y"] = y,
@@ -693,8 +693,6 @@ end
 -- Layers define areas of the background that actors can walk behind.
 
 
-slime.layers = {}
-
 function slime.layer (self, background, mask, baseline)
 
     local source = love.graphics.newImage(background)
@@ -702,14 +700,11 @@ function slime.layer (self, background, mask, baseline)
     
     local newLayer = { 
         ["image"] = slime:createLayer(source, mask),
-        ["baseline"] = baseline
+        ["baseline"] = baseline,
+        islayer = true
         }
     
-    table.insert(self.layers, newLayer)
-    
-    -- Order the layers by their baselines.
-    -- This is important for when we draw the layers.
-    table.sort(self.layers, function (a, b) return a.baseline < b.baseline end )
+    table.insert(self.actors, newLayer)
     
 end
 
@@ -846,20 +841,26 @@ function slime.update (self, dt)
 
     self:updateBackground(dt)
     
-    -- Sort actors from top to bottom
-    table.sort(self.actors, function (a, b) 
-        return a.y - a.base[2] < b.y - b.base[2]
-        end )
+    -- Sort actors and layers for correct zorder drawing
+    table.sort(self.actors, function (a, b)
+            local m = a.isactor and a.y or a.baseline
+            local n = b.isactor and b.y or b.baseline
+            if a.isactor and a.nozbuffer then m = 10000 end
+            if b.isactor and b.nozbuffer then n = 10001 end
+            return m < n
+            end)
     
     -- Update animations
-    for _, actor in pairs(self.actors) do
-        self:moveActorOnPath (actor, dt)
-        local anim = actor:getAnim()
-        if anim then
-            anim._frames:update(dt)
-            local framesound = anim._sounds[anim._frames.position]
-            if framesound then
-                love.audio.play(framesound)
+    for _, actor in ipairs(self.actors) do
+        if actor.isactor then
+            self:moveActorOnPath (actor, dt)
+            local anim = actor:getAnim()
+            if anim then
+                anim._frames:update(dt)
+                local framesound = anim._sounds[anim._frames.position]
+                if framesound then
+                    love.audio.play(framesound)
+                end
             end
         end
     end
@@ -890,24 +891,11 @@ function slime.draw (self, scale)
         love.graphics.draw(bg.image, 0, 0)
     end
 
-    -- Layers
-    -- layers are ordered by their baselines: smaller values first.
-    -- for each layer, draw the actors above it, then draw the layer.
-    local maxBaseline = 0
-    for i, layer in pairs(self.layers) do
-        for _, actor in ipairs(self.actors) do
-            if (actor.y) < layer.baseline then
-                self:drawActor(actor)
-            end
-        end
-        love.graphics.draw(layer.image, 0, 0)
-        maxBaseline = layer.baseline
-    end
-
-    -- draw actors above all the baselines
-    for _, actor in ipairs(self.actors) do
-        if actor.y >= maxBaseline or actor.nozbuffer then
-            self:drawActor(actor)
+    for _, o in ipairs(self.actors) do
+        if o.isactor then
+            self:drawActor(o)
+        elseif o.islayer then
+            love.graphics.draw(o.image, 0, 0)
         end
     end
     
@@ -952,8 +940,11 @@ function slime.getObjects (self, x, y)
     local objects = { }
 
     for _, actor in pairs(self.actors) do
-        if (x >= actor.x - actor.base[1] and x <= actor.x - actor.base[1] + actor.w) and 
-            (y >= actor.y - actor.base[2] and y <= actor.y - actor.base[2] + actor.h) then
+        if actor.isactor and 
+            (x >= actor.x - actor.base[1] 
+            and x <= actor.x - actor.base[1] + actor.w) 
+        and (y >= actor.y - actor.base[2] 
+            and y <= actor.y - actor.base[2] + actor.h) then
             table.insert(objects, actor)
         end
     end
@@ -1084,12 +1075,6 @@ function slime.outlineStageElements(self)
     
     local r, g, b, a = love.graphics.getColor( )
     
-    -- draw baselines for layers
-    love.graphics.setColor(255, 0, 0, 64)
-    for i, layer in pairs(self.layers) do
-        love.graphics.line( 0, layer.baseline, love.window.getHeight(), layer.baseline)
-    end
-    
     -- draw outlines of hotspots
     love.graphics.setColor(0, 0, 255, 64)
     for ihotspot, hotspot in pairs(self.hotspots) do
@@ -1103,10 +1088,18 @@ function slime.outlineStageElements(self)
     end    
 
     -- draw outlines of actors
-    love.graphics.setColor(0, 255, 0, 64)
-    for _, actor in pairs(self.actors) do
-        love.graphics.rectangle("line", actor.x - actor.base[1], actor.y - actor.base[2], actor.w, actor.h)
-        love.graphics.circle("line", actor.x, actor.y, 1, 6)
+    for _, actor in ipairs(self.actors) do
+        if actor.isactor then
+            love.graphics.setColor(0, 255, 0, 64)
+            love.graphics.rectangle("line", actor.x - actor.base[1], 
+                actor.y - actor.base[2], actor.w, actor.h)
+            love.graphics.circle("line", actor.x, actor.y, 1, 6)
+        elseif actor.islayer then
+            -- draw baselines for layers
+            love.graphics.setColor(255, 0, 0, 64)
+            love.graphics.line(0, actor.baseline, 
+                love.window.getHeight(), actor.baseline)
+        end
     end
     
     love.graphics.setColor(r, g, b, a)
