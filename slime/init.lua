@@ -1178,7 +1178,7 @@ end
 function slime.updateChains (self, dt)
         
     -- process the first link in each chain
-    for _, chain in pairs(self.chains.queue) do
+    for cidx, chain in pairs(self.chains.queue) do
     
         local link = chain[1] or {}
         local expired = false
@@ -1240,7 +1240,7 @@ function slime.updateChains (self, dt)
         elseif link.method == "sound" then
             expired = true
         end
-    
+        
         -- remove expired links
         if expired and #chain > 0 then
             table.remove(chain, 1)
@@ -1248,7 +1248,7 @@ function slime.updateChains (self, dt)
         
         -- remove empty chains
         if #chain == 0 then
-            table.remove(self.chains.queue, 1)
+            table.remove(self.chains.queue, cidx)
         end
         
     end
