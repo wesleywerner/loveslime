@@ -933,8 +933,14 @@ function slime.draw (self, scale)
     
     -- status text
     if (self.statusText) then
+        local y = self.settings["status position"]
+        local w = love.window.getWidth() / scale
         love.graphics.setFont(self.settings["status font"])
-        love.graphics.printf(self.statusText, 0, self.settings["status position"], love.window.getWidth() / scale, "center")
+        -- Outline
+        love.graphics.setColor({0, 0, 0, 255})
+        love.graphics.printf(self.statusText, 1, y+1, w, "center")
+        love.graphics.setColor({255, 255, 255, 255})
+        love.graphics.printf(self.statusText, 0, y, w, "center")
     end
     
     -- Draw Speech
