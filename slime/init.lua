@@ -51,6 +51,7 @@ slime.counters = {}
 
 -- Store settings to customize the look of SLIME
 slime.settings = {
+    ["builtin text"] = true,
     ["status position"] = 70,
     ["status font"] = love.graphics.newFont(12),
     ["speech position"] = 0,
@@ -73,6 +74,9 @@ function slime.callback (event, object)
 end
 
 function slime.animationLooped (actor, key, counter)
+end
+
+function slime.onDrawSpeechCallback(actorX, actorY, speechcolor, words)
 end
 
 --                       _      
@@ -929,14 +933,18 @@ function slime.draw (self, scale)
     -- Draw Speech
     if (#self.speech > 0) then
         local spc = self.speech[1]
-        -- Store the original color
-        local r, g, b, a = love.graphics.getColor()
-        -- Set a new speech color
-        love.graphics.setColor(spc.actor.speechcolor)
-        love.graphics.setFont(self.settings["speech font"])
-        love.graphics.printf(spc.text, 0, self.settings["speech position"], love.window.getWidth() / scale, "center")
-        -- Restore original color
-        love.graphics.setColor(r, g, b, a)
+        if self.settings["builtin text"] then
+            -- Store the original color
+            local r, g, b, a = love.graphics.getColor()
+            -- Set a new speech color
+            love.graphics.setColor(spc.actor.speechcolor)
+            love.graphics.setFont(self.settings["speech font"])
+            love.graphics.printf(spc.text, 0, self.settings["speech position"], love.window.getWidth() / scale, "center")
+            -- Restore original color
+            love.graphics.setColor(r, g, b, a)
+        else
+            self:onDrawSpeechCallback(spc.actor.x, spc.actor.y, spc.actor.speechcolor, spc.text)
+        end
     end
     
     self:outlineStageElements()
