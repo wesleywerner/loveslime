@@ -54,7 +54,8 @@ slime.settings = {
     ["status position"] = 70,
     ["status font"] = love.graphics.newFont(12),
     ["speech position"] = 0,
-    ["speech font"] = love.graphics.newFont(10)
+    ["speech font"] = love.graphics.newFont(10),
+    ["walk and talk"] = false
     }
 
 function slime.reset (self)
@@ -874,6 +875,9 @@ function slime.update (self, dt)
             self:skipSpeech()
         else
             spc.actor.action = "talk"
+            if not self.settings["walk and talk"] then
+                spc.actor.path = nil
+            end
         end
     end
     

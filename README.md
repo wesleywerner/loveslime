@@ -448,12 +448,13 @@ Call with no parameters to set the default cursor.
 
 ## Settings
 
-SLIME offers these settings to customize your game:
+SLIME offers these settings to customize your game. They are set through the `slime.settings` table, as in `slime.settings["setting name"] = true`
 
-    slime.settings["status position"] = 70      -- The Y position to print the built-in status text
-    slime.settings["status font"] = love.graphics.Font
-    slime.settings["speech position"] = 0       -- The Y position to print speech
-    slime.settings["speech font"] = love.graphics.Font
+* "status position": The Y position where to print the built-in status text
+* "status font": A love.graphics.Font object for drawing status
+* "speech position": The Y position where to print speech
+* "speech font": A love.graphics.Font object for drawing speech
+* "walk and talk": Set to `true` to allow an actor talking while moving. Default is false.
 
 ---
 
