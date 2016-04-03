@@ -934,16 +934,28 @@ function slime.draw (self, scale)
     if (#self.speech > 0) then
         local spc = self.speech[1]
         if self.settings["builtin text"] then
+            
             -- Store the original color
             local r, g, b, a = love.graphics.getColor()
-            -- Set a new speech color
-            love.graphics.setColor(spc.actor.speechcolor)
+            
+            local y = self.settings["speech position"]
+            local w = love.window.getWidth() / scale
+            
             love.graphics.setFont(self.settings["speech font"])
-            love.graphics.printf(spc.text, 0, self.settings["speech position"], love.window.getWidth() / scale, "center")
+            
+            -- Black outline
+            love.graphics.setColor({0, 0, 0, 255})
+            love.graphics.printf(spc.text, 1, y+1, w, "center")
+            
+            love.graphics.setColor(spc.actor.speechcolor)
+            love.graphics.printf(spc.text, 0, y, w, "center")
+            
             -- Restore original color
             love.graphics.setColor(r, g, b, a)
+            
         else
-            self:onDrawSpeechCallback(spc.actor.x, spc.actor.y, spc.actor.speechcolor, spc.text)
+            self:onDrawSpeechCallback(spc.actor.x, spc.actor.y,
+                spc.actor.speechcolor, spc.text)
         end
     end
     
