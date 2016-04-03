@@ -1239,7 +1239,7 @@ function slime.updateChains (self, dt)
             link.processed = true
             if link.method == "image" then
                 local actor = self:getActor(link.actor)
-                actor:setImage(link.path)
+                if actor then actor:setImage(link.path) end
             elseif link.method == "floor" then
                 self:floor(link.path)
             elseif link.method == "move" then
