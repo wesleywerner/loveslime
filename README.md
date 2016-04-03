@@ -295,6 +295,10 @@ Move an actor to another actor.
 
 Turns an Actor to face a direction, one of `south`, `west`, `north` or `east`.
 
+![func](api/func.png) `slime:stopActor (name)`  
+
+Stops a moving actor.
+
 ## Hotspots
 
 ![func](api/func.png) `slime:hotspot (name, x, y, w, h)`

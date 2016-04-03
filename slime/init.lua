@@ -527,6 +527,7 @@ function slime.moveActorTo (self, name, target)
     end
 end
 
+
 function slime.moveActorOnPath (self, actor, dt)
     if (actor.path and #actor.path > 0) then
         -- Check if the actor's speed is set to delay movement.
@@ -564,6 +565,7 @@ function slime.moveActorOnPath (self, actor, dt)
         end
     end
 end
+
 
 -- Return the nearest cardinal direction represented by the angle of movement.
 function slime.calculateDirection (self, x1, y1, x2, y2)
@@ -628,6 +630,15 @@ function slime.calculateDirection (self, x1, y1, x2, y2)
     end
     
     --return 'south'
+end
+
+
+-- Stops an actor from moving
+function slime.stopActor (self, name)
+    local actor = self:getActor(name)
+    if actor then
+        actor.path = nil
+    end
 end
 
 
