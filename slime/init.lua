@@ -368,6 +368,12 @@ function slime.setAnimation (self, name, key)
         -- reset the animation counter
         local anim = actor:getAnim()
         if anim then anim.loopcounter = 0 end
+        
+        -- Recalculate the actor's base offset
+        local size = anim.anim.size
+        actor["w"] = size.w
+        actor["h"] = size.h
+        actor["base"] = { size.w / 2, size.h }
     end
         
 end
