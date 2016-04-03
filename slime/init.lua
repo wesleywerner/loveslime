@@ -186,7 +186,8 @@ function slime.actor (self, name, x, y)
         }
         
     function newActor:getAnim ()
-        if (self.customAnimationKey) then
+        local priorityAction = self.action == "talk" or self.action == "walk"
+        if (self.customAnimationKey and not priorityAction) then
             return self.animations[self.customAnimationKey]
         else
             local key = self.action .. " " .. self.direction
