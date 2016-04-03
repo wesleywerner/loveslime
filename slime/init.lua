@@ -769,15 +769,15 @@ end
 slime.hotspots = { }
 
 function slime.hotspot(self, name, x, y, w, h)
-
-    table.insert(self.hotspots, {
+    local hotspot = {
         ["name"] = name, 
         ["x"] = x, 
         ["y"] = y, 
         ["w"] = w, 
         ["h"] = h
-    })
-
+    }
+    table.insert(self.hotspots, hotspot)
+    return hotspot
 end
 
 --    _                      _                   
