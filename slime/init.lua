@@ -67,8 +67,9 @@ function slime.reset (self)
     self.hotspots = {}
     self.astar = nil
     self.statusText = nil
-    self.cursorName = nil
 end
+
+slime.cursor = { ["quads"] = {}, ["names"] = {} }
 
 function slime.callback (event, object)
 end
@@ -973,6 +974,28 @@ function slime.draw (self, scale)
     end
     
     self:outlineStageElements()
+    
+    -- Draw Cursor
+    local quad = self.cursor.quads[self.cursor.current]
+    
+    if quad then
+        
+        local x, y = love.mouse.getPosition()
+        x = x / scale
+        y = y / scale
+        
+        if self.cursor.custom then
+            local cursorhotspot = self.cursor.custom.hotspot
+            love.graphics.draw(self.cursor.custom.image, 
+                x-cursorhotspot.x, y-cursorhotspot.y)
+        else
+            
+            local cursorhotspot = self.cursor.hotspots[self.cursor.current]
+            cursorhotspot = cursorhotspot or {x=0, y=0}
+            love.graphics.draw(self.cursor.image, quad,
+                x-cursorhotspot.x, y-cursorhotspot.y)
+        end
+    end
 
 end
 
@@ -1026,28 +1049,73 @@ function slime.interact (self, x, y)
     if (not objects) then return end
     
     for i, object in pairs(objects) do
-        self.callback (self.cursorName or "interact", object)
+        local cursorname = self.cursor.custom and self.cursor.custom.name
+        cursorname = cursorname or (self.cursor.names[self.cursor.current])
+        self.callback (cursorname, object)
     end
     
     return true
     
 end
 
--- Set a hardware cursor with scale applied.
-function slime.setCursor (self, name, image, scale, hotx, hoty)
 
-    self.cursorName = name
-    local cursor = nil
-    if (image) then
-        local w, h = image:getDimensions ()
-        local cursorCanvas = love.graphics.newCanvas (w * scale, h * scale)
-        cursorCanvas:renderTo(function()
-                love.graphics.draw (image, 0, 0, 0, scale, scale)
-            end)
-        cursor = love.mouse.newCursor (cursorCanvas:getImageData(), 
-            hotx * scale, hoty * scale)
+-- Loads the cursors as a spritemap, w and h is the size of each quad
+function slime.loadCursors (self, path, w, h, names, hotspots)
+    
+    self.cursor = {}
+    self.cursor.names = names or {}
+    self.cursor.hotspots = hotspots or {}
+    self.cursor.image = love.graphics.newImage(path)
+    self.cursor.quads = {}
+    self.cursor.current = 1
+    
+    local imgwidth, imgheight = self.cursor.image:getDimensions()
+    
+    local totalImages = imgwidth / w
+    
+    for x = 1, totalImages do
+        
+        local quad = love.graphics.newQuad((x - 1) * w, 0,
+            w, h, imgwidth, imgheight)
+        
+        table.insert(self.cursor.quads, quad)
+        
     end
-    love.mouse.setCursor (cursor)
+
+end
+
+
+-- Uses a preloaded cursor
+function slime.useCursor (self, index)
+    self.cursor.current = index
+end
+
+
+
+-- Set a custom cursor.
+function slime.setCursor (self, name, image, hotspot)
+
+    if name then
+        self.cursor.custom = {
+            name=name,
+            image=image, 
+            hotspot=hotspot or {x=0, y=0}
+            }
+    else
+        self.cursor.custom = nil
+    end
+    
+--    local cursor = nil
+--    if (image) then
+--        local w, h = image:getDimensions ()
+--        local cursorCanvas = love.graphics.newCanvas (w * scale, h * scale)
+--        cursorCanvas:renderTo(function()
+--                love.graphics.draw (image, 0, 0, 0, scale, scale)
+--            end)
+--        cursor = love.mouse.newCursor (cursorCanvas:getImageData(), 
+--            hotx * scale, hoty * scale)
+--    end
+--    love.mouse.setCursor (cursor)
 end
 
 --        _      _                 

@@ -442,13 +442,31 @@ Plays the given audio source. Resolves immediately.
 
 ## Cursors
 
-![func](api/func.png) `slime:setCursor (name, image, scale, hotx, hoty)`
+![func](api/func.png) `slime:loadCursors (path, w, h [, names, hotspots])`  
 
-Set a hardware cursor with scale applied.
+Loads a tileset sprite containing multiple cursor images. `w` and `h` is each cursor size, and optional `hotspots` position where the click-zone on the icon lies. Defaults to {x=0, y=0} if not given.
+
+The names list sets the `event` passed when interacting on objects.
+
+![func](api/func.png) `slime:useCursor (index)`  
+
+Uses the cursor at `index` position.
+
+    local cursorHotspots = { {x=4, y=4}, {x=4, y=3}, {x=2, y=6} }
+    local cursorNames = {"interact", "look", "talk", "take", "busy" }
+    slime:loadCursors("images/cursors.png", 12, 12, cursorNames, cursorHotspots)
+    slime:useCursor(2)
+    
+    -- slime:interact(x, y) will pass "look" as the `event` parameter during `slime.callback`
+
+
+![func](api/func.png) `slime:setCursor (name, image, [hotspot])`
+
+Set a custom cursor.
 
 When you set a cursor, the `name` is passed back as the `event` parameter to `slime.callback`. This makes it easy to check if the player is using a key on a door.
 
-Call with no parameters to set the default cursor.
+Call with no parameters to clear the custom cursor.
 
 ## Settings
 
