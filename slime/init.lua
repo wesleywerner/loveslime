@@ -821,6 +821,16 @@ function slime.bagContents (self, bag)
 
 end
 
+-- Checks if an item is inside a bag
+function slime.bagContains (self, bag, item)
+    local bago = self:bagContents(bag)
+    for _, v in pairs(bago) do
+        if v.name == item then
+            return true
+        end
+    end
+end
+
 -- Remove an item from a bag.
 function slime.bagRemove (self, bag, name)
 
