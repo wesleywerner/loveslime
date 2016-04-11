@@ -1091,6 +1091,10 @@ function slime.useCursor (self, index)
 end
 
 
+function slime.getCursor (self)
+    return self.cursor.current
+end
+
 
 -- Set a custom cursor.
 function slime.setCursor (self, name, image, hotspot)
