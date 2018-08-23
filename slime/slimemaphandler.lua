@@ -8,9 +8,9 @@ require 'slime.astar'
 
 SlimeMapHandler = class('SlimeMapHandler')
 
-function SlimeMapHandler:convert(mask)
+function SlimeMapHandler:convert(filename)
     -- Converts a walkable image mask into map points.
-    local mask = mask:getData()
+    local mask = love.image.newImageData(filename)
     local w = mask:getWidth()
     local h = mask:getHeight()
     local row = nil
@@ -55,7 +55,7 @@ function SlimeMapHandler:getNode(location)
 
   if self.tiles[location.y][location.x] == 1 then
     -- print(string.format('location is solid: (%i, %i)', location.x, location.y))
-    
+
     return nil
   end
 
@@ -70,9 +70,9 @@ function SlimeMapHandler:getAdjacentNodes(curnode, dest)
   local result = {}
   local cl = curnode.location
   local dl = dest
-  
+
   local n = false
-  
+
   n = self:_handleNode(cl.x + 1, cl.y, curnode, dl.x, dl.y)
   if n then
     table.insert(result, n)
@@ -92,7 +92,7 @@ function SlimeMapHandler:getAdjacentNodes(curnode, dest)
   if n then
     table.insert(result, n)
   end
-  
+
   return result
 end
 
@@ -106,21 +106,21 @@ function SlimeMapHandler:_handleNode(x, y, fromnode, destx, desty)
     x = x,
     y = y
   }
-  
+
   local n = self:getNode(loc)
-  
+
   if n ~= nil then
     local dx = math.max(x, destx) - math.min(x, destx)
     local dy = math.max(y, desty) - math.min(y, desty)
     local emCost = dx + dy
-    
+
     n.mCost = n.mCost + fromnode.mCost
     n.score = n.mCost + emCost
     n.parent = fromnode
-    
+
     return n
   end
-  
+
   return nil
 end
 
