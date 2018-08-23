@@ -28,9 +28,7 @@ function cell.setup ()
     slime:hotspot("hole", x, y, width, height)
 
     -- Bowl and spoon
-    local bowl = slime:actor("bowl and spoon")
-    bowl.x = 65
-    bowl.y = 37
+    local bowl = slime:actor("bowl and spoon", 65, 37)
     bowl:setImage("images/bowl1.png")
 
     -- Hook into the slime callbacks
@@ -62,10 +60,14 @@ function cell.addEgoActor (x, y)
     local northFrames = {18, 1}
     local northDelays = 1
 
-    egoAnim:define("idle south", southFrames, southDelays)
-    egoAnim:define("idle west", westFrames, westDelays)
-    egoAnim:define("idle north", northFrames, northDelays)
-    egoAnim:define("idle east", westFrames, westDelays)--:flip()
+    egoAnim:define("idle south")
+      :frames(southFrames):delays(southDelays)
+    egoAnim:define("idle west")
+      :frames(westFrames):delays(westDelays)
+    egoAnim:define("idle north")
+      :frames(northFrames):delays(northDelays)
+    egoAnim:define("idle east")
+      :frames(westFrames):delays(westDelays):flip()
 
     -- Walk animation
     southFrames = {'11-14', 1}
@@ -75,10 +77,14 @@ function cell.addEgoActor (x, y)
     northFrames = {'18-21', 1}
     northDelays = 0.2
 
-    egoAnim:define("walk south", southFrames, southDelays)
-    egoAnim:define("walk west", westFrames, westDelays)
-    egoAnim:define("walk north", northFrames, northDelays)
-    egoAnim:define("walk east", westFrames, westDelays)--:flip()
+    egoAnim:define("walk south")
+      :frames(southFrames):delays(southDelays)
+    egoAnim:define("walk west")
+      :frames(westFrames):delays(westDelays)
+    egoAnim:define("walk north")
+      :frames(northFrames):delays(northDelays)
+    egoAnim:define("walk east")
+      :frames(westFrames):delays(westDelays):flip()
 
     -- Talk animation
     southFrames = {'15-17', 1}
@@ -88,13 +94,18 @@ function cell.addEgoActor (x, y)
     northFrames = {'15-17', 1}
     northDelays = 0.2
 
-    egoAnim:define("talk south", southFrames, southDelays)
-    egoAnim:define("talk west", westFrames, westDelays)
-    egoAnim:define("talk north", northFrames, northDelays)
-    egoAnim:define("talk east", westFrames, westDelays)--:flip()
+    egoAnim:define("talk south")
+      :frames(southFrames):delays(southDelays)
+    egoAnim:define("talk west")
+      :frames(westFrames):delays(westDelays)
+    egoAnim:define("talk north")
+      :frames(northFrames):delays(northDelays)
+    egoAnim:define("talk east")
+      :frames(westFrames):delays(westDelays):flip()
 
     -- Ego animation using the spoon to dig
-    egoAnim:define("dig", {"22-25", 1}, 0.2)--:flip()
+    egoAnim:define("dig")
+      :frames({"22-25", 1}):delays(0.2):flip()
 
 end
 
@@ -169,6 +180,8 @@ end
 
 
 function cell.callback (event, object)
+
+  if not event then return end
 
     slime:log(event .. " on " .. object.name)
 

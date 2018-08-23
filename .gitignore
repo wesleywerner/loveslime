@@ -1,3 +1,4 @@
+*.orig
 release/
 refresh-sprites.sh
 tutorial/slime

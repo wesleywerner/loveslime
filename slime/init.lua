@@ -211,6 +211,8 @@ function slime.actor (self, name, x, y)
     -- set slime host reference
     newActor.host = self
 
+    self:sortLayers()
+    
     return newActor
 end
 
@@ -818,6 +820,16 @@ function slime.bagContents (self, bag)
 
 end
 
+-- Checks if an item is inside a bag
+function slime.bagContains (self, bag, item)
+    local bago = self:bagContents(bag)
+    for _, v in pairs(bago) do
+        if v.name == item then
+            return true
+        end
+    end
+end
+
 -- Remove an item from a bag.
 function slime.bagRemove (self, bag, name)
 
@@ -863,14 +875,7 @@ function slime.update (self, dt)
 
     self:updateBackground(dt)
 
-    -- Sort actors and layers for correct zorder drawing
-    table.sort(self.actors, function (a, b)
-            local m = a.isactor and a.y or a.baseline
-            local n = b.isactor and b.y or b.baseline
-            if a.isactor and a.nozbuffer then m = 10000 end
-            if b.isactor and b.nozbuffer then n = 10001 end
-            return m < n
-            end)
+    self:sortLayers()
 
     -- Update animations
     for _, actor in ipairs(self.actors) do
@@ -905,6 +910,19 @@ function slime.update (self, dt)
     self:updateChains(dt)
 
 end
+
+
+-- Sort actors and layers for correct zorder drawing
+function slime.sortLayers (self)
+    table.sort(self.actors, function (a, b)
+            local m = a.isactor and a.y or a.baseline
+            local n = b.isactor and b.y or b.baseline
+            if a.isactor and a.nozbuffer then m = 10000 end
+            if b.isactor and b.nozbuffer then n = 10001 end
+            return m < n
+            end)    
+end
+
 
 function slime.draw (self, scale)
 
@@ -1087,6 +1105,10 @@ function slime.useCursor (self, index)
     self.cursor.current = index
 end
 
+
+function slime.getCursor (self)
+    return self.cursor.current
+end
 
 
 -- Set a custom cursor.
