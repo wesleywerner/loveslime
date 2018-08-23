@@ -10,62 +10,64 @@ function cell.setup ()
 
     -- Add the background
     slime:background("images/cell-background.png")
-    
+
     -- Apply the walk-behind layer
     slime:layer("images/cell-background.png", "images/cell-layer.png", 50)
-    
+
     -- Set the floor
     slime:floor("images/cell-floor-closed.png")
-    
+
     -- Add our main actor
     cell.addEgoActor(70, 50)
-    
+
     -- Add the cell door
     cell.addCellDoor(50, 49)
-    
+
     -- Hole in the wall
     local x, y, width, height = 92, 23, 8, 8
     slime:hotspot("hole", x, y, width, height)
 
     -- Bowl and spoon
-    local bowl = slime:actor("bowl and spoon")
-    bowl.x = 65
-    bowl.y = 37
+    local bowl = slime:actor("bowl and spoon", 65, 37)
     bowl:setImage("images/bowl1.png")
-    
+
     -- Hook into the slime callbacks
     slime.callback = cell.callback
     slime.inventoryChanged = cell.inventoryChanged
     slime.animationLooped = cell.animationLooped
-    
+
 end
 
 function cell.addEgoActor (x, y)
 
     -- Add an actor named "ego"
     local ego = slime:actor("ego", x, y)
-    
+
     -- The time between actor steps. More delay means slower steps.
     ego.movedelay = 0.05
 
     -- create a new animation pack for ego using a tileset of 12x12 frames
     local egoAnim = ego:tileset("images/ego.png", {w=12, h=12})
-    
+
     -- Idle animation
     -- The idle animation plays when the actor is not walking or talking:
     -- a simple two-frame animation: Open eyes, and blink.
-    
+
     local southFrames = {'11-10', 1}
     local southDelays = {3, 0.2}
     local westFrames = {'3-2', 1}
     local westDelays = {3, 0.2}
     local northFrames = {18, 1}
     local northDelays = 1
-    
-    egoAnim:define("idle south", southFrames, southDelays)
-    egoAnim:define("idle west", westFrames, westDelays)
-    egoAnim:define("idle north", northFrames, northDelays)
-    egoAnim:define("idle east", westFrames, westDelays):flip()
+
+    egoAnim:define("idle south")
+      :frames(southFrames):delays(southDelays)
+    egoAnim:define("idle west")
+      :frames(westFrames):delays(westDelays)
+    egoAnim:define("idle north")
+      :frames(northFrames):delays(northDelays)
+    egoAnim:define("idle east")
+      :frames(westFrames):delays(westDelays):flip()
 
     -- Walk animation
     southFrames = {'11-14', 1}
@@ -74,11 +76,15 @@ function cell.addEgoActor (x, y)
     westDelays = 0.2
     northFrames = {'18-21', 1}
     northDelays = 0.2
-    
-    egoAnim:define("walk south", southFrames, southDelays)
-    egoAnim:define("walk west", westFrames, westDelays)
-    egoAnim:define("walk north", northFrames, northDelays)
-    egoAnim:define("walk east", westFrames, westDelays):flip()
+
+    egoAnim:define("walk south")
+      :frames(southFrames):delays(southDelays)
+    egoAnim:define("walk west")
+      :frames(westFrames):delays(westDelays)
+    egoAnim:define("walk north")
+      :frames(northFrames):delays(northDelays)
+    egoAnim:define("walk east")
+      :frames(westFrames):delays(westDelays):flip()
 
     -- Talk animation
     southFrames = {'15-17', 1}
@@ -88,13 +94,18 @@ function cell.addEgoActor (x, y)
     northFrames = {'15-17', 1}
     northDelays = 0.2
 
-    egoAnim:define("talk south", southFrames, southDelays)
-    egoAnim:define("talk west", westFrames, westDelays)
-    egoAnim:define("talk north", northFrames, northDelays)
-    egoAnim:define("talk east", westFrames, westDelays):flip()
-    
+    egoAnim:define("talk south")
+      :frames(southFrames):delays(southDelays)
+    egoAnim:define("talk west")
+      :frames(westFrames):delays(westDelays)
+    egoAnim:define("talk north")
+      :frames(northFrames):delays(northDelays)
+    egoAnim:define("talk east")
+      :frames(westFrames):delays(westDelays):flip()
+
     -- Ego animation using the spoon to dig
-    egoAnim:define("dig", {"22-25", 1}, 0.2):flip()
+    egoAnim:define("dig")
+      :frames({"22-25", 1}):delays(0.2):flip()
 
 end
 
@@ -113,13 +124,13 @@ function cell.addCellDoor (x, y)
     -- A series of frames that open or close the door
     local openingFrames = {"1-31", 1}
     local closingFrames = {"31-1", 1}
-    
+
     local doorAnim = cellDoor:tileset("images/cell-door.png", {w=9, h=30})
     doorAnim:define("closing", closingFrames, animationDelay)
     doorAnim:define("closed", closedFrame)
     doorAnim:define("opening", openingFrames, animationDelay)
     doorAnim:define("open", openFrame)
-        
+
     -- Start off closed
     slime:setAnimation("door", "closed")
 
@@ -146,15 +157,15 @@ function cell.pickUpSpoon ()
     slime:bagInsert("ego", { ["name"] = "bowl", ["image"] = "images/bowl2.png" })
     slime:bagInsert("ego", { ["name"] = "spoon", ["image"] = "images/spoon.png" })
     -- Remove the bowl and spoon actor from the stage
-    slime.actors["bowl and spoon"] = nil    
+    slime.actors["bowl and spoon"] = nil
 end
 
 
 -- Picks up the cement dust
 function cell.pickUpDust ()
-    slime:bagInsert("ego", 
+    slime:bagInsert("ego",
         { ["name"] = "cement dust", ["image"] = "images/inv-dust.png" })
-    slime.actors["dust"] = nil    
+    slime.actors["dust"] = nil
 end
 
 
@@ -170,35 +181,37 @@ end
 
 function cell.callback (event, object)
 
+  if not event then return end
+
     slime:log(event .. " on " .. object.name)
 
     if (event == "moved" and object.name == "ego") then
         slime:interact(object.clickedX, object.clickedY)
     end
-    
+
     if event == "interact" then
-    
+
         -- give ego a bowl and a spoon inventory items
         if object.name == "bowl and spoon" then
             cell.pickUpSpoon()
         end
-        
+
         -- Look at the hole in the wall
         if object.name == "hole" then
             slime:say("ego", "I see a hole in the wall")
         end
-        
+
         -- Set the cursor when interacting on bag items
         if object.name == "spoon" then
             slime:setCursor(object.name, object.image, scale, 0, 0)
         end
-        
+
         if object.name == "dust" then
             cell.pickUpDust()
         end
-    
+
     end
-    
+
     if event == "spoon" then
         if object.name == "door" then
             slime:say("ego", "The spoon won't open this door")
@@ -210,7 +223,7 @@ function cell.callback (event, object)
             slime:setCursor()
         end
     end
-    
+
 end
 
 
@@ -225,26 +238,26 @@ end
 
 
 function cell.animationLooped (actor, key, counter)
-    
+
     if actor == "door" then
-        
+
         -- Keep the door closed after the closing animation played.
         if key == "closing" then
             slime:setAnimation("door", "closed")
         end
-        
+
         -- Keep the door open after the opening animation played.
         if key == "opening" then
             slime:setAnimation("door", "open")
         end
-        
+
     end
-    
+
     if actor == "dust" then
         slime:setAnimation("dust", "still")
         slime:setAnimation("ego", nil)
     end
-    
+
 end
 
 -- Handle Love events
@@ -268,7 +281,7 @@ end
 
 function love.update (dt)
     slime:update(dt)
-    
+
     -- display hover over objects
     local x, y = love.mouse.getPosition()
     -- Adjust for scale
@@ -284,7 +297,7 @@ function love.update (dt)
     else
         slime:status()
     end
-    
+
 end
 
 function love.keypressed (key, isrepeat)
@@ -301,10 +314,10 @@ function love.mousepressed (x, y, button)
     y = math.floor(y / scale)
 
     -- Left mouse button
-    if button == "l" then
-    
+    if button == 1 then
+
         -- The point is in our bag inventory area
-        if (y > bagPosition) then 
+        if (y > bagPosition) then
             slime:interact(x, y)
         else
             if slime:someoneTalking() then
@@ -316,10 +329,10 @@ function love.mousepressed (x, y, button)
         end
 
     end
-    
+
     -- Right clicks uses the default cursor
-    if button == "r" then
+    if button == 2 then
         slime:setCursor()
     end
-    
+
 end

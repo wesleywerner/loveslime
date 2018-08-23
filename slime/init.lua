@@ -953,7 +953,7 @@ function slime.draw (self, scale)
     -- status text
     if (self.statusText) then
         local y = self.settings["status position"]
-        local w = love.window.getWidth() / scale
+        local w = love.graphics.getWidth() / scale
         love.graphics.setFont(self.settings["status font"])
         -- Outline
         love.graphics.setColor({0, 0, 0, 255})
@@ -971,7 +971,7 @@ function slime.draw (self, scale)
             local r, g, b, a = love.graphics.getColor()
             
             local y = self.settings["speech position"]
-            local w = love.window.getWidth() / scale
+            local w = love.graphics.getWidth() / scale
             
             love.graphics.setFont(self.settings["speech font"])
             
@@ -1237,7 +1237,7 @@ function slime.outlineStageElements(self)
             -- draw baselines for layers
             love.graphics.setColor(255, 0, 0, 64)
             love.graphics.line(0, actor.baseline, 
-                love.window.getHeight(), actor.baseline)
+                love.graphics.getHeight(), actor.baseline)
         end
     end
     
