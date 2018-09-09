@@ -48,18 +48,10 @@ require 'slime.bresenham'
 local anim8 = require 'slime.anim8'
 
 local backgrounds = { }
-
--- Store settings to customize the look of SLIME
-slime.settings = {
-    ["builtin text"] = true,
-    ["status position"] = 70,
-    ["status font"] = love.graphics.newFont(12),
-    ["speech position"] = 0,
-    ["speech font"] = love.graphics.newFont(10),
-    ["walk and talk"] = false
-    }
+local settings = { }
 
 function slime.reset (self)
+	settings:clear ()
     backgrounds:clear ()
     self.actors = {}
     self.debug.log = {}
@@ -948,7 +940,7 @@ function slime.update (self, dt)
             self:skipSpeech()
         else
             spc.actor.action = "talk"
-            if not self.settings["walk and talk"] then
+            if not settings["walk and talk"] then
                 spc.actor.path = nil
             end
         end
@@ -993,9 +985,9 @@ function slime.draw (self, scale)
 
     -- status text
     if (self.statusText) then
-        local y = self.settings["status position"]
+        local y = settings["status position"]
         local w = love.graphics.getWidth() / scale
-        love.graphics.setFont(self.settings["status font"])
+        love.graphics.setFont(settings["status font"])
         -- Outline
         love.graphics.setColor({0, 0, 0, 255})
         love.graphics.printf(self.statusText, 1, y+1, w, "center")
@@ -1006,15 +998,15 @@ function slime.draw (self, scale)
     -- Draw Speech
     if (#self.speech > 0) then
         local spc = self.speech[1]
-        if self.settings["builtin text"] then
+        if settings["builtin text"] then
 
             -- Store the original color
             local r, g, b, a = love.graphics.getColor()
 
-            local y = self.settings["speech position"]
+            local y = settings["speech position"]
             local w = love.graphics.getWidth() / scale
 
-            love.graphics.setFont(self.settings["speech font"])
+            love.graphics.setFont(settings["speech font"])
 
             -- Black outline
             love.graphics.setColor({0, 0, 0, 255})
@@ -1444,12 +1436,37 @@ function slime.updateChains (self, dt)
 
 end
 
---~     _    ____ ___
---~    / \  |  _ \_ _|
---~   / _ \ | |_) | |
---~  / ___ \|  __/| |
---~ /_/   \_\_|  |___|
+--~           _   _   _
+--~  ___  ___| |_| |_(_)_ __   __ _ ___
+--~ / __|/ _ \ __| __| | '_ \ / _` / __|
+--~ \__ \  __/ |_| |_| | | | | (_| \__ \
+--~ |___/\___|\__|\__|_|_| |_|\__, |___/
+                          --~ |___/
 
+--- Clears slime settings to defaults.
+function settings.clear (self)
+
+	-- Let slime handle displaying of speech text on screen,
+	-- if false the onDrawSpeechCallback function is called.
+    self["builtin text"] = true
+
+	-- The y-position to display status text
+    self["status position"] = 70
+
+    self["status font"] = love.graphics.newFont(12)
+
+    -- The y-position to display speech text
+    self["speech position"] = 0
+
+    self["speech font"] = love.graphics.newFont(10)
+
+    -- actors stop walking when they speak
+    self["walk and talk"] = false
+
+end
+
+-- Export
+slime.settings = settings
 
 
 return slime
