@@ -1221,8 +1221,11 @@ function slime.debugdraw (self)
     love.graphics.print(tostring(love.timer.getFPS()) .. " fps", 12, 10)
 
     -- print background info
-    if (self.counters["background index"] and self.counters["background delay"]) then
-        love.graphics.print("background #" .. self.counters["background index"] .. " showing for " .. string.format("%.1f", self.counters["background delay"]) .. "s", 60, 10)
+    if (backgrounds.index and backgrounds.timeout) then
+        love.graphics.print(
+			string.format("background #%d showing for %.1f",
+			backgrounds.index, backgrounds.timeout)
+			, 60, 10)
     end
 
     -- print info of everything under the pointer
