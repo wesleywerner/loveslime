@@ -47,7 +47,7 @@ require 'slime.bresenham'
 -- https://github.com/kikito/anim8
 local anim8 = require 'slime.anim8'
 
-slime.counters = {}
+local backgrounds = { }
 
 -- Store settings to customize the look of SLIME
 slime.settings = {
@@ -60,8 +60,7 @@ slime.settings = {
     }
 
 function slime.reset (self)
-    self.counters = {}
-    self.backgrounds = {}
+    backgrounds:clear ()
     self.actors = {}
     self.debug.log = {}
     self.hotspots = {}
@@ -80,56 +79,81 @@ end
 function slime.onDrawSpeechCallback(actorX, actorY, speechcolor, words)
 end
 
---                       _
---    ___  ___ ___ _ __ (_) ___
---   / __|/ __/ _ \ '_ \| |/ __|
---   \__ \ (_|  __/ | | | | (__
---   |___/\___\___|_| |_|_|\___|
+--~  _                _                                   _
+--~ | |__   __ _  ___| | ____ _ _ __ ___  _   _ _ __   __| |___
+--~ | '_ \ / _` |/ __| |/ / _` | '__/ _ \| | | | '_ \ / _` / __|
+--~ | |_) | (_| | (__|   < (_| | | | (_) | |_| | | | | (_| \__ \
+--~ |_.__/ \__,_|\___|_|\_\__, |_|  \___/ \__,_|_| |_|\__,_|___/
+--~ 				      |___/
 
-
-slime.backgrounds = {}
-
-function slime.background (self, backgroundfilename, delay)
+--- Add a background image to the room.
+-- This can be called many times to create an animated background.
+--
+-- @param filename
+-- The image filename of the background.
+--
+-- @param delay
+-- The seconds to display the background.
+-- When the delay has expired the next background is displayed.
+function backgrounds.add (self, filename, delay)
 
     -- Add a background to the stage, drawn at x, y for the given delay
     -- before drawing the next available background.
     -- If no delay is given, the background will draw forever.
 
-    local image = love.graphics.newImage(backgroundfilename)
+    local image = love.graphics.newImage(filename)
 
-    newBackground = {
+    local data = {
         ["image"] = image,
         ["delay"] = delay
         }
 
-    table.insert(self.backgrounds, newBackground)
+    table.insert(self.list, data)
 
     -- default to the first background
-    if (#self.backgrounds == 1) then
-        self.counters["background index"] = 1
-        self.counters["background delay"] = delay
+    if #self.list == 1 then
+        self.index = 1
+        self.timeout = delay
     end
+
 end
 
--- Set the floor mask that determines walkable areas.
-function slime.floor (self, floorfilename)
-    self.handler = SlimeMapHandler()
-    self.handler:convert(floorfilename)
-    self.astar = AStar(self.handler)
+--- Clears all backgrounds.
+function backgrounds.clear (self)
+
+	-- stores the list of backgrounds
+	self.list = { }
+
+	-- the index of the current background
+	self.index = 1
+
+	-- time remaining until the background cycles
+	self.timeout = 1
+
 end
 
-function slime.updateBackground (self, dt)
+--- Draws the current background to screen.
+function backgrounds.draw (self)
 
-    -- Rotates to the next background if there is one and delay expired.
+    local bg = self.list[self.index]
 
-    if (#self.backgrounds <= 1) then
+    if (bg) then
+        love.graphics.draw(bg.image, 0, 0)
+    end
+
+end
+
+--- Rotates to the next background if there is one and delay expired.
+function backgrounds.update (self, dt)
+
+    if (#self.list <= 1) then
         -- skip background rotation if there is one or none
         return
     end
 
-    local index = self.counters["background index"]
-    local background = self.backgrounds[index]
-    local timer = self.counters["background delay"]
+    local index = self.index
+    local background = self.list[index]
+    local timer = self.timeout
 
     if (timer == nil or background == nil) then
         -- start a new timer
@@ -140,17 +164,41 @@ function slime.updateBackground (self, dt)
         -- this timer has expired
         if (timer < 0) then
             -- move to the next index (with wrapping)
-            index = (index == #self.backgrounds) and 1 or index + 1
-            if (self.backgrounds[index]) then
-                timer = self.backgrounds[index].delay
+            index = (index == #self.list) and 1 or index + 1
+            if (self.list[index]) then
+                timer = self.list[index].delay
             end
         end
     end
 
-    self.counters["background index"] = index
-    self.counters["background delay"] = timer
+    self.index = index
+    self.timeout = timer
 
 end
+
+-- Expose the API
+function slime.background (self, ...)
+
+	backgrounds:add (...)
+
+end
+
+
+
+--~   __ _
+--~  / _| | ___   ___  _ __ ___
+--~ | |_| |/ _ \ / _ \| '__/ __|
+--~ |  _| | (_) | (_) | |  \__ \
+--~ |_| |_|\___/ \___/|_|  |___/
+
+
+-- Set the floor mask that determines walkable areas.
+function slime.floor (self, floorfilename)
+    self.handler = SlimeMapHandler()
+    self.handler:convert(floorfilename)
+    self.astar = AStar(self.handler)
+end
+
 
 
 --               _
@@ -212,7 +260,7 @@ function slime.actor (self, name, x, y)
     newActor.host = self
 
     self:sortLayers()
-    
+
     return newActor
 end
 
@@ -873,7 +921,7 @@ end
 
 function slime.update (self, dt)
 
-    self:updateBackground(dt)
+    backgrounds:update (dt)
 
     self:sortLayers()
 
@@ -920,7 +968,7 @@ function slime.sortLayers (self)
             if a.isactor and a.nozbuffer then m = 10000 end
             if b.isactor and b.nozbuffer then n = 10001 end
             return m < n
-            end)    
+            end)
 end
 
 
@@ -928,11 +976,7 @@ function slime.draw (self, scale)
 
     scale = scale or 1
 
-    -- Background
-    local bg = self.backgrounds[self.counters["background index"]]
-    if (bg) then
-        love.graphics.draw(bg.image, 0, 0)
-    end
+    backgrounds:draw ()
 
     for _, o in ipairs(self.actors) do
         if o.isactor then
@@ -1399,6 +1443,13 @@ function slime.updateChains (self, dt)
     end
 
 end
+
+--~     _    ____ ___
+--~    / \  |  _ \_ _|
+--~   / _ \ | |_) | |
+--~  / ___ \|  __/| |
+--~ /_/   \_\_|  |___|
+
 
 
 return slime

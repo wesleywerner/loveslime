@@ -126,10 +126,22 @@ function cell.addCellDoor (x, y)
     local closingFrames = {"31-1", 1}
 
     local doorAnim = cellDoor:tileset("images/cell-door.png", {w=9, h=30})
-    doorAnim:define("closing", closingFrames, animationDelay)
-    doorAnim:define("closed", closedFrame)
-    doorAnim:define("opening", openingFrames, animationDelay)
-    doorAnim:define("open", openFrame)
+    doorAnim
+		:define ("closing")
+		:frames (closingFrames)
+		:delays (animationDelay)
+    doorAnim
+        :define("closed")
+        :frames(closedFrame)
+        :delays(10)
+    doorAnim
+		:define ("opening")
+		:frames (openingFrames)
+		:delays (animationDelay)
+    doorAnim
+		:define ("open")
+		:frames (openFrame)
+        :delays(10)
 
     -- Start off closed
     slime:setAnimation("door", "closed")
