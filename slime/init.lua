@@ -53,6 +53,8 @@ local layers = { }
 local speech = { }
 local settings = { }
 local cursor = { }
+local hotspots = { }
+
 
 --- Clears the room and actors.
 -- TODO rename to clear
@@ -62,7 +64,7 @@ function slime.reset (self)
     speech:clear ()
     self.actors = {}
     self.debug.log = {}
-    self.hotspots = {}
+    hotspots:clear ()
     floors:clear ()
     self.statusText = nil
 end
@@ -237,7 +239,8 @@ function cursor.getName (self)
 end
 
 -- Set a custom cursor.
--- TODO change signature to take a table of cursor data
+-- TODO change signature to take a table of cursor data.
+-- also rename "hotspot", it is too ambiguous with the hotspots namespace.
 function cursor.set (self, name, image, hotspot)
 
     if name then
@@ -1054,9 +1057,14 @@ end
 --   |_| |_|\___/ \__|___/ .__/ \___/ \__|___/
 --                       |_|
 
-slime.hotspots = { }
+function hotspots.clear (self)
 
-function slime.hotspot(self, name, x, y, w, h)
+	self.list = { }
+
+end
+
+function hotspots.add (self, name, x, y, w, h)
+
     local hotspot = {
         ["name"] = name,
         ["x"] = x,
@@ -1064,9 +1072,19 @@ function slime.hotspot(self, name, x, y, w, h)
         ["w"] = w,
         ["h"] = h
     }
-    table.insert(self.hotspots, hotspot)
+
+    table.insert(self.list, hotspot)
     return hotspot
+
 end
+
+function slime.hotspot(self, ...)
+
+	print ("slime.hotspot will be obsoleted, use slime.hotspots:add()")
+	hotspots:add (...)
+
+end
+
 
 --    _                      _
 --   (_)_ ____   _____ _ __ | |_ ___  _ __ _   _
@@ -1262,7 +1280,8 @@ function slime.getObjects (self, x, y)
         end
     end
 
-    for ihotspot, hotspot in pairs(self.hotspots) do
+	-- TODO convert to hotspots:getAt()
+    for ihotspot, hotspot in pairs(hotspots.list) do
         if (x >= hotspot.x and x <= hotspot.x + hotspot.w) and
             (y >= hotspot.y and y <= hotspot.y + hotspot.h) then
             table.insert(objects, hotspot)
@@ -1378,7 +1397,7 @@ function slime.outlineStageElements(self)
 
     -- draw outlines of hotspots
     love.graphics.setColor(0, 0, 255, 64)
-    for ihotspot, hotspot in pairs(self.hotspots) do
+    for ihotspot, hotspot in pairs(hotspots.list) do
         love.graphics.rectangle("line", hotspot.x, hotspot.y, hotspot.w, hotspot.h)
     end
 
