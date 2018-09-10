@@ -49,6 +49,7 @@ local anim8 = require 'slime.anim8'
 
 local backgrounds = { }
 local floors = { }
+local layers = { }
 local speech = { }
 local settings = { }
 local cursor = { }
@@ -984,20 +985,26 @@ end
 --
 -- Layers define areas of the background that actors can walk behind.
 
-
-function slime.layer (self, background, mask, baseline)
+--- Add a walk-behind layer.
+function layers.add (self, background, mask, baseline)
 
     local newLayer = {
-        ["image"] = self.createLayer(self, background, mask),
+        ["image"] = self:convertMask (background, mask),
         ["baseline"] = baseline,
         islayer = true
         }
 
-    table.insert(self.actors, newLayer)
+	-- layers are merged with actors so that we can perform
+	-- efficient sorting, enabling drawing of actors behind layers.
+    table.insert(slime.actors, newLayer)
 
 end
 
-function slime:createLayer (source, mask)
+--- Cut a shape out of an image.
+-- All corresponding black pixels from the mask will cut and discard
+-- pixels (they become transparent), and only non-black mask pixels
+-- preserve the matching source pixels.
+function layers.convertMask (self, source, mask)
 
     -- Returns a copy of the source image with transparent pixels where
     -- the positional pixels in the mask are black.
@@ -1022,7 +1029,23 @@ function slime:createLayer (source, mask)
                         end)
 
     return love.graphics.newImage(layerData)
+
 end
+
+function slime.layer (self, ...)
+
+	print ("slime.layer will be obsoleted, use slime.layers:add()")
+	layers:add (...)
+
+end
+
+function slime:createLayer (source, mask)
+
+	print ("slime.layer will be obsoleted, use slime.layers:add()")
+	return layers:convertMask (source, mask)
+
+end
+
 
 --    _           _                   _
 --   | |__   ___ | |_ ___ _ __   ___ | |_ ___
