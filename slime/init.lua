@@ -49,6 +49,7 @@ local anim8 = require 'slime.anim8'
 
 local backgrounds = { }
 local floors = { }
+local speech = { }
 local settings = { }
 local cursor = { }
 
@@ -57,6 +58,7 @@ local cursor = { }
 function slime.reset (self)
 	settings:clear ()
     backgrounds:clear ()
+    speech:clear ()
     self.actors = {}
     self.debug.log = {}
     self.hotspots = {}
@@ -832,21 +834,25 @@ function slime.stopActor (self, name)
 end
 
 
---        _ _       _
---     __| (_) __ _| | ___   __ _ _   _  ___
---    / _` | |/ _` | |/ _ \ / _` | | | |/ _ \
---   | (_| | | (_| | | (_) | (_| | |_| |  __/
---    \__,_|_|\__,_|_|\___/ \__, |\__,_|\___|
---                          |___/
+--~                           _
+--~  ___ _ __   ___  ___  ___| |__
+--~ / __| '_ \ / _ \/ _ \/ __| '_ \
+--~ \__ \ |_) |  __/  __/ (__| | | |
+--~ |___/ .__/ \___|\___|\___|_| |_|
+--~     |_|
 
-slime.speech = { }
+--- Clears all current or queued speeches
+function speech.clear (self)
 
+	self.queue = { }
 
--- Make an actor say something
-function slime.say (self, name, text)
+end
+
+--- Make an actor say something
+function speech.say (self, name, text)
 
     local newSpeech = {
-        ["actor"] = self:getActor(name),
+        ["actor"] = slime:getActor(name),
         ["text"] = text,
         ["time"] = 3
         }
@@ -856,33 +862,116 @@ function slime.say (self, name, text)
         return
     end
 
-    table.insert(self.speech, newSpeech)
+    table.insert(self.queue, newSpeech)
+
+end
+
+function slime.say (self, name, text)
+
+	print ("slime.say will be obsoleted, use slime.speech:say()")
+	speech:say (name, text)
+
+end
+
+--- Returns if any actor is busy talking
+function speech.talking (self, actor)
+
+	if actor then
+		-- if a specific actor is talking
+		return self.queue[1] and self.queue[1].actor.name == actor
+	else
+		-- if any actor is talking
+		return (#self.queue > 0)
+	end
+
+end
+
+function speech.skip (self)
+
+    local spc = self.queue[1]
+    if (spc) then
+        table.remove(self.queue, 1)
+        spc.actor.action = "idle"
+    end
+end
+
+function speech.update (self, dt)
+
+    -- Update the speech display time.
+    if (#self.queue > 0) then
+        local spc = self.queue[1]
+        spc.time = spc.time - dt
+        if (spc.time < 0) then
+            self:skip ()
+        else
+            spc.actor.action = "talk"
+            if not settings["walk and talk"] then
+                spc.actor.path = nil
+            end
+        end
+    end
+
+end
+
+function speech.draw (self)
+
+    if (#self.queue > 0) then
+        local spc = self.queue[1]
+        if settings["builtin text"] then
+
+            -- Store the original color
+            local r, g, b, a = love.graphics.getColor()
+
+            local y = settings["speech position"]
+            local w = love.graphics.getWidth() / scale
+
+            love.graphics.setFont(settings["speech font"])
+
+            -- Black outline
+            love.graphics.setColor({0, 0, 0, 255})
+            love.graphics.printf(spc.text, 1, y+1, w, "center")
+
+            love.graphics.setColor(spc.actor.speechcolor)
+            love.graphics.printf(spc.text, 0, y, w, "center")
+
+            -- Restore original color
+            love.graphics.setColor(r, g, b, a)
+
+        else
+            self:onDrawSpeechCallback(spc.actor.x, spc.actor.y,
+                spc.actor.speechcolor, spc.text)
+        end
+    end
 
 end
 
 
 -- Checks if there is an actor talking.
+-- OBSOLETE IN FUTURE
 function slime.someoneTalking (self)
 
-    return (#self.speech > 0)
+	print ("slime.someoneTalking will be obsoleted, use slime.speech:talking()")
+	return speech:talking ()
 
 end
 
 
 -- Checks if specific actor is talking
+-- OBSOLETE IN FUTURE
 function slime.actorTalking (self, actor)
-    return self.speech[1] and self.speech[1].actor.name == actor
+
+	print ("slime.actorTalking will be obsoleted, use slime.speech:talking()")
+	return speech:talking (actor)
+
 end
 
 
 -- Skips the current speech
+-- OBSOLETE IN FUTURE
 function slime.skipSpeech (self)
 
-    local spc = self.speech[1]
-    if (spc) then
-        table.remove(self.speech, 1)
-        spc.actor.action = "idle"
-    end
+	print ("slime.skipSpeech will be obsoleted, use slime.speech:skip()")
+	speech:skip ()
 
 end
 
@@ -1069,19 +1158,7 @@ function slime.update (self, dt)
         end
     end
 
-    -- Update the speech display time.
-    if (#self.speech > 0) then
-        local spc = self.speech[1]
-        spc.time = spc.time - dt
-        if (spc.time < 0) then
-            self:skipSpeech()
-        else
-            spc.actor.action = "talk"
-            if not settings["walk and talk"] then
-                spc.actor.path = nil
-            end
-        end
-    end
+	speech:update (dt)
 
     -- Update chained actions
     self:updateChains(dt)
@@ -1132,34 +1209,7 @@ function slime.draw (self, scale)
         love.graphics.printf(self.statusText, 0, y, w, "center")
     end
 
-    -- Draw Speech
-    if (#self.speech > 0) then
-        local spc = self.speech[1]
-        if settings["builtin text"] then
-
-            -- Store the original color
-            local r, g, b, a = love.graphics.getColor()
-
-            local y = settings["speech position"]
-            local w = love.graphics.getWidth() / scale
-
-            love.graphics.setFont(settings["speech font"])
-
-            -- Black outline
-            love.graphics.setColor({0, 0, 0, 255})
-            love.graphics.printf(spc.text, 1, y+1, w, "center")
-
-            love.graphics.setColor(spc.actor.speechcolor)
-            love.graphics.printf(spc.text, 0, y, w, "center")
-
-            -- Restore original color
-            love.graphics.setColor(r, g, b, a)
-
-        else
-            self:onDrawSpeechCallback(spc.actor.x, spc.actor.y,
-                spc.actor.speechcolor, spc.text)
-        end
-    end
+	speech:draw ()
 
     self:outlineStageElements()
 
