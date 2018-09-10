@@ -47,6 +47,7 @@ require 'slime.bresenham'
 -- https://github.com/kikito/anim8
 local anim8 = require 'slime.anim8'
 
+local actors = { }
 local backgrounds = { }
 local floors = { }
 local layers = { }
@@ -63,7 +64,7 @@ function slime.reset (self)
 	settings:clear ()
     backgrounds:clear ()
     speech:clear ()
-    self.actors = {}
+    actors:clear ()
     self.debug.log = {}
     hotspots:clear ()
     floors:clear ()
@@ -388,10 +389,13 @@ end
 --   | (_| | (__| || (_) | |  \__ \
 --    \__,_|\___|\__\___/|_|  |___/
 
-slime.actors = {}
-slime.tilesets = {}
+function actors.clear (self)
 
-function slime.actor (self, name, x, y)
+	self.list = { }
+
+end
+
+function actors.add (self, name, x, y)
 
     -- Add an actor to the stage.
     -- Allows adding the same actor name multiple times, but only
@@ -429,303 +433,57 @@ function slime.actor (self, name, x, y)
         end
     end
 
-    table.insert(self.actors, newActor)
+    table.insert(self.list, newActor)
 
     -- set actor image method
     newActor.setImage = slime.setImage
 
     -- set the actor new animation method
+    -- TODO refactor this, pass animation data to this add() method
+    -- instead of all this chaining business.
     newActor.tileset = slime.defineTileset
 
     -- set slime host reference
     newActor.host = self
 
-    self:sortLayers()
+    actors:sortLayers()
 
     return newActor
-end
-
-
--- Gets the actor by name
-function slime.getActor (self, name)
-    for _, actor in ipairs(self.actors) do
-        if actor.name == name then
-            return actor
-        end
-    end
-end
-
-
--- Internal callback fired on any animation loop
-function slime.internalAnimationLoop (frames, counter)
-    local pack = frames.pack
-    pack.loopcounter = pack.loopcounter + 1
-    if pack.loopcounter > 255 then
-        pack.loopcounter = 0
-    end
-    slime.animationLooped (pack.anim.actor.name, pack.key, pack.loopcounter)
-end
-
-
-
-function slime.removeActor (self, name)
-    for i, actor in ipairs(self.actors) do
-        if actor.name == name then
-            table.remove(self.actors, i)
-            return true
-        end
-    end
-end
-
-
--- Cache a tileset image in slime, or return an already cached one.
-function slime.cache (self, path)
-
-    -- cache tileset image to save loading duplicate images
-    local image = self.tilesets[path]
-
-    if not image then
-        image = love.graphics.newImage(path)
-        self.tilesets[path] = image
-    end
-
-    return image
 
 end
 
+function actors.update (self, dt)
 
--- Helper method to add an animation to an actor
-function slime.defineTileset (self, tileset, size)
-
-    local actor = self
-
-    -- cache tileset image to save loading duplicate images
-    actor.host:cache(tileset)
-
-    -- default actor hotspot to centered at the base of the image
-    actor["w"] = size.w
-    actor["h"] = size.h
-    actor["base"] = { size.w / 2, size.h }
-
-    return {
-        actor = actor,
-        tileset = tileset,
-        size = size,
-        define = slime.defineAnimation
-        }
-
-end
-
--- A helper method to define frames against an animation object.
-function slime.defineAnimation (self, key)
-
-    local pack = {
-        anim = self,
-        frames = slime.defineFrames,
-        delays = slime.defineDelays,
-        sounds = slime.defineSounds,
-        offset = slime.defineOffset,
-        flip = slime.defineFlip,
-        key = key,
-        loopcounter = 0,
-        _sounds = {},
-        _offset = {x=0, y=0}
-    }
-
-    return pack
-
-end
-
-function slime.defineFrames (self, frames)
-    self.framesDefinition = frames
-    return self
-end
-
-function slime.defineDelays (self, delays)
-
-    local image = self.anim.actor.host:cache(self.anim.tileset)
-
-    local g = anim8.newGrid(
-        self.anim.size.w,
-        self.anim.size.h,
-        image:getWidth(),
-        image:getHeight())
-
-    self._frames = anim8.newAnimation(
-        g(unpack(self.framesDefinition)),
-        delays or 1,
-        slime.internalAnimationLoop)
-
-    -- circular ref back
-    self._frames.pack = self
-
-    -- store this animation object in the actor's animation table
-    self.anim.actor.animations[self.key] = self
-
-    return self
-end
-
-function slime.defineSounds (self, sounds)
-    sounds = sounds or {}
-    for i, v in pairs(sounds) do
-        if type(v) == "string" then
-            sounds[i] = love.audio.newSource(v, "static")
-        end
-    end
-    self._sounds = sounds
-    return self
-end
-
-function slime.defineOffset (self, x, y)
-    self._offset = {x=x, y=y}
-    return self
-end
-
--- Helper method to flip defined animations
-function slime.defineFlip (self)
-    self._frames:flipH()
-    return self
-end
-
--- Set the animation of an actor
-function slime.setAnimation (self, name, key)
-
-    local actor = self:getActor(name)
-
-    if (not actor) then
-        self:log ("Set animation failed: no actor named " .. name)
-    else
-        actor.customAnimationKey = key
-        -- reset the animation counter
-        local anim = actor:getAnim()
-        if anim then
-            anim.loopcounter = 0
-            -- Recalculate the actor's base offset
-            local size = anim.anim.size
-            actor["w"] = size.w
-            actor["h"] = size.h
-            actor["base"] = { size.w / 2, size.h }
+    -- Update animations
+    for _, actor in ipairs(self.list) do
+        if actor.isactor then
+            self:moveActorOnPath (actor, dt)
+            local anim = actor:getAnim()
+            if anim then
+                anim._frames:update(dt)
+                local framesound = anim._sounds[anim._frames.position]
+                if framesound then
+                    love.audio.play(framesound)
+                end
+            end
         end
     end
 
 end
 
-
--- Gets the duration of a given animation
-function slime.animationDuration(self, name, key)
-    local a = self:getActor(name)
-    if a then
-        local anim = a.animations[key]
-        if anim then
-            return anim._frames.totalDuration
-        end
-    end
-    return 0
+-- Sort actors and layers for correct zorder drawing
+function actors.sortLayers (self)
+    table.sort(self.list, function (a, b)
+            local m = a.isactor and a.y or a.baseline
+            local n = b.isactor and b.y or b.baseline
+            if a.isactor and a.nozbuffer then m = 10000 end
+            if b.isactor and b.nozbuffer then n = 10001 end
+            return m < n
+            end)
 end
 
+function actors.moveActorOnPath (self, actor, dt)
 
--- Set a static image as an actor's sprite.
-function slime.setImage (self, image)
-
-    local actor = self
-
-    if (not actor) then
-        self:log ("slime.Image method should be called from an actor instance")
-    else
-        image = love.graphics.newImage(image)
-        actor.image = image
-        actor.w = image:getWidth()
-        actor.h = image:getHeight()
-        actor.base = { actor.w/2, actor.h }
-    end
-
-end
-
-function slime.drawActor (self, actor)
-
-    local anim = actor:getAnim()
-
-    if anim then
-        local tileset = self:cache(anim.anim.tileset)
-        anim._frames:draw(tileset,
-            actor.x - actor.base[1] + anim._offset.x,
-            actor.y - actor.base[2] + anim._offset.y)
-    elseif (actor.image) then
-        love.graphics.draw(actor.image,
-            actor.x - actor.base[1],
-            actor.y - actor.base[2])
-    else
-        love.graphics.rectangle ("fill", actor.x - actor.base[1], actor.y - actor.base[2], actor.w, actor.h)
-    end
-
-end
-
-function slime.turnActor (self, name, direction)
-
-    local actor = self:getActor(name)
-
-    if (actor) then
-        actor.direction = direction
-    end
-
-end
-
-function slime.moveActor (self, name, x, y)
-
-    -- Move an actor to point xy using A Star path finding
-
-    if (floors.astar == nil) then
-        self:log("No walkable area defined")
-        return
-    end
-
-    local actor = self:getActor(name)
-
-    if (actor == nil) then
-        self:log("No actor named " .. name)
-    else
-        -- Our path runs backwards so we can pop the points off the stack
-        local start = { x = actor.x, y = actor.y }
-        local goal = { x = x, y = y }
-
-        -- If the goal is on a solid block find the nearest open node.
-        if (floors.handler:nodeBlocking(goal)) then
-            goal = floors:findNearestOpenPoint (goal)
-        end
-
-        -- Calculate a path
-        local path = floors.astar:findPath(goal, start)
-        if (path == nil) then
-            self:log("no actor path found")
-        else
-            actor.clickedX = x
-            actor.clickedY = y
-            actor.path = path:getNodes()
-            -- Default to walking animation
-            actor.action = "walk"
-            -- Calculate actor direction immediately
-            actor.lastx, actor.lasty = actor.x, actor.y
-            actor.direction = self:calculateDirection(actor.x, actor.y, x, y)
-            -- Output debug
-            self:log("move " .. name .. " to " .. x .. " : " .. y)
-        end
-    end
-end
-
--- Move an actor to another actor
-function slime.moveActorTo (self, name, target)
-
-    local targetActor = self:getActor(target)
-
-    if (targetActor) then
-        self:moveActor (name, targetActor.x, targetActor.y)
-    else
-        self:log("no actor named " .. target)
-    end
-end
-
-
-function slime.moveActorOnPath (self, actor, dt)
     if (actor.path and #actor.path > 0) then
         -- Check if the actor's speed is set to delay movement.
         -- If no speed is set, we move on every update.
@@ -758,14 +516,14 @@ function slime.moveActorOnPath (self, actor, dt)
         if (#actor.path == 0) then
             actor.path = nil
             actor.action = "idle"
-            self.callback ("moved", actor)
+            slime.callback ("moved", actor)
         end
     end
 end
 
 
 -- Return the nearest cardinal direction represented by the angle of movement.
-function slime.calculateDirection (self, x1, y1, x2, y2)
+function actors.calculateDirection (self, x1, y1, x2, y2)
 
     -- function angle(x1, y1, x2, y2)
     --     local ang = math.atan2(y2 - y1, x2 - x1) * 180 / math.pi
@@ -829,13 +587,376 @@ function slime.calculateDirection (self, x1, y1, x2, y2)
     --return 'south'
 end
 
+function actors.get (self, name)
 
--- Stops an actor from moving
-function slime.stopActor (self, name)
-    local actor = self:getActor(name)
+    for _, actor in ipairs(self.list) do
+        if actor.name == name then
+            return actor
+        end
+    end
+
+end
+
+function actors.remove (self, name)
+
+    for i, actor in ipairs(self.list) do
+        if actor.name == name then
+            table.remove(self.list, i)
+            return true
+        end
+    end
+
+end
+
+function actors.draw (self)
+
+    for _, actor in ipairs(self.list) do
+        if actor.isactor then
+
+			local anim = actor:getAnim()
+
+			if anim then
+				local tileset = slime:cache(anim.anim.tileset)
+				anim._frames:draw(tileset,
+					actor.x - actor.base[1] + anim._offset.x,
+					actor.y - actor.base[2] + anim._offset.y)
+			elseif (actor.image) then
+				love.graphics.draw(actor.image,
+					actor.x - actor.base[1],
+					actor.y - actor.base[2])
+			else
+				love.graphics.rectangle ("fill", actor.x - actor.base[1], actor.y - actor.base[2], actor.w, actor.h)
+			end
+
+        elseif actor.islayer then
+            love.graphics.draw(actor.image, 0, 0)
+        end
+    end
+
+end
+
+
+--- Move an actor to point xy using A Star path finding
+function actors.move (self, name, x, y)
+
+    if (floors.astar == nil) then
+        slime:log("No walkable area defined")
+        return
+    end
+
+    local actor = self:get(name)
+
+    if (actor == nil) then
+        slime:log("No actor named " .. name)
+    else
+        -- Our path runs backwards so we can pop the points off the stack
+        local start = { x = actor.x, y = actor.y }
+        local goal = { x = x, y = y }
+
+        -- If the goal is on a solid block find the nearest open node.
+        if (floors.handler:nodeBlocking(goal)) then
+            goal = floors:findNearestOpenPoint (goal)
+        end
+
+        -- Calculate a path
+        local path = floors.astar:findPath(goal, start)
+        if (path == nil) then
+            slime:log("no actor path found")
+        else
+            actor.clickedX = x
+            actor.clickedY = y
+            actor.path = path:getNodes()
+            -- Default to walking animation
+            actor.action = "walk"
+            -- Calculate actor direction immediately
+            actor.lastx, actor.lasty = actor.x, actor.y
+            actor.direction = self:calculateDirection(actor.x, actor.y, x, y)
+            -- Output debug
+            slime:log("move " .. name .. " to " .. x .. " : " .. y)
+        end
+    end
+
+end
+
+function actors.turn (self, name, direction)
+
+    local actor = self:get (name)
+
+    if (actor) then
+        actor.direction = direction
+    end
+
+end
+
+--- Move an actor to another actor
+function actors.moveTowards (self, name, target)
+
+    local targetActor = self:get (target)
+
+    if (targetActor) then
+        self:move (name, targetActor.x, targetActor.y)
+    else
+        slime:log("no actor named " .. target)
+    end
+
+end
+
+function actors.stop (self, name)
+
+    local actor = self:get (name)
+
     if actor then
         actor.path = nil
     end
+
+end
+
+
+
+
+slime.tilesets = {}
+
+function slime.actor (self, ...)
+
+	print ("slime.actor will be obsoleted, use slime.actors:add()")
+	return actors:add (...)
+
+end
+
+
+-- Gets the actor by name
+function slime.getActor (self, ...)
+
+	-- OBSOLETE IN FUTURE
+	print ("slime.getActor will be obsoleted, use slime.actors:get()")
+	return actors:get (...)
+
+end
+
+
+-- Internal callback fired on any animation loop
+function slime.internalAnimationLoop (frames, counter)
+    local pack = frames.pack
+    pack.loopcounter = pack.loopcounter + 1
+    if pack.loopcounter > 255 then
+        pack.loopcounter = 0
+    end
+    slime.animationLooped (pack.anim.actor.name, pack.key, pack.loopcounter)
+end
+
+
+function slime.removeActor (self, ...)
+
+	-- OBSOLETE IN FUTURE
+	print ("slime.removeActor will be obsoleted, use slime.actors:remove()")
+	return actors:remove (...)
+
+end
+
+
+-- Cache a tileset image in slime, or return an already cached one.
+function slime.cache (self, path)
+
+    -- cache tileset image to save loading duplicate images
+    local image = self.tilesets[path]
+
+    if not image then
+        image = love.graphics.newImage(path)
+        self.tilesets[path] = image
+    end
+
+    return image
+
+end
+
+
+-- Helper method to add an animation to an actor
+-- OBSOLETE IN FUTURE
+function slime.defineTileset (self, tileset, size)
+
+    local actor = self
+
+    -- cache tileset image to save loading duplicate images
+    slime:cache(tileset)
+
+    -- default actor hotspot to centered at the base of the image
+    actor["w"] = size.w
+    actor["h"] = size.h
+    actor["base"] = { size.w / 2, size.h }
+
+    return {
+        actor = actor,
+        tileset = tileset,
+        size = size,
+        define = slime.defineAnimation
+        }
+
+end
+
+-- A helper method to define frames against an animation object.
+-- OBSOLETE IN FUTURE
+function slime.defineAnimation (self, key)
+
+    local pack = {
+        anim = self,
+        frames = slime.defineFrames,
+        delays = slime.defineDelays,
+        sounds = slime.defineSounds,
+        offset = slime.defineOffset,
+        flip = slime.defineFlip,
+        key = key,
+        loopcounter = 0,
+        _sounds = {},
+        _offset = {x=0, y=0}
+    }
+
+    return pack
+
+end
+
+-- OBSOLETE IN FUTURE
+function slime.defineFrames (self, frames)
+    self.framesDefinition = frames
+    return self
+end
+
+-- OBSOLETE IN FUTURE
+function slime.defineDelays (self, delays)
+
+    local image = slime:cache(self.anim.tileset)
+
+    local g = anim8.newGrid(
+        self.anim.size.w,
+        self.anim.size.h,
+        image:getWidth(),
+        image:getHeight())
+
+    self._frames = anim8.newAnimation(
+        g(unpack(self.framesDefinition)),
+        delays or 1,
+        slime.internalAnimationLoop)
+
+    -- circular ref back
+    self._frames.pack = self
+
+    -- store this animation object in the actor's animation table
+    self.anim.actor.animations[self.key] = self
+
+    return self
+end
+
+-- OBSOLETE IN FUTURE
+function slime.defineSounds (self, sounds)
+    sounds = sounds or {}
+    for i, v in pairs(sounds) do
+        if type(v) == "string" then
+            sounds[i] = love.audio.newSource(v, "static")
+        end
+    end
+    self._sounds = sounds
+    return self
+end
+
+-- OBSOLETE IN FUTURE
+function slime.defineOffset (self, x, y)
+    self._offset = {x=x, y=y}
+    return self
+end
+
+-- OBSOLETE IN FUTURE
+function slime.defineFlip (self)
+    self._frames:flipH()
+    return self
+end
+
+-- OBSOLETE IN FUTURE
+function slime.setAnimation (self, name, key)
+
+    local actor = self:getActor(name)
+
+    if (not actor) then
+        slime:log ("Set animation failed: no actor named " .. name)
+    else
+        actor.customAnimationKey = key
+        -- reset the animation counter
+        local anim = actor:getAnim()
+        if anim then
+            anim.loopcounter = 0
+            -- Recalculate the actor's base offset
+            local size = anim.anim.size
+            actor["w"] = size.w
+            actor["h"] = size.h
+            actor["base"] = { size.w / 2, size.h }
+        end
+    end
+
+end
+
+
+-- Gets the duration of a given animation
+-- OBSOLETE IN FUTURE
+function slime.animationDuration(self, name, key)
+    local a = self:getActor(name)
+    if a then
+        local anim = a.animations[key]
+        if anim then
+            return anim._frames.totalDuration
+        end
+    end
+    return 0
+end
+
+
+-- Set a static image as an actor's sprite.
+-- OBSOLETE IN FUTURE
+function slime.setImage (self, image)
+
+    local actor = self
+
+    if (not actor) then
+        slime:log ("slime.Image method should be called from an actor instance")
+    else
+        image = love.graphics.newImage(image)
+        actor.image = image
+        actor.w = image:getWidth()
+        actor.h = image:getHeight()
+        actor.base = { actor.w/2, actor.h }
+    end
+
+end
+
+
+function slime.turnActor (self, ...)
+
+	-- OBSOLETE IN FUTURE
+	print ("slime.turnActor will be obsoleted, use slime.actors:turn()")
+	actors:turn (...)
+
+end
+
+function slime.moveActor (self, ...)
+
+	-- OBSOLETE IN FUTURE
+	print ("slime.moveActor will be obsoleted, use slime.actors:move()")
+	return actors:move (...)
+
+end
+
+function slime.moveActorTo (self, ...)
+
+	-- OBSOLETE IN FUTURE
+	print ("slime.moveActorTo will be obsoleted, use slime.actors:moveTowards()")
+	actors:moveTowards (...)
+
+end
+
+-- Stops an actor from moving
+function slime.stopActor (self, ...)
+
+	-- OBSOLETE IN FUTURE
+	print ("slime.stopActor will be obsoleted, use slime.actors:stop()")
+	actors:stop (...)
+
 end
 
 
@@ -863,7 +984,7 @@ function speech.say (self, name, text)
         }
 
     if (not newSpeech.actor) then
-        self:log("Speech failed: No actor named " .. name)
+        slime:log("Speech failed: No actor named " .. name)
         return
     end
 
@@ -1000,7 +1121,7 @@ function layers.add (self, background, mask, baseline)
 
 	-- layers are merged with actors so that we can perform
 	-- efficient sorting, enabling drawing of actors behind layers.
-    table.insert(slime.actors, newLayer)
+    table.insert(actors.list, newLayer)
 
 end
 
@@ -1224,24 +1345,8 @@ end
 function slime.update (self, dt)
 
     backgrounds:update (dt)
-
-    self:sortLayers()
-
-    -- Update animations
-    for _, actor in ipairs(self.actors) do
-        if actor.isactor then
-            self:moveActorOnPath (actor, dt)
-            local anim = actor:getAnim()
-            if anim then
-                anim._frames:update(dt)
-                local framesound = anim._sounds[anim._frames.position]
-                if framesound then
-                    love.audio.play(framesound)
-                end
-            end
-        end
-    end
-
+    actors:sortLayers()
+	actors:update (dt)
 	speech:update (dt)
 
     -- Update chained actions
@@ -1250,31 +1355,12 @@ function slime.update (self, dt)
 end
 
 
--- Sort actors and layers for correct zorder drawing
-function slime.sortLayers (self)
-    table.sort(self.actors, function (a, b)
-            local m = a.isactor and a.y or a.baseline
-            local n = b.isactor and b.y or b.baseline
-            if a.isactor and a.nozbuffer then m = 10000 end
-            if b.isactor and b.nozbuffer then n = 10001 end
-            return m < n
-            end)
-end
-
-
 function slime.draw (self, scale)
 
     scale = scale or 1
 
     backgrounds:draw ()
-
-    for _, o in ipairs(self.actors) do
-        if o.isactor then
-            self:drawActor(o)
-        elseif o.islayer then
-            love.graphics.draw(o.image, 0, 0)
-        end
-    end
+	actors:draw ()
 
     -- Bag Buttons
 	-- OBSOLETE IN FUTURE
@@ -1314,7 +1400,7 @@ function slime.getObjects (self, x, y)
 
     local objects = { }
 
-    for _, actor in pairs(self.actors) do
+    for _, actor in pairs(actors.list) do
         if actor.isactor and
             (x >= actor.x - actor.base[1]
             and x <= actor.x - actor.base[1] + actor.w)
@@ -1355,7 +1441,7 @@ function slime.interact (self, x, y)
 	local cursorname = cursor:getName ()
 
     for i, object in pairs(objects) do
-        self.callback (cursorname, object)
+        slime.callback (cursorname, object)
     end
 
     return true
@@ -1452,7 +1538,7 @@ function slime.outlineStageElements(self)
     end
 
     -- draw outlines of actors
-    for _, actor in ipairs(self.actors) do
+    for _, actor in ipairs(actors.list) do
         if actor.isactor then
             love.graphics.setColor(0, 255, 0, 64)
             love.graphics.rectangle("line", actor.x - actor.base[1],
