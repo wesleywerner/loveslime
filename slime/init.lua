@@ -54,6 +54,7 @@ local speech = { }
 local settings = { }
 local cursor = { }
 local hotspots = { }
+local bags = { }
 
 
 --- Clears the room and actors.
@@ -1086,74 +1087,116 @@ function slime.hotspot(self, ...)
 end
 
 
---    _                      _
---   (_)_ ____   _____ _ __ | |_ ___  _ __ _   _
---   | | '_ \ \ / / _ \ '_ \| __/ _ \| '__| | | |
---   | | | | \ V /  __/ | | | || (_) | |  | |_| |
---   |_|_| |_|\_/ \___|_| |_|\__\___/|_|   \__, |
---                                         |___/
+--~  _
+--~ | |__   __ _  __ _ ___
+--~ | '_ \ / _` |/ _` / __|
+--~ | |_) | (_| | (_| \__ \
+--~ |_.__/ \__,_|\__, |___/
+--~              |___/
 
--- Stores bags and their contents.
-slime.bags = { }
-slime.bagButtons = { }
+--- Clears the contents of all bags.
+function bags.clear (self)
 
--- Placeholder for the inventory changed callback
-function slime.inventoryChanged ( )
+	self.contents = { }
 
 end
 
--- Add an item to a bag.
-function slime.bagInsert (self, bag, object)
+--- Adds an item to a named bag.
+function bags.add (self, bag, object)
 
     -- load the image data
     if type(object.image) == "string" then
         object.image = love.graphics.newImage(object.image)
     end
 
-    -- Add the inventory item under "name"
-    if (not self.bags[bag]) then self.bags[bag] = { } end
-    local inv = self.bags[bag]
-    table.insert(inv, object)
-    self.inventoryChanged (bag)
+    -- create the bag
+    if not self.contents[bag] then
+		self.contents[bag] = { }
+	end
 
-    self:log ("Added " .. object.name .. " to bag \"" .. bag .. "\"")
+	-- add object to the bag
+    table.insert(self.contents[bag], object)
 
-end
+    -- notify of changes
+    slime.inventoryChanged (bag)
 
--- Get items from a bag.
-function slime.bagContents (self, bag)
-
-    return self.bags[bag] or { }
+    slime:log ("Added " .. object.name .. " to bag \"" .. bag .. "\"")
 
 end
 
--- Checks if an item is inside a bag
-function slime.bagContains (self, bag, item)
-    local bago = self:bagContents(bag)
-    for _, v in pairs(bago) do
+function bags.remove (self, bag, name)
+
+    local inv = self.contents[bag] or { }
+
+	for i, item in pairs(inv) do
+		if (item.name == name) then
+			table.remove(inv, i)
+			slime:log ("Removed " .. name .. " from bag \"" .. bag .. "\"")
+			slime.inventoryChanged (bag)
+		end
+	end
+
+end
+
+--- Test if a bag contains a named item.
+function bags.contains (self, bag, item)
+
+    local inv = self.contents[bag] or { }
+
+    for _, v in pairs(inv) do
         if v.name == item then
             return true
         end
     end
+
+end
+
+
+-- OBSOLETE IN FUTURE
+slime.bagButtons = { }
+
+-- Placeholder for the inventory changed callback
+function slime.inventoryChanged ( )
+	-- OBSOLETE IN FUTURE
+	-- replace with the future room structure
+end
+
+-- Add an item to a bag.
+function slime.bagInsert (self, ...)
+
+	print ("slime.bagInsert will be obsoleted, use slime.bags:add()")
+	bags:add (...)
+
+end
+
+-- Get items from a bag.
+-- OBSOLETE IN FUTURE
+function slime.bagContents (self, bag)
+
+	print ("slime.bagContents will be obsoleted, use slime.bags.contents[<key>]")
+    return bags.contents[bag] or { }
+
+end
+
+-- Checks if an item is inside a bag
+function slime.bagContains (self, ...)
+	print ("slime.bagContains will be obsoleted, use slime.bags:contains()")
+	return bags:contains (...)
 end
 
 -- Remove an item from a bag.
-function slime.bagRemove (self, bag, name)
+function slime.bagRemove (self, ...)
 
-    local inv = self.bags[bag]
-    if (inv) then
-        for i, item in pairs(inv) do
-            if (item.name == name) then
-                table.remove(inv, i)
-                self:log ("Removed " .. name .. " from bag \"" .. bag .. "\"")
-                self.inventoryChanged (bag)
-            end
-        end
-    end
+	print ("slime.bagRemove will be obsoleted, use slime.bags:remove()")
+	bags:remove (...)
 
 end
 
+
+-- OBSOLETE IN FUTURE
 function slime.bagButton (self, name, image, x, y)
+
+	print ("slime.bagButton will be obsoleted")
 
     if type(image) == "string" then image = love.graphics.newImage(image) end
 
@@ -1234,6 +1277,7 @@ function slime.draw (self, scale)
     end
 
     -- Bag Buttons
+	-- OBSOLETE IN FUTURE
     for counter, button in pairs(self.bagButtons) do
         love.graphics.draw (button.image, button.x, button.y)
     end
@@ -1616,7 +1660,10 @@ end
 -- Export
 slime.settings = settings
 
+-- Clear these components on load
+-- Warning! these will call on every require.
 cursor:clear ()
+bags:clear ()
 
 return slime
 
