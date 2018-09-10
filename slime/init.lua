@@ -48,6 +48,7 @@ require 'slime.bresenham'
 local anim8 = require 'slime.anim8'
 
 local backgrounds = { }
+local floors = { }
 local settings = { }
 local cursor = { }
 
@@ -59,7 +60,7 @@ function slime.reset (self)
     self.actors = {}
     self.debug.log = {}
     self.hotspots = {}
-    self.astar = nil
+    floors:clear ()
     self.statusText = nil
 end
 
@@ -251,6 +252,7 @@ end
 -- OBSOLETE IN FUTURE
 function slime.setCursor (self, ...)
 
+	print ("slime.setCursor will be obsoleted, use slime.cursor:set()")
 	cursor:set (...)
 
 end
@@ -259,6 +261,7 @@ end
 -- OBSOLETE IN FUTURE
 function slime.loadCursors (self, path, w, h, names, hotspots)
 
+	print ("slime.loadCursors will be obsoleted, use slime.cursor:set()")
     cursor.names = names or {}
     cursor.hotspots = hotspots or {}
     cursor.image = love.graphics.newImage(path)
@@ -283,12 +286,14 @@ end
 -- Uses a preloaded cursor
 -- OBSOLETE IN FUTURE
 function slime.useCursor (self, index)
+	--print ("slime.useCursor will be obsoleted, use slime.cursor:set()")
     cursor.current = index
 end
 
---function slime.getCursor (self)
---    return self.cursor.current
---end
+function slime.getCursor (self)
+	print ("slime.getCursor will be obsoleted")
+    return self.cursor.current
+end
 
 
 --~   __ _
@@ -298,11 +303,74 @@ end
 --~ |_| |_|\___/ \___/|_|  |___/
 
 
--- Set the floor mask that determines walkable areas.
-function slime.floor (self, floorfilename)
+--- Clears all walkable floors.
+function floors.clear (self)
+
+	self.astar = nil
+
+end
+
+function floors.set (self, filename)
+
     self.handler = SlimeMapHandler()
-    self.handler:convert(floorfilename)
+    self.handler:convert(filename)
     self.astar = AStar(self.handler)
+
+end
+
+
+-- Find the nearest open point to the south, west, north or east.
+-- Use the bresenham line algorithm to project four lines from the goal:
+-- (S, W, N, E) and find the first open node on each line.
+-- We then choose the point with the shortest distance from the goal.
+function floors.findNearestOpenPoint (self, point)
+
+    -- Get the dimensions of the walkable floor map.
+    local size = floors.handler:size()
+
+    -- Define the cardinal direction to test against relative to the point.
+    local directions = {
+        { ["x"] = point.x, ["y"] = size.h },    -- S
+        { ["x"] = 1, ["y"] = point.y },         -- W
+        { ["x"] = point.x, ["y"] = 1 },         -- N
+        { ["x"] = size.w, ["y"] = point.y }     -- E
+        }
+
+    -- Stores the four directional points found and their distance.
+    local foundPoints = { }
+
+    for idirection, direction in pairs(directions) do
+        local goal = point
+        local walkTheLine = bresenham (direction, goal)
+        local findNearestPoint = true
+        while (findNearestPoint) do
+            if (#walkTheLine == 0) then
+                findNearestPoint = false
+            else
+                goal = table.remove(walkTheLine)
+                findNearestPoint = floors.handler:nodeBlocking(goal)
+            end
+        end
+        -- math.sqrt( (x2 - x1)^2 + (y2 - y1)^2 )
+        local distance = math.sqrt( (goal.x - point.x)^2 + (goal.y - point.y)^2 )
+        table.insert(foundPoints, { ["goal"] = goal, ["distance"] = distance })
+    end
+
+    -- Sort the results with shortest distance first
+    table.sort(foundPoints, function (a, b) return a.distance < b.distance end )
+
+    -- Return the winning point
+    return foundPoints[1].goal
+
+end
+
+-- OBSOLETE IN FUTURE
+-- Set the floor mask that determines walkable areas.
+function slime.floor (self, filename)
+
+	print ("slime.floors will be obsoleted, use slime.floors:set()")
+	floors:set (filename)
+
 end
 
 
@@ -599,7 +667,7 @@ function slime.moveActor (self, name, x, y)
 
     -- Move an actor to point xy using A Star path finding
 
-    if (self.astar == nil) then
+    if (floors.astar == nil) then
         self:log("No walkable area defined")
         return
     end
@@ -614,12 +682,12 @@ function slime.moveActor (self, name, x, y)
         local goal = { x = x, y = y }
 
         -- If the goal is on a solid block find the nearest open node.
-        if (self.handler:nodeBlocking(goal)) then
-            goal = self:findNearestOpenPoint (goal)
+        if (floors.handler:nodeBlocking(goal)) then
+            goal = floors:findNearestOpenPoint (goal)
         end
 
         -- Calculate a path
-        local path = self.astar:findPath(goal, start)
+        local path = floors.astar:findPath(goal, start)
         if (path == nil) then
             self:log("no actor path found")
         else
@@ -635,51 +703,6 @@ function slime.moveActor (self, name, x, y)
             self:log("move " .. name .. " to " .. x .. " : " .. y)
         end
     end
-end
-
--- Find the nearest open point to the south, west, north or east.
--- Use the bresenham line algorithm to project four lines from the goal:
--- (S, W, N, E) and find the first open node on each line.
--- We then choose the point with the shortest distance from the goal.
-function slime.findNearestOpenPoint (self, point)
-
-    -- Get the dimensions of the walkable floor map.
-    local size = self.handler:size()
-
-    -- Define the cardinal direction to test against relative to the point.
-    local directions = {
-        { ["x"] = point.x, ["y"] = size.h },    -- S
-        { ["x"] = 1, ["y"] = point.y },         -- W
-        { ["x"] = point.x, ["y"] = 1 },         -- N
-        { ["x"] = size.w, ["y"] = point.y }     -- E
-        }
-
-    -- Stores the four directional points found and their distance.
-    local foundPoints = { }
-
-    for idirection, direction in pairs(directions) do
-        local goal = point
-        local walkTheLine = bresenham (direction, goal)
-        local findNearestPoint = true
-        while (findNearestPoint) do
-            if (#walkTheLine == 0) then
-                findNearestPoint = false
-            else
-                goal = table.remove(walkTheLine)
-                findNearestPoint = self.handler:nodeBlocking(goal)
-            end
-        end
-        -- math.sqrt( (x2 - x1)^2 + (y2 - y1)^2 )
-        local distance = math.sqrt( (goal.x - point.x)^2 + (goal.y - point.y)^2 )
-        table.insert(foundPoints, { ["goal"] = goal, ["distance"] = distance })
-    end
-
-    -- Sort the results with shortest distance first
-    table.sort(foundPoints, function (a, b) return a.distance < b.distance end )
-
-    -- Return the winning point
-    return foundPoints[1].goal
-
 end
 
 -- Move an actor to another actor
