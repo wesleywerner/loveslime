@@ -361,7 +361,7 @@ function actors.add (self, name, x, y)
     -- set slime host reference
     newActor.host = self
 
-    actors:sortLayers()
+    self:sortLayers()
 
     return newActor
 
@@ -369,10 +369,16 @@ end
 
 function actors.update (self, dt)
 
+	local actorsMoved = false
+
     -- Update animations
     for _, actor in ipairs(self.list) do
         if actor.isactor then
-            self:moveActorOnPath (actor, dt)
+
+            if self:moveActorOnPath (actor, dt) then
+				actorsMoved = true
+            end
+
             local anim = actor:getAnim()
             if anim then
                 anim._frames:update(dt)
@@ -382,6 +388,11 @@ function actors.update (self, dt)
                 end
             end
         end
+    end
+
+	-- reorder if any actors moved
+	if actorsMoved then
+		self:sortLayers()
     end
 
 end
@@ -433,7 +444,12 @@ function actors.moveActorOnPath (self, actor, dt)
             actor.action = "idle"
             slime.callback ("moved", actor)
         end
+
+		-- return movement signal
+		return true
+
     end
+
 end
 
 
@@ -787,6 +803,8 @@ function layers.add (self, background, mask, baseline)
 	-- efficient sorting, enabling drawing of actors behind layers.
     table.insert(actors.list, newLayer)
 
+    actors:sortLayers()
+
 end
 
 --- Cut a shape out of an image.
@@ -925,7 +943,6 @@ end
 function slime.update (self, dt)
 
     backgrounds:update (dt)
-    actors:sortLayers()
 	actors:update (dt)
 	speech:update (dt)
 

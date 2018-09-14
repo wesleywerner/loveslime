@@ -115,6 +115,8 @@ function cell.addCellDoor (x, y)
     -- Add the door as an actor
     local cellDoor = slime:actor("door", x, y)
 
+    cellDoor.baseline = 5
+
     -- Sprite frames
     local frameWidth, frameHeight = 9, 30
     local animationDelay = 0.05
