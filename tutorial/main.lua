@@ -169,7 +169,7 @@ function cell.pickUpSpoon ()
     slime:bagInsert("ego", { ["name"] = "bowl", ["image"] = "images/bowl2.png" })
     slime:bagInsert("ego", { ["name"] = "spoon", ["image"] = "images/spoon.png" })
     -- Remove the bowl and spoon actor from the stage
-    slime.actors["bowl and spoon"] = nil
+    slime.actors:remove ("bowl and spoon")
 end
 
 
@@ -177,7 +177,7 @@ end
 function cell.pickUpDust ()
     slime:bagInsert("ego",
         { ["name"] = "cement dust", ["image"] = "images/inv-dust.png" })
-    slime.actors["dust"] = nil
+    slime.actors.remove ("dust")
 end
 
 

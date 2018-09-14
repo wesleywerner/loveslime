@@ -58,27 +58,6 @@ local hotspots = { }
 local bags = { }
 
 
---- Clears the room and actors.
--- TODO rename to clear
-function slime.reset (self)
-	settings:clear ()
-    backgrounds:clear ()
-    speech:clear ()
-    actors:clear ()
-    self.debug.log = {}
-    hotspots:clear ()
-    floors:clear ()
-    self.statusText = nil
-end
-
-function slime.callback (event, object)
-end
-
-function slime.animationLooped (actor, key, counter)
-end
-
-function slime.onDrawSpeechCallback(actorX, actorY, speechcolor, words)
-end
 
 --~  _                _                                   _
 --~ | |__   __ _  ___| | ____ _ _ __ ___  _   _ _ __   __| |___
@@ -177,14 +156,6 @@ function backgrounds.update (self, dt)
 
 end
 
--- Expose the API
--- TODO expose the whole background object
-function slime.background (self, ...)
-
-	backgrounds:add (...)
-
-end
-
 
 
 --~   ___ _   _ _ __ ___  ___  _ __
@@ -257,52 +228,6 @@ function cursor.set (self, name, image, hotspot)
 
 end
 
--- OBSOLETE IN FUTURE
-function slime.setCursor (self, ...)
-
-	print ("slime.setCursor will be obsoleted, use slime.cursor:set()")
-	cursor:set (...)
-
-end
-
---- Loads the cursors as a spritemap, w and h is the size of each quad
--- OBSOLETE IN FUTURE
-function slime.loadCursors (self, path, w, h, names, hotspots)
-
-	print ("slime.loadCursors will be obsoleted, use slime.cursor:set()")
-    cursor.names = names or {}
-    cursor.hotspots = hotspots or {}
-    cursor.image = love.graphics.newImage(path)
-    cursor.quads = {}
-    cursor.current = 1
-
-    local imgwidth, imgheight = cursor.image:getDimensions()
-
-    local totalImages = imgwidth / w
-
-    for x = 1, totalImages do
-
-        local quad = love.graphics.newQuad((x - 1) * w, 0,
-            w, h, imgwidth, imgheight)
-
-        table.insert(cursor.quads, quad)
-
-    end
-
-end
-
--- Uses a preloaded cursor
--- OBSOLETE IN FUTURE
-function slime.useCursor (self, index)
-	--print ("slime.useCursor will be obsoleted, use slime.cursor:set()")
-    cursor.current = index
-end
-
-function slime.getCursor (self)
-	print ("slime.getCursor will be obsoleted")
-    return self.cursor.current
-end
-
 
 --~   __ _
 --~  / _| | ___   ___  _ __ ___
@@ -371,16 +296,6 @@ function floors.findNearestOpenPoint (self, point)
     return foundPoints[1].goal
 
 end
-
--- OBSOLETE IN FUTURE
--- Set the floor mask that determines walkable areas.
-function slime.floor (self, filename)
-
-	print ("slime.floors will be obsoleted, use slime.floors:set()")
-	floors:set (filename)
-
-end
-
 
 
 --               _
@@ -716,24 +631,6 @@ end
 
 slime.tilesets = {}
 
-function slime.actor (self, ...)
-
-	print ("slime.actor will be obsoleted, use slime.actors:add()")
-	return actors:add (...)
-
-end
-
-
--- Gets the actor by name
-function slime.getActor (self, ...)
-
-	-- OBSOLETE IN FUTURE
-	print ("slime.getActor will be obsoleted, use slime.actors:get()")
-	return actors:get (...)
-
-end
-
-
 -- Internal callback fired on any animation loop
 function slime.internalAnimationLoop (frames, counter)
     local pack = frames.pack
@@ -744,14 +641,6 @@ function slime.internalAnimationLoop (frames, counter)
     slime.animationLooped (pack.anim.actor.name, pack.key, pack.loopcounter)
 end
 
-
-function slime.removeActor (self, ...)
-
-	-- OBSOLETE IN FUTURE
-	print ("slime.removeActor will be obsoleted, use slime.actors:remove()")
-	return actors:remove (...)
-
-end
 
 
 -- Cache a tileset image in slime, or return an already cached one.
@@ -769,195 +658,6 @@ function slime.cache (self, path)
 
 end
 
-
--- Helper method to add an animation to an actor
--- OBSOLETE IN FUTURE
-function slime.defineTileset (self, tileset, size)
-
-    local actor = self
-
-    -- cache tileset image to save loading duplicate images
-    slime:cache(tileset)
-
-    -- default actor hotspot to centered at the base of the image
-    actor["w"] = size.w
-    actor["h"] = size.h
-    actor["base"] = { size.w / 2, size.h }
-
-    return {
-        actor = actor,
-        tileset = tileset,
-        size = size,
-        define = slime.defineAnimation
-        }
-
-end
-
--- A helper method to define frames against an animation object.
--- OBSOLETE IN FUTURE
-function slime.defineAnimation (self, key)
-
-    local pack = {
-        anim = self,
-        frames = slime.defineFrames,
-        delays = slime.defineDelays,
-        sounds = slime.defineSounds,
-        offset = slime.defineOffset,
-        flip = slime.defineFlip,
-        key = key,
-        loopcounter = 0,
-        _sounds = {},
-        _offset = {x=0, y=0}
-    }
-
-    return pack
-
-end
-
--- OBSOLETE IN FUTURE
-function slime.defineFrames (self, frames)
-    self.framesDefinition = frames
-    return self
-end
-
--- OBSOLETE IN FUTURE
-function slime.defineDelays (self, delays)
-
-    local image = slime:cache(self.anim.tileset)
-
-    local g = anim8.newGrid(
-        self.anim.size.w,
-        self.anim.size.h,
-        image:getWidth(),
-        image:getHeight())
-
-    self._frames = anim8.newAnimation(
-        g(unpack(self.framesDefinition)),
-        delays or 1,
-        slime.internalAnimationLoop)
-
-    -- circular ref back
-    self._frames.pack = self
-
-    -- store this animation object in the actor's animation table
-    self.anim.actor.animations[self.key] = self
-
-    return self
-end
-
--- OBSOLETE IN FUTURE
-function slime.defineSounds (self, sounds)
-    sounds = sounds or {}
-    for i, v in pairs(sounds) do
-        if type(v) == "string" then
-            sounds[i] = love.audio.newSource(v, "static")
-        end
-    end
-    self._sounds = sounds
-    return self
-end
-
--- OBSOLETE IN FUTURE
-function slime.defineOffset (self, x, y)
-    self._offset = {x=x, y=y}
-    return self
-end
-
--- OBSOLETE IN FUTURE
-function slime.defineFlip (self)
-    self._frames:flipH()
-    return self
-end
-
--- OBSOLETE IN FUTURE
-function slime.setAnimation (self, name, key)
-
-    local actor = self:getActor(name)
-
-    if (not actor) then
-        slime:log ("Set animation failed: no actor named " .. name)
-    else
-        actor.customAnimationKey = key
-        -- reset the animation counter
-        local anim = actor:getAnim()
-        if anim then
-            anim.loopcounter = 0
-            -- Recalculate the actor's base offset
-            local size = anim.anim.size
-            actor["w"] = size.w
-            actor["h"] = size.h
-            actor["base"] = { size.w / 2, size.h }
-        end
-    end
-
-end
-
-
--- Gets the duration of a given animation
--- OBSOLETE IN FUTURE
-function slime.animationDuration(self, name, key)
-    local a = self:getActor(name)
-    if a then
-        local anim = a.animations[key]
-        if anim then
-            return anim._frames.totalDuration
-        end
-    end
-    return 0
-end
-
-
--- Set a static image as an actor's sprite.
--- OBSOLETE IN FUTURE
-function slime.setImage (self, image)
-
-    local actor = self
-
-    if (not actor) then
-        slime:log ("slime.Image method should be called from an actor instance")
-    else
-        image = love.graphics.newImage(image)
-        actor.image = image
-        actor.w = image:getWidth()
-        actor.h = image:getHeight()
-        actor.base = { actor.w/2, actor.h }
-    end
-
-end
-
-
-function slime.turnActor (self, ...)
-
-	-- OBSOLETE IN FUTURE
-	print ("slime.turnActor will be obsoleted, use slime.actors:turn()")
-	actors:turn (...)
-
-end
-
-function slime.moveActor (self, ...)
-
-	-- OBSOLETE IN FUTURE
-	print ("slime.moveActor will be obsoleted, use slime.actors:move()")
-	return actors:move (...)
-
-end
-
-function slime.moveActorTo (self, ...)
-
-	-- OBSOLETE IN FUTURE
-	print ("slime.moveActorTo will be obsoleted, use slime.actors:moveTowards()")
-	actors:moveTowards (...)
-
-end
-
--- Stops an actor from moving
-function slime.stopActor (self, ...)
-
-	-- OBSOLETE IN FUTURE
-	print ("slime.stopActor will be obsoleted, use slime.actors:stop()")
-	actors:stop (...)
-
-end
 
 
 --~                           _
@@ -989,13 +689,6 @@ function speech.say (self, name, text)
     end
 
     table.insert(self.queue, newSpeech)
-
-end
-
-function slime.say (self, name, text)
-
-	print ("slime.say will be obsoleted, use slime.speech:say()")
-	speech:say (name, text)
 
 end
 
@@ -1072,35 +765,6 @@ function speech.draw (self)
 end
 
 
--- Checks if there is an actor talking.
--- OBSOLETE IN FUTURE
-function slime.someoneTalking (self)
-
-	print ("slime.someoneTalking will be obsoleted, use slime.speech:talking()")
-	return speech:talking ()
-
-end
-
-
--- Checks if specific actor is talking
--- OBSOLETE IN FUTURE
-function slime.actorTalking (self, actor)
-
-	print ("slime.actorTalking will be obsoleted, use slime.speech:talking()")
-	return speech:talking (actor)
-
-end
-
-
--- Skips the current speech
--- OBSOLETE IN FUTURE
-function slime.skipSpeech (self)
-
-	print ("slime.skipSpeech will be obsoleted, use slime.speech:skip()")
-	speech:skip ()
-
-end
-
 --    _
 --   | | __ _ _   _  ___ _ __ ___
 --   | |/ _` | | | |/ _ \ '__/ __|
@@ -1157,20 +821,6 @@ function layers.convertMask (self, source, mask)
 
 end
 
-function slime.layer (self, ...)
-
-	print ("slime.layer will be obsoleted, use slime.layers:add()")
-	layers:add (...)
-
-end
-
-function slime:createLayer (source, mask)
-
-	print ("slime.layer will be obsoleted, use slime.layers:add()")
-	return layers:convertMask (source, mask)
-
-end
-
 
 --    _           _                   _
 --   | |__   ___ | |_ ___ _ __   ___ | |_ ___
@@ -1197,13 +847,6 @@ function hotspots.add (self, name, x, y, w, h)
 
     table.insert(self.list, hotspot)
     return hotspot
-
-end
-
-function slime.hotspot(self, ...)
-
-	print ("slime.hotspot will be obsoleted, use slime.hotspots:add()")
-	hotspots:add (...)
 
 end
 
@@ -1273,69 +916,6 @@ function bags.contains (self, bag, item)
 end
 
 
--- OBSOLETE IN FUTURE
-slime.bagButtons = { }
-
--- Placeholder for the inventory changed callback
-function slime.inventoryChanged ( )
-	-- OBSOLETE IN FUTURE
-	-- replace with the future room structure
-end
-
--- Add an item to a bag.
-function slime.bagInsert (self, ...)
-
-	print ("slime.bagInsert will be obsoleted, use slime.bags:add()")
-	bags:add (...)
-
-end
-
--- Get items from a bag.
--- OBSOLETE IN FUTURE
-function slime.bagContents (self, bag)
-
-	print ("slime.bagContents will be obsoleted, use slime.bags.contents[<key>]")
-    return bags.contents[bag] or { }
-
-end
-
--- Checks if an item is inside a bag
-function slime.bagContains (self, ...)
-	print ("slime.bagContains will be obsoleted, use slime.bags:contains()")
-	return bags:contains (...)
-end
-
--- Remove an item from a bag.
-function slime.bagRemove (self, ...)
-
-	print ("slime.bagRemove will be obsoleted, use slime.bags:remove()")
-	bags:remove (...)
-
-end
-
-
--- OBSOLETE IN FUTURE
-function slime.bagButton (self, name, image, x, y)
-
-	print ("slime.bagButton will be obsoleted")
-
-    if type(image) == "string" then image = love.graphics.newImage(image) end
-
-    local w, h = image:getDimensions ()
-
-    table.insert(self.bagButtons, {
-        ["name"] = name,
-        ["image"] = image,
-        ["x"] = x,
-        ["y"] = y,
-        ["w"] = w,
-        ["h"] = h,
-        ["data"] = data
-    })
-
-end
-
-
 --        _
 --     __| |_ __ __ ___      __
 --    / _` | '__/ _` \ \ /\ / /
@@ -1385,13 +965,6 @@ function slime.draw (self, scale)
     self:outlineStageElements()
 
 	cursor:draw ()
-
-end
-
--- Set a status text
-function slime.status (self, text)
-
-    self.statusText = text
 
 end
 
@@ -1743,13 +1316,493 @@ function settings.clear (self)
 
 end
 
--- Export
-slime.settings = settings
+
+--~              _
+--~   __ _ _ __ (_)
+--~  / _` | '_ \| |
+--~ | (_| | |_) | |
+--~  \__,_| .__/|_|
+--~       |_|
+
+
+--- Clears backgrounds, actors, floors and layers.
+function slime.clear (self)
+
+    backgrounds:clear ()
+    speech:clear ()
+    actors:clear ()
+    self.debug.log = {}
+    hotspots:clear ()
+    floors:clear ()
+    self.statusText = nil
+
+end
+
+--- Analagous to clear() and additionally also clears
+-- slime settings and persistent data.
+function slime.reset (self)
+
+	self:clear ()
+	settings:clear ()
+
+end
+
+
+--~        _               _      _
+--~   ___ | |__  ___  ___ | | ___| |_ ___
+--~  / _ \| '_ \/ __|/ _ \| |/ _ \ __/ _ \
+--~ | (_) | |_) \__ \ (_) | |  __/ ||  __/
+--~  \___/|_.__/|___/\___/|_|\___|\__\___|
+--~
+
+--- Clears the room and actors.
+-- TODO rename to clear
+function slime.reset (self)
+	print ("slime.reset will be obsoleted. Use slime:clear() instead.")
+	self:clear ()
+end
+
+function slime.callback (event, object)
+end
+
+function slime.animationLooped (actor, key, counter)
+end
+
+function slime.onDrawSpeechCallback(actorX, actorY, speechcolor, words)
+end
+
+function slime.background (self, ...)
+
+	backgrounds:add (...)
+
+end
+
+-- OBSOLETE IN FUTURE
+function slime.setCursor (self, ...)
+
+	print ("slime.setCursor will be obsoleted, use slime.cursor:set()")
+	cursor:set (...)
+
+end
+
+--- Loads the cursors as a spritemap, w and h is the size of each quad
+-- OBSOLETE IN FUTURE
+function slime.loadCursors (self, path, w, h, names, hotspots)
+
+	print ("slime.loadCursors will be obsoleted, use slime.cursor:set()")
+    cursor.names = names or {}
+    cursor.hotspots = hotspots or {}
+    cursor.image = love.graphics.newImage(path)
+    cursor.quads = {}
+    cursor.current = 1
+
+    local imgwidth, imgheight = cursor.image:getDimensions()
+
+    local totalImages = imgwidth / w
+
+    for x = 1, totalImages do
+
+        local quad = love.graphics.newQuad((x - 1) * w, 0,
+            w, h, imgwidth, imgheight)
+
+        table.insert(cursor.quads, quad)
+
+    end
+
+end
+
+-- Uses a preloaded cursor
+-- OBSOLETE IN FUTURE
+function slime.useCursor (self, index)
+	--print ("slime.useCursor will be obsoleted, use slime.cursor:set()")
+    cursor.current = index
+end
+
+function slime.getCursor (self)
+	print ("slime.getCursor will be obsoleted")
+    return self.cursor.current
+end
+
+-- Set the floor mask that determines walkable areas.
+function slime.floor (self, filename)
+
+	print ("slime.floors will be obsoleted, use slime.floors:set()")
+	floors:set (filename)
+
+end
+
+
+function slime.actor (self, ...)
+
+	print ("slime.actor will be obsoleted, use slime.actors:add()")
+	return actors:add (...)
+
+end
+
+
+-- Gets the actor by name
+function slime.getActor (self, ...)
+
+	-- OBSOLETE IN FUTURE
+	print ("slime.getActor will be obsoleted, use slime.actors:get()")
+	return actors:get (...)
+
+end
+
+function slime.removeActor (self, ...)
+
+	-- OBSOLETE IN FUTURE
+	print ("slime.removeActor will be obsoleted, use slime.actors:remove()")
+	return actors:remove (...)
+
+end
+
+
+-- Helper method to add an animation to an actor
+-- OBSOLETE IN FUTURE
+function slime.defineTileset (self, tileset, size)
+
+	print ("slime.defineTileset will be obsoleted.")
+    local actor = self
+
+    -- cache tileset image to save loading duplicate images
+    slime:cache(tileset)
+
+    -- default actor hotspot to centered at the base of the image
+    actor["w"] = size.w
+    actor["h"] = size.h
+    actor["base"] = { size.w / 2, size.h }
+
+    return {
+        actor = actor,
+        tileset = tileset,
+        size = size,
+        define = slime.defineAnimation
+        }
+
+end
+
+-- A helper method to define frames against an animation object.
+-- OBSOLETE IN FUTURE
+function slime.defineAnimation (self, key)
+
+    local pack = {
+        anim = self,
+        frames = slime.defineFrames,
+        delays = slime.defineDelays,
+        sounds = slime.defineSounds,
+        offset = slime.defineOffset,
+        flip = slime.defineFlip,
+        key = key,
+        loopcounter = 0,
+        _sounds = {},
+        _offset = {x=0, y=0}
+    }
+
+    return pack
+
+end
+
+-- OBSOLETE IN FUTURE
+function slime.defineFrames (self, frames)
+    self.framesDefinition = frames
+    return self
+end
+
+-- OBSOLETE IN FUTURE
+function slime.defineDelays (self, delays)
+
+    local image = slime:cache(self.anim.tileset)
+
+    local g = anim8.newGrid(
+        self.anim.size.w,
+        self.anim.size.h,
+        image:getWidth(),
+        image:getHeight())
+
+    self._frames = anim8.newAnimation(
+        g(unpack(self.framesDefinition)),
+        delays or 1,
+        slime.internalAnimationLoop)
+
+    -- circular ref back
+    self._frames.pack = self
+
+    -- store this animation object in the actor's animation table
+    self.anim.actor.animations[self.key] = self
+
+    return self
+end
+
+-- OBSOLETE IN FUTURE
+function slime.defineSounds (self, sounds)
+    sounds = sounds or {}
+    for i, v in pairs(sounds) do
+        if type(v) == "string" then
+            sounds[i] = love.audio.newSource(v, "static")
+        end
+    end
+    self._sounds = sounds
+    return self
+end
+
+-- OBSOLETE IN FUTURE
+function slime.defineOffset (self, x, y)
+    self._offset = {x=x, y=y}
+    return self
+end
+
+-- OBSOLETE IN FUTURE
+function slime.defineFlip (self)
+    self._frames:flipH()
+    return self
+end
+
+-- OBSOLETE IN FUTURE
+function slime.setAnimation (self, name, key)
+
+    local actor = self:getActor(name)
+
+    if (not actor) then
+        slime:log ("Set animation failed: no actor named " .. name)
+    else
+        actor.customAnimationKey = key
+        -- reset the animation counter
+        local anim = actor:getAnim()
+        if anim then
+            anim.loopcounter = 0
+            -- Recalculate the actor's base offset
+            local size = anim.anim.size
+            actor["w"] = size.w
+            actor["h"] = size.h
+            actor["base"] = { size.w / 2, size.h }
+        end
+    end
+
+end
+
+
+-- Gets the duration of a given animation
+-- OBSOLETE IN FUTURE
+function slime.animationDuration(self, name, key)
+    local a = self:getActor(name)
+    if a then
+        local anim = a.animations[key]
+        if anim then
+            return anim._frames.totalDuration
+        end
+    end
+    return 0
+end
+
+
+-- Set a static image as an actor's sprite.
+-- OBSOLETE IN FUTURE
+function slime.setImage (self, image)
+
+    local actor = self
+
+    if (not actor) then
+        slime:log ("slime.Image method should be called from an actor instance")
+    else
+        image = love.graphics.newImage(image)
+        actor.image = image
+        actor.w = image:getWidth()
+        actor.h = image:getHeight()
+        actor.base = { actor.w/2, actor.h }
+    end
+
+end
+
+
+function slime.turnActor (self, ...)
+
+	-- OBSOLETE IN FUTURE
+	print ("slime.turnActor will be obsoleted, use slime.actors:turn()")
+	actors:turn (...)
+
+end
+
+function slime.moveActor (self, ...)
+
+	-- OBSOLETE IN FUTURE
+	print ("slime.moveActor will be obsoleted, use slime.actors:move()")
+	return actors:move (...)
+
+end
+
+function slime.moveActorTo (self, ...)
+
+	-- OBSOLETE IN FUTURE
+	print ("slime.moveActorTo will be obsoleted, use slime.actors:moveTowards()")
+	actors:moveTowards (...)
+
+end
+
+-- Stops an actor from moving
+function slime.stopActor (self, ...)
+
+	-- OBSOLETE IN FUTURE
+	print ("slime.stopActor will be obsoleted, use slime.actors:stop()")
+	actors:stop (...)
+
+end
+
+
+function slime.say (self, name, text)
+
+	print ("slime.say will be obsoleted, use slime.speech:say()")
+	speech:say (name, text)
+
+end
+
+
+-- Checks if there is an actor talking.
+-- OBSOLETE IN FUTURE
+function slime.someoneTalking (self)
+
+	print ("slime.someoneTalking will be obsoleted, use slime.speech:talking()")
+	return speech:talking ()
+
+end
+
+
+-- Checks if specific actor is talking
+-- OBSOLETE IN FUTURE
+function slime.actorTalking (self, actor)
+
+	print ("slime.actorTalking will be obsoleted, use slime.speech:talking()")
+	return speech:talking (actor)
+
+end
+
+
+-- Skips the current speech
+-- OBSOLETE IN FUTURE
+function slime.skipSpeech (self)
+
+	print ("slime.skipSpeech will be obsoleted, use slime.speech:skip()")
+	speech:skip ()
+
+end
+
+
+function slime.layer (self, ...)
+
+	print ("slime.layer will be obsoleted, use slime.layers:add()")
+	layers:add (...)
+
+end
+
+function slime:createLayer (source, mask)
+
+	print ("slime.layer will be obsoleted, use slime.layers:add()")
+	return layers:convertMask (source, mask)
+
+end
+
+function slime.hotspot(self, ...)
+
+	print ("slime.hotspot will be obsoleted, use slime.hotspots:add()")
+	hotspots:add (...)
+
+end
+
+
+-- OBSOLETE IN FUTURE
+slime.bagButtons = { }
+
+-- Placeholder for the inventory changed callback
+function slime.inventoryChanged ( )
+	-- OBSOLETE IN FUTURE
+	-- replace with the future room structure
+end
+
+-- Add an item to a bag.
+function slime.bagInsert (self, ...)
+
+	print ("slime.bagInsert will be obsoleted, use slime.bags:add()")
+	bags:add (...)
+
+end
+
+-- Get items from a bag.
+-- OBSOLETE IN FUTURE
+function slime.bagContents (self, bag)
+
+	print ("slime.bagContents will be obsoleted, use slime.bags.contents[<key>]")
+    return bags.contents[bag] or { }
+
+end
+
+-- Checks if an item is inside a bag
+function slime.bagContains (self, ...)
+	print ("slime.bagContains will be obsoleted, use slime.bags:contains()")
+	return bags:contains (...)
+end
+
+-- Remove an item from a bag.
+function slime.bagRemove (self, ...)
+
+	print ("slime.bagRemove will be obsoleted, use slime.bags:remove()")
+	bags:remove (...)
+
+end
+
+function slime.bagButton (self, name, image, x, y)
+
+	print ("slime.bagButton will be obsoleted")
+
+    if type(image) == "string" then image = love.graphics.newImage(image) end
+
+    local w, h = image:getDimensions ()
+
+    table.insert(self.bagButtons, {
+        ["name"] = name,
+        ["image"] = image,
+        ["x"] = x,
+        ["y"] = y,
+        ["w"] = w,
+        ["h"] = h,
+        ["data"] = data
+    })
+
+end
+
+-- Set a status text
+function slime.status (self, text)
+
+	--print ("slime.status will be obsoleted")
+    self.statusText = text
+
+end
+
+
+
+
+
+
+                            --~ _
+--~   _____  ___ __   ___  _ __| |_
+--~  / _ \ \/ / '_ \ / _ \| '__| __|
+--~ |  __/>  <| |_) | (_) | |  | |_
+--~  \___/_/\_\ .__/ \___/|_|   \__|
+          --~ |_|
+
 
 -- Clear these components on load
 -- Warning! these will call on every require.
 cursor:clear ()
 bags:clear ()
+settings:clear ()
+
+slime.actors = actors
+slime.backgrounds = backgrounds
+slime.bags = bags
+slime.cursor = cursor
+slime.floors = floors
+slime.layers = layers
+slime.settings = settings
 
 return slime
 
