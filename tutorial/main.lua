@@ -150,7 +150,7 @@ function cell.addCellDoor (x, y)
     slime:setAnimation("door", "closed")
 
 	-- adjust the base (the "feet" of the door")
-    cellDoor.base[2] = 0
+    cellDoor.feet[2] = 0
 
 end
 

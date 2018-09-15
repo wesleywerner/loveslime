@@ -92,7 +92,7 @@ function actors.add (self, name, x, y)
         ["direction recalc delay"] = 0,     -- delay direction calc counter.
         ["w"] = w,
         ["h"] = h,
-        ["base"] = {0, 0},                  -- image draw offset vs actor x/y
+        ["feet"] = {0, 0},                  -- position of actor's feet (relative to the sprite)
         ["image"] = nil,                    -- a static image of this actor.
         ["animations"] = { },
         ["direction"] = "south",
@@ -345,14 +345,14 @@ function actors.draw (self)
 			if anim then
 				local tileset = slime:cache(anim.anim.tileset)
 				anim._frames:draw(tileset,
-					actor.x - actor.base[1] + anim._offset.x,
-					actor.y - actor.base[2] + anim._offset.y)
+					actor.x - actor.feet[1] + anim._offset.x,
+					actor.y - actor.feet[2] + anim._offset.y)
 			elseif (actor.image) then
 				love.graphics.draw(actor.image,
-					actor.x - actor.base[1],
-					actor.y - actor.base[2])
+					actor.x - actor.feet[1],
+					actor.y - actor.feet[2])
 			else
-				love.graphics.rectangle ("fill", actor.x - actor.base[1], actor.y - actor.base[2], actor.w, actor.h)
+				love.graphics.rectangle ("fill", actor.x - actor.feet[1], actor.y - actor.feet[2], actor.w, actor.h)
 			end
 
         elseif actor.islayer then
@@ -760,7 +760,7 @@ function debug.draw (self, scale)
     for _, actor in ipairs(actors.list) do
         if actor.isactor then
 			love.graphics.setColor (self.actorColor)
-            love.graphics.rectangle("line", actor.x - actor.base[1], actor.y - actor.base[2], actor.w, actor.h)
+            love.graphics.rectangle("line", actor.x - actor.feet[1], actor.y - actor.feet[2], actor.w, actor.h)
             love.graphics.circle("line", actor.x, actor.y, 1, 6)
         elseif actor.islayer then
             -- draw baselines for layers
@@ -1096,10 +1096,10 @@ function slime.getObjects (self, x, y)
 
     for _, actor in pairs(actors.list) do
         if actor.isactor and
-            (x >= actor.x - actor.base[1]
-            and x <= actor.x - actor.base[1] + actor.w)
-        and (y >= actor.y - actor.base[2]
-            and y <= actor.y - actor.base[2] + actor.h) then
+            (x >= actor.x - actor.feet[1]
+            and x <= actor.x - actor.feet[1] + actor.w)
+        and (y >= actor.y - actor.feet[2]
+            and y <= actor.y - actor.feet[2] + actor.h) then
             table.insert(objects, actor)
         end
     end
@@ -1484,9 +1484,9 @@ function slime.defineTileset (self, tileset, size)
     slime:cache(tileset)
 
     -- default actor hotspot to centered at the base of the image
-    actor["w"] = size.w
-    actor["h"] = size.h
-    actor["base"] = { size.w / 2, size.h }
+    actor.w = size.w
+    actor.h = size.h
+    actor.feet = { size.w / 2, size.h }
 
     return {
         actor = actor,
@@ -1588,9 +1588,9 @@ function slime.setAnimation (self, name, key)
             anim.loopcounter = 0
             -- Recalculate the actor's base offset
             local size = anim.anim.size
-            actor["w"] = size.w
-            actor["h"] = size.h
-            actor["base"] = { size.w / 2, size.h }
+            actor.w = size.w
+            actor.h = size.h
+            actor.base = { size.w / 2, size.h }
         end
     end
 
@@ -1624,7 +1624,7 @@ function slime.setImage (self, image)
         actor.image = image
         actor.w = image:getWidth()
         actor.h = image:getHeight()
-        actor.base = { actor.w/2, actor.h }
+        actor.feet = { actor.w/2, actor.h }
     end
 
 end
