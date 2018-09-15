@@ -49,253 +49,15 @@ local anim8 = require 'slime.anim8'
 
 local actors = { }
 local backgrounds = { }
-local floors = { }
-local layers = { }
-local speech = { }
-local settings = { }
+local bags = { }
+local debug = { }
 local cursor = { }
 local hotspots = { }
-local bags = { }
+local floors = { }
+local layers = { }
+local settings = { }
+local speech = { }
 
-
-
---~  _                _                                   _
---~ | |__   __ _  ___| | ____ _ _ __ ___  _   _ _ __   __| |___
---~ | '_ \ / _` |/ __| |/ / _` | '__/ _ \| | | | '_ \ / _` / __|
---~ | |_) | (_| | (__|   < (_| | | | (_) | |_| | | | | (_| \__ \
---~ |_.__/ \__,_|\___|_|\_\__, |_|  \___/ \__,_|_| |_|\__,_|___/
---~ 				      |___/
-
---- Add a background image to the room.
--- This can be called many times to create an animated background.
---
--- @param filename
--- The image filename of the background.
---
--- @param delay
--- The seconds to display the background.
--- When the delay has expired the next background is displayed.
-function backgrounds.add (self, filename, delay)
-
-    -- Add a background to the stage, drawn at x, y for the given delay
-    -- before drawing the next available background.
-    -- If no delay is given, the background will draw forever.
-
-    local image = love.graphics.newImage(filename)
-
-    local data = {
-        ["image"] = image,
-        ["delay"] = delay
-        }
-
-    table.insert(self.list, data)
-
-    -- default to the first background
-    if #self.list == 1 then
-        self.index = 1
-        self.timeout = delay
-    end
-
-end
-
---- Clears all backgrounds.
-function backgrounds.clear (self)
-
-	-- stores the list of backgrounds
-	self.list = { }
-
-	-- the index of the current background
-	self.index = 1
-
-	-- time remaining until the background cycles
-	self.timeout = 1
-
-end
-
---- Draws the current background to screen.
-function backgrounds.draw (self)
-
-    local bg = self.list[self.index]
-
-    if (bg) then
-        love.graphics.draw(bg.image, 0, 0)
-    end
-
-end
-
---- Rotates to the next background if there is one and delay expired.
-function backgrounds.update (self, dt)
-
-    if (#self.list <= 1) then
-        -- skip background rotation if there is one or none
-        return
-    end
-
-    local index = self.index
-    local background = self.list[index]
-    local timer = self.timeout
-
-    if (timer == nil or background == nil) then
-        -- start a new timer
-        index = 1
-        timer = background.delay
-    else
-        timer = timer - dt
-        -- this timer has expired
-        if (timer < 0) then
-            -- move to the next index (with wrapping)
-            index = (index == #self.list) and 1 or index + 1
-            if (self.list[index]) then
-                timer = self.list[index].delay
-            end
-        end
-    end
-
-    self.index = index
-    self.timeout = timer
-
-end
-
-
-
---~   ___ _   _ _ __ ___  ___  _ __
---~  / __| | | | '__/ __|/ _ \| '__|
---~ | (__| |_| | |  \__ \ (_) | |
---~  \___|\__,_|_|  |___/\___/|_|
-
-
---- Clears all cursor data
-function cursor.clear (self)
-
-	self.quads = { }
-	self.names = { }
-
-end
-
---- Draws the cursor on screen
-function cursor.draw (self)
-
-    local quad = self.quads[self.current]
-
-    if quad then
-
-        local x, y = love.mouse.getPosition()
-        x = x / scale
-        y = y / scale
-
-		-- A custom cursor (like that of an inventory item)
-		-- set through setCursor
-        if self.custom then
-            local cursorhotspot = self.custom.hotspot
-            love.graphics.draw(self.custom.image,
-                x-cursorhotspot.x, y-cursorhotspot.y)
-        else
-
-            local cursorhotspot = self.hotspots[self.current]
-            cursorhotspot = cursorhotspot or {x=0, y=0}
-            love.graphics.draw(self.image, quad,
-                x-cursorhotspot.x, y-cursorhotspot.y)
-        end
-    end
-
-end
-
---- Get the current cursor name
--- TODO rename to "name"
-function cursor.getName (self)
-
-	-- TODO tidy up with if-else
-	local cursorname = self.custom and self.custom.name
-	cursorname = cursorname or (self.names[self.current])
-	return cursorname or "interact"
-
-end
-
--- Set a custom cursor.
--- TODO change signature to take a table of cursor data.
--- also rename "hotspot", it is too ambiguous with the hotspots namespace.
-function cursor.set (self, name, image, hotspot)
-
-    if name then
-        cursor.custom = {
-            name=name,
-            image=image,
-            hotspot=hotspot or {x=0, y=0}
-            }
-    else
-        cursor.custom = nil
-    end
-
-end
-
-
---~   __ _
---~  / _| | ___   ___  _ __ ___
---~ | |_| |/ _ \ / _ \| '__/ __|
---~ |  _| | (_) | (_) | |  \__ \
---~ |_| |_|\___/ \___/|_|  |___/
-
-
---- Clears all walkable floors.
-function floors.clear (self)
-
-	self.astar = nil
-
-end
-
-function floors.set (self, filename)
-
-    self.handler = SlimeMapHandler()
-    self.handler:convert(filename)
-    self.astar = AStar(self.handler)
-
-end
-
-
--- Find the nearest open point to the south, west, north or east.
--- Use the bresenham line algorithm to project four lines from the goal:
--- (S, W, N, E) and find the first open node on each line.
--- We then choose the point with the shortest distance from the goal.
-function floors.findNearestOpenPoint (self, point)
-
-    -- Get the dimensions of the walkable floor map.
-    local size = floors.handler:size()
-
-    -- Define the cardinal direction to test against relative to the point.
-    local directions = {
-        { ["x"] = point.x, ["y"] = size.h },    -- S
-        { ["x"] = 1, ["y"] = point.y },         -- W
-        { ["x"] = point.x, ["y"] = 1 },         -- N
-        { ["x"] = size.w, ["y"] = point.y }     -- E
-        }
-
-    -- Stores the four directional points found and their distance.
-    local foundPoints = { }
-
-    for idirection, direction in pairs(directions) do
-        local goal = point
-        local walkTheLine = bresenham (direction, goal)
-        local findNearestPoint = true
-        while (findNearestPoint) do
-            if (#walkTheLine == 0) then
-                findNearestPoint = false
-            else
-                goal = table.remove(walkTheLine)
-                findNearestPoint = floors.handler:nodeBlocking(goal)
-            end
-        end
-        -- math.sqrt( (x2 - x1)^2 + (y2 - y1)^2 )
-        local distance = math.sqrt( (goal.x - point.x)^2 + (goal.y - point.y)^2 )
-        table.insert(foundPoints, { ["goal"] = goal, ["distance"] = distance })
-    end
-
-    -- Sort the results with shortest distance first
-    table.sort(foundPoints, function (a, b) return a.distance < b.distance end )
-
-    -- Return the winning point
-    return foundPoints[1].goal
-
-end
 
 
 --               _
@@ -310,6 +72,7 @@ function actors.clear (self)
 
 end
 
+-- TODO change actor.add sig to a table
 function actors.add (self, name, x, y)
 
     -- Add an actor to the stage.
@@ -397,7 +160,7 @@ function actors.update (self, dt)
 
 end
 
--- Sort actors and layers for correct zorder drawing
+--- Sort actors and layers for correct zorder drawing
 function actors.sortLayers (self)
     table.sort(self.list, function (a, b)
             local m = a.isactor and a.y or a.baseline
@@ -440,6 +203,7 @@ function actors.moveActorOnPath (self, actor, dt)
         end
 
         if (#actor.path == 0) then
+			debug:append (actor.name .. " moved complete")
             actor.path = nil
             actor.action = "idle"
             slime.callback ("moved", actor)
@@ -571,14 +335,14 @@ end
 function actors.move (self, name, x, y)
 
     if (floors.astar == nil) then
-        slime:log("No walkable area defined")
+        debug:append ("No walkable area defined")
         return
     end
 
     local actor = self:get(name)
 
     if (actor == nil) then
-        slime:log("No actor named " .. name)
+        debug:append ("No actor named " .. name)
     else
         -- Our path runs backwards so we can pop the points off the stack
         local start = { x = actor.x, y = actor.y }
@@ -592,7 +356,7 @@ function actors.move (self, name, x, y)
         -- Calculate a path
         local path = floors.astar:findPath(goal, start)
         if (path == nil) then
-            slime:log("no actor path found")
+            debug:append ("no actor path found")
         else
             actor.clickedX = x
             actor.clickedY = y
@@ -603,7 +367,7 @@ function actors.move (self, name, x, y)
             actor.lastx, actor.lasty = actor.x, actor.y
             actor.direction = self:calculateDirection(actor.x, actor.y, x, y)
             -- Output debug
-            slime:log("move " .. name .. " to " .. x .. " : " .. y)
+            debug:append ("move " .. name .. " to " .. x .. " : " .. y)
         end
     end
 
@@ -627,7 +391,7 @@ function actors.moveTowards (self, name, target)
     if (targetActor) then
         self:move (name, targetActor.x, targetActor.y)
     else
-        slime:log("no actor named " .. target)
+        debug:append ("no actor named " .. target)
     end
 
 end
@@ -643,37 +407,498 @@ function actors.stop (self, name)
 end
 
 
+--~  _                _                                   _
+--~ | |__   __ _  ___| | ____ _ _ __ ___  _   _ _ __   __| |___
+--~ | '_ \ / _` |/ __| |/ / _` | '__/ _ \| | | | '_ \ / _` / __|
+--~ | |_) | (_| | (__|   < (_| | | | (_) | |_| | | | | (_| \__ \
+--~ |_.__/ \__,_|\___|_|\_\__, |_|  \___/ \__,_|_| |_|\__,_|___/
+--~ 				      |___/
 
+--- Add a background image to the room.
+-- This can be called many times to create an animated background.
+--
+-- @param filename
+-- The image filename of the background.
+--
+-- @param delay
+-- The seconds to display the background.
+-- When the delay has expired the next background is displayed.
+function backgrounds.add (self, filename, delay)
 
-slime.tilesets = {}
+    -- Add a background to the stage, drawn at x, y for the given delay
+    -- before drawing the next available background.
+    -- If no delay is given, the background will draw forever.
 
--- Internal callback fired on any animation loop
-function slime.internalAnimationLoop (frames, counter)
-    local pack = frames.pack
-    pack.loopcounter = pack.loopcounter + 1
-    if pack.loopcounter > 255 then
-        pack.loopcounter = 0
+    local image = love.graphics.newImage(filename)
+
+    local data = {
+        ["image"] = image,
+        ["delay"] = delay
+        }
+
+    table.insert(self.list, data)
+
+    -- default to the first background
+    if #self.list == 1 then
+        self.index = 1
+        self.timeout = delay
     end
-    slime.animationLooped (pack.anim.actor.name, pack.key, pack.loopcounter)
+
+end
+
+--- Clears all backgrounds.
+function backgrounds.clear (self)
+
+	-- stores the list of backgrounds
+	self.list = { }
+
+	-- the index of the current background
+	self.index = 1
+
+	-- time remaining until the background cycles
+	self.timeout = 1
+
+end
+
+--- Draws the current background to screen.
+function backgrounds.draw (self)
+
+    local bg = self.list[self.index]
+
+    if (bg) then
+        love.graphics.draw(bg.image, 0, 0)
+    end
+
+end
+
+--- Rotates to the next background if there is one and delay expired.
+function backgrounds.update (self, dt)
+
+    if (#self.list <= 1) then
+        -- skip background rotation if there is one or none
+        return
+    end
+
+    local index = self.index
+    local background = self.list[index]
+    local timer = self.timeout
+
+    if (timer == nil or background == nil) then
+        -- start a new timer
+        index = 1
+        timer = background.delay
+    else
+        timer = timer - dt
+        -- this timer has expired
+        if (timer < 0) then
+            -- move to the next index (with wrapping)
+            index = (index == #self.list) and 1 or index + 1
+            if (self.list[index]) then
+                timer = self.list[index].delay
+            end
+        end
+    end
+
+    self.index = index
+    self.timeout = timer
+
 end
 
 
 
--- Cache a tileset image in slime, or return an already cached one.
-function slime.cache (self, path)
+--~  _
+--~ | |__   __ _  __ _ ___
+--~ | '_ \ / _` |/ _` / __|
+--~ | |_) | (_| | (_| \__ \
+--~ |_.__/ \__,_|\__, |___/
+--~              |___/
 
-    -- cache tileset image to save loading duplicate images
-    local image = self.tilesets[path]
+--- Clears the contents of all bags.
+function bags.clear (self)
 
-    if not image then
-        image = love.graphics.newImage(path)
-        self.tilesets[path] = image
-    end
-
-    return image
+	self.contents = { }
 
 end
 
+--- Adds an item to a named bag.
+function bags.add (self, bag, object)
+
+    -- load the image data
+    if type(object.image) == "string" then
+        object.image = love.graphics.newImage(object.image)
+    end
+
+    -- create the bag
+    if not self.contents[bag] then
+		self.contents[bag] = { }
+	end
+
+	-- add object to the bag
+    table.insert(self.contents[bag], object)
+
+    -- notify of changes
+    slime.inventoryChanged (bag)
+
+    debug:append ("Added " .. object.name .. " to bag \"" .. bag .. "\"")
+
+end
+
+function bags.remove (self, bag, name)
+
+    local inv = self.contents[bag] or { }
+
+	for i, item in pairs(inv) do
+		if (item.name == name) then
+			table.remove(inv, i)
+			debug:append ("Removed " .. name .. " from bag \"" .. bag .. "\"")
+			slime.inventoryChanged (bag)
+		end
+	end
+
+end
+
+--- Test if a bag contains a named item.
+function bags.contains (self, bag, item)
+
+    local inv = self.contents[bag] or { }
+
+    for _, v in pairs(inv) do
+        if v.name == item then
+            return true
+        end
+    end
+
+end
+
+
+--~   ___ _   _ _ __ ___  ___  _ __
+--~  / __| | | | '__/ __|/ _ \| '__|
+--~ | (__| |_| | |  \__ \ (_) | |
+--~  \___|\__,_|_|  |___/\___/|_|
+
+
+--- Clears all cursor data
+function cursor.clear (self)
+
+	self.quads = { }
+	self.names = { }
+
+end
+
+--- Draws the cursor on screen
+function cursor.draw (self)
+
+    local quad = self.quads[self.current]
+
+    if quad then
+
+        local x, y = love.mouse.getPosition()
+        x = x / scale
+        y = y / scale
+
+		-- A custom cursor (like that of an inventory item)
+		-- set through setCursor
+        if self.custom then
+            local cursorhotspot = self.custom.hotspot
+            love.graphics.draw(self.custom.image,
+                x-cursorhotspot.x, y-cursorhotspot.y)
+        else
+
+            local cursorhotspot = self.hotspots[self.current]
+            cursorhotspot = cursorhotspot or {x=0, y=0}
+            love.graphics.draw(self.image, quad,
+                x-cursorhotspot.x, y-cursorhotspot.y)
+        end
+    end
+
+end
+
+--- Get the current cursor name
+-- TODO rename to "name"
+function cursor.getName (self)
+
+	-- TODO tidy up with if-else
+	local cursorname = self.custom and self.custom.name
+	cursorname = cursorname or (self.names[self.current])
+	return cursorname or "interact"
+
+end
+
+-- Set a custom cursor.
+-- TODO change signature to take a table of cursor data.
+-- also rename "hotspot", it is too ambiguous with the hotspots namespace.
+function cursor.set (self, name, image, hotspot)
+
+    if name then
+        cursor.custom = {
+            name=name,
+            image=image,
+            hotspot=hotspot or {x=0, y=0}
+            }
+    else
+        cursor.custom = nil
+    end
+
+end
+
+
+--        _      _
+--     __| | ___| |__  _   _  __ _
+--    / _` |/ _ \ '_ \| | | |/ _` |
+--   | (_| |  __/ |_) | |_| | (_| |
+--    \__,_|\___|_.__/ \__,_|\__, |
+--                           |___/
+-- Provides helpful debug information while building your game.
+
+--- Clears the debug log
+function debug.clear (self)
+
+	self.log = { }
+	self.enabled = true
+
+	-- debug border
+	self.padding = 10
+	self.width, self.height = love.graphics.getDimensions ()
+	self.width = self.width - (self.padding * 2)
+	self.height = self.height - (self.padding * 2)
+
+	-- the alpha for debug outlines
+	local alpha = 0.42
+
+	-- define colors for debug outlines
+	self.hotspotColor = {1, 1, 0, alpha}
+	self.actorColor = {0, 0, 1, alpha}
+	self.layerColor = {1, 0, 0, alpha}
+	self.textColor = {0, 1, 0, alpha}
+
+	-- the font for printing debug texts
+	self.font = love.graphics.newFont (12)
+
+end
+
+
+--- Appends an entry to the debugging log.
+function debug.append (self, text)
+
+    table.insert(self.log, text)
+
+    -- cull the log
+    if (#self.log > 10) then
+		table.remove(self.log, 1)
+	end
+
+end
+
+
+--- Draws debug information and object outlines.
+function debug.draw (self, scale)
+
+	-- draw the debug frame
+	love.graphics.setColor (self.textColor)
+	love.graphics.rectangle ("line", self.padding, self.padding, self.width, self.height)
+	love.graphics.setFont (self.font)
+	love.graphics.printf ("SLIME DEBUG", self.padding, self.padding, self.width, "center")
+
+    -- print fps
+    love.graphics.print (tostring(love.timer.getFPS()) .. " fps", self.padding, self.padding)
+
+    -- print background info
+    if (backgrounds.index and backgrounds.timeout) then
+        love.graphics.print(
+			string.format("background #%d showing for %.1f",
+			backgrounds.index, backgrounds.timeout), 60, 10)
+    end
+
+	-- print log
+    for i, n in ipairs(self.log) do
+        love.graphics.print (n, self.padding, self.padding * 3 + (16 * i))
+    end
+
+	-- draw object outlines to scale
+	love.graphics.push ()
+	love.graphics.scale (scale)
+
+    -- outline hotspots
+	love.graphics.setColor (self.hotspotColor)
+    for ihotspot, hotspot in pairs(hotspots.list) do
+        love.graphics.rectangle ("line", hotspot.x, hotspot.y, hotspot.w, hotspot.h)
+    end
+
+    -- outline actors
+    for _, actor in ipairs(actors.list) do
+        if actor.isactor then
+			love.graphics.setColor (self.actorColor)
+            love.graphics.rectangle("line", actor.x - actor.base[1],
+                actor.y - actor.base[2], actor.w, actor.h)
+            love.graphics.circle("line", actor.x, actor.y, 1, 6)
+        elseif actor.islayer then
+            -- draw baselines for layers
+			love.graphics.setColor (self.layerColor)
+            love.graphics.line(0, actor.baseline, self.width, actor.baseline)
+        end
+    end
+
+    love.graphics.pop ()
+
+end
+
+
+--~   __ _
+--~  / _| | ___   ___  _ __ ___
+--~ | |_| |/ _ \ / _ \| '__/ __|
+--~ |  _| | (_) | (_) | |  \__ \
+--~ |_| |_|\___/ \___/|_|  |___/
+
+
+--- Clears all walkable floors.
+function floors.clear (self)
+
+	self.astar = nil
+
+end
+
+function floors.set (self, filename)
+
+    self.handler = SlimeMapHandler()
+    self.handler:convert(filename)
+    self.astar = AStar(self.handler)
+
+end
+
+
+-- Find the nearest open point to the south, west, north or east.
+-- Use the bresenham line algorithm to project four lines from the goal:
+-- (S, W, N, E) and find the first open node on each line.
+-- We then choose the point with the shortest distance from the goal.
+function floors.findNearestOpenPoint (self, point)
+
+    -- Get the dimensions of the walkable floor map.
+    local size = floors.handler:size()
+
+    -- Define the cardinal direction to test against relative to the point.
+    local directions = {
+        { ["x"] = point.x, ["y"] = size.h },    -- S
+        { ["x"] = 1, ["y"] = point.y },         -- W
+        { ["x"] = point.x, ["y"] = 1 },         -- N
+        { ["x"] = size.w, ["y"] = point.y }     -- E
+        }
+
+    -- Stores the four directional points found and their distance.
+    local foundPoints = { }
+
+    for idirection, direction in pairs(directions) do
+        local goal = point
+        local walkTheLine = bresenham (direction, goal)
+        local findNearestPoint = true
+        while (findNearestPoint) do
+            if (#walkTheLine == 0) then
+                findNearestPoint = false
+            else
+                goal = table.remove(walkTheLine)
+                findNearestPoint = floors.handler:nodeBlocking(goal)
+            end
+        end
+        -- math.sqrt( (x2 - x1)^2 + (y2 - y1)^2 )
+        local distance = math.sqrt( (goal.x - point.x)^2 + (goal.y - point.y)^2 )
+        table.insert(foundPoints, { ["goal"] = goal, ["distance"] = distance })
+    end
+
+    -- Sort the results with shortest distance first
+    table.sort(foundPoints, function (a, b) return a.distance < b.distance end )
+
+    -- Return the winning point
+    return foundPoints[1].goal
+
+end
+
+
+
+--    _           _                   _
+--   | |__   ___ | |_ ___ _ __   ___ | |_ ___
+--   | '_ \ / _ \| __/ __| '_ \ / _ \| __/ __|
+--   | | | | (_) | |_\__ \ |_) | (_) | |_\__ \
+--   |_| |_|\___/ \__|___/ .__/ \___/ \__|___/
+--                       |_|
+
+function hotspots.clear (self)
+
+	self.list = { }
+
+end
+
+function hotspots.add (self, name, x, y, w, h)
+
+    local hotspot = {
+        ["name"] = name,
+        ["x"] = x,
+        ["y"] = y,
+        ["w"] = w,
+        ["h"] = h
+    }
+
+    table.insert(self.list, hotspot)
+    return hotspot
+
+end
+
+
+--    _
+--   | | __ _ _   _  ___ _ __ ___
+--   | |/ _` | | | |/ _ \ '__/ __|
+--   | | (_| | |_| |  __/ |  \__ \
+--   |_|\__,_|\__, |\___|_|  |___/
+--            |___/
+--
+-- Layers define areas of the background that actors can walk behind.
+
+--- Add a walk-behind layer.
+function layers.add (self, background, mask, baseline)
+
+    local newLayer = {
+        ["image"] = self:convertMask (background, mask),
+        ["baseline"] = baseline,
+        islayer = true
+        }
+
+	-- layers are merged with actors so that we can perform
+	-- efficient sorting, enabling drawing of actors behind layers.
+    table.insert(actors.list, newLayer)
+
+    actors:sortLayers()
+
+end
+
+--- Cut a shape out of an image.
+-- All corresponding black pixels from the mask will cut and discard
+-- pixels (they become transparent), and only non-black mask pixels
+-- preserve the matching source pixels.
+function layers.convertMask (self, source, mask)
+
+    -- Returns a copy of the source image with transparent pixels where
+    -- the positional pixels in the mask are black.
+
+    local sourceData = love.image.newImageData(source)
+    local maskData = love.image.newImageData(mask)
+
+	local sourceW, sourceH = sourceData:getDimensions()
+    layerData = love.image.newImageData( sourceW, sourceH )
+
+    -- copy the orignal
+    layerData:paste(sourceData, 0, 0, 0, 0, sourceW, sourceH)
+
+    -- map black mask pixels to transparent layer pixels
+    layerData:mapPixel( function (x, y, r, g, b, a)
+                            r2, g2, b2, a2 = maskData:getPixel(x, y)
+                            if (r2 + g2 + b2 == 0) then
+                                return 0, 0, 0, 0
+                            else
+                                return r, g, b, a
+                            end
+                        end)
+
+    return love.graphics.newImage(layerData)
+
+end
 
 
 --~                           _
@@ -700,7 +925,7 @@ function speech.say (self, name, text)
         }
 
     if (not newSpeech.actor) then
-        slime:log("Speech failed: No actor named " .. name)
+        debug:append ("Speech failed: No actor named " .. name)
         return
     end
 
@@ -781,158 +1006,6 @@ function speech.draw (self)
 end
 
 
---    _
---   | | __ _ _   _  ___ _ __ ___
---   | |/ _` | | | |/ _ \ '__/ __|
---   | | (_| | |_| |  __/ |  \__ \
---   |_|\__,_|\__, |\___|_|  |___/
---            |___/
---
--- Layers define areas of the background that actors can walk behind.
-
---- Add a walk-behind layer.
-function layers.add (self, background, mask, baseline)
-
-    local newLayer = {
-        ["image"] = self:convertMask (background, mask),
-        ["baseline"] = baseline,
-        islayer = true
-        }
-
-	-- layers are merged with actors so that we can perform
-	-- efficient sorting, enabling drawing of actors behind layers.
-    table.insert(actors.list, newLayer)
-
-    actors:sortLayers()
-
-end
-
---- Cut a shape out of an image.
--- All corresponding black pixels from the mask will cut and discard
--- pixels (they become transparent), and only non-black mask pixels
--- preserve the matching source pixels.
-function layers.convertMask (self, source, mask)
-
-    -- Returns a copy of the source image with transparent pixels where
-    -- the positional pixels in the mask are black.
-
-    local sourceData = love.image.newImageData(source)
-    local maskData = love.image.newImageData(mask)
-
-	local sourceW, sourceH = sourceData:getDimensions()
-    layerData = love.image.newImageData( sourceW, sourceH )
-
-    -- copy the orignal
-    layerData:paste(sourceData, 0, 0, 0, 0, sourceW, sourceH)
-
-    -- map black mask pixels to transparent layer pixels
-    layerData:mapPixel( function (x, y, r, g, b, a)
-                            r2, g2, b2, a2 = maskData:getPixel(x, y)
-                            if (r2 + g2 + b2 == 0) then
-                                return 0, 0, 0, 0
-                            else
-                                return r, g, b, a
-                            end
-                        end)
-
-    return love.graphics.newImage(layerData)
-
-end
-
-
---    _           _                   _
---   | |__   ___ | |_ ___ _ __   ___ | |_ ___
---   | '_ \ / _ \| __/ __| '_ \ / _ \| __/ __|
---   | | | | (_) | |_\__ \ |_) | (_) | |_\__ \
---   |_| |_|\___/ \__|___/ .__/ \___/ \__|___/
---                       |_|
-
-function hotspots.clear (self)
-
-	self.list = { }
-
-end
-
-function hotspots.add (self, name, x, y, w, h)
-
-    local hotspot = {
-        ["name"] = name,
-        ["x"] = x,
-        ["y"] = y,
-        ["w"] = w,
-        ["h"] = h
-    }
-
-    table.insert(self.list, hotspot)
-    return hotspot
-
-end
-
-
---~  _
---~ | |__   __ _  __ _ ___
---~ | '_ \ / _` |/ _` / __|
---~ | |_) | (_| | (_| \__ \
---~ |_.__/ \__,_|\__, |___/
---~              |___/
-
---- Clears the contents of all bags.
-function bags.clear (self)
-
-	self.contents = { }
-
-end
-
---- Adds an item to a named bag.
-function bags.add (self, bag, object)
-
-    -- load the image data
-    if type(object.image) == "string" then
-        object.image = love.graphics.newImage(object.image)
-    end
-
-    -- create the bag
-    if not self.contents[bag] then
-		self.contents[bag] = { }
-	end
-
-	-- add object to the bag
-    table.insert(self.contents[bag], object)
-
-    -- notify of changes
-    slime.inventoryChanged (bag)
-
-    slime:log ("Added " .. object.name .. " to bag \"" .. bag .. "\"")
-
-end
-
-function bags.remove (self, bag, name)
-
-    local inv = self.contents[bag] or { }
-
-	for i, item in pairs(inv) do
-		if (item.name == name) then
-			table.remove(inv, i)
-			slime:log ("Removed " .. name .. " from bag \"" .. bag .. "\"")
-			slime.inventoryChanged (bag)
-		end
-	end
-
-end
-
---- Test if a bag contains a named item.
-function bags.contains (self, bag, item)
-
-    local inv = self.contents[bag] or { }
-
-    for _, v in pairs(inv) do
-        if v.name == item then
-            return true
-        end
-    end
-
-end
-
 
 --        _
 --     __| |_ __ __ ___      __
@@ -956,6 +1029,9 @@ function slime.draw (self, scale)
 
     scale = scale or 1
 
+    -- reset draw color
+    love.graphics.setColor (1, 1, 1)
+
     backgrounds:draw ()
 	actors:draw ()
 
@@ -978,9 +1054,6 @@ function slime.draw (self, scale)
     end
 
 	speech:draw ()
-
-    self:outlineStageElements()
-
 	cursor:draw ()
 
 end
@@ -1031,6 +1104,7 @@ function slime.interact (self, x, y)
 	local cursorname = cursor:getName ()
 
     for i, object in pairs(objects) do
+		debug:append (cursorname .. " on " .. object.name)
         slime.callback (cursorname, object)
     end
 
@@ -1038,113 +1112,6 @@ function slime.interact (self, x, y)
 
 end
 
---        _      _
---     __| | ___| |__  _   _  __ _
---    / _` |/ _ \ '_ \| | | |/ _` |
---   | (_| |  __/ |_) | |_| | (_| |
---    \__,_|\___|_.__/ \__,_|\__, |
---                           |___/
--- Provides helpful debug information while building your game.
-
-slime.debug = { ["enabled"] = true, ["log"] = {} }
-
-function slime.log (self, text)
-    -- add a debug log entry
-    table.insert(self.debug.log, text)
-    if (#self.debug.log > 10) then table.remove(self.debug.log, 1) end
-end
-
-function slime.debugdraw (self)
-
-    if (not self.debug["enabled"]) then return end
-
-    -- get the debug overlay image
-    local debugOverlay = self.debug["overlay"]
-
-    -- remember the original colour
-    local r, g, b, a = love.graphics.getColor( )
-
-    -- create a new overlay
-    if (not debugOverlay) then
-        debugOverlay = love.graphics.newCanvas( )
-        debugOverlay:renderTo(function()
-                local w = debugOverlay:getWidth()
-                local h = debugOverlay:getHeight()
-                love.graphics.setColor(0, 255, 0)
-                love.graphics.rectangle( "line", 10, 10, w - 20, h - 20 )
-                love.graphics.setFont( love.graphics.newFont( 12 ))
-                love.graphics.print("SLIME DEBUG ON", 12, h - 26)
-            end)
-        self.debug["overlay"] = debugOverlay
-    end
-
-    -- draw the overlay
-    love.graphics.draw(debugOverlay, 0, 0);
-
-    -- print frame speed
-    love.graphics.setFont(love.graphics.newFont(12))
-    love.graphics.print(tostring(love.timer.getFPS()) .. " fps", 12, 10)
-
-    -- print background info
-    if (backgrounds.index and backgrounds.timeout) then
-        love.graphics.print(
-			string.format("background #%d showing for %.1f",
-			backgrounds.index, backgrounds.timeout)
-			, 60, 10)
-    end
-
-    -- print info of everything under the pointer
-    -- TODO
-
-    -- log texts
-    for i, n in pairs(self.debug.log) do
-        love.graphics.setColor(0, 0, 0, 128)
-        love.graphics.print(n, 11, 21 + (10 * i))
-        love.graphics.setColor(0, 255, 0, 128)
-        love.graphics.print(n, 10, 20 + (10 * i))
-    end
-
-    -- restore the original colour
-    love.graphics.setColor(r, g, b, a)
-
-end
-
-function slime.outlineStageElements(self)
-
-    if (not self.debug["enabled"]) then return end
-
-    local r, g, b, a = love.graphics.getColor( )
-
-    -- draw outlines of hotspots
-    love.graphics.setColor(0, 0, 255, 64)
-    for ihotspot, hotspot in pairs(hotspots.list) do
-        love.graphics.rectangle("line", hotspot.x, hotspot.y, hotspot.w, hotspot.h)
-    end
-
-    -- Outline bag buttons
-    love.graphics.setColor(255, 0, 255, 64)
-    for counter, button in pairs(self.bagButtons) do
-        love.graphics.rectangle("line", button.x, button.y, button.w, button.h)
-    end
-
-    -- draw outlines of actors
-    for _, actor in ipairs(actors.list) do
-        if actor.isactor then
-            love.graphics.setColor(0, 255, 0, 64)
-            love.graphics.rectangle("line", actor.x - actor.base[1],
-                actor.y - actor.base[2], actor.w, actor.h)
-            love.graphics.circle("line", actor.x, actor.y, 1, 6)
-        elseif actor.islayer then
-            -- draw baselines for layers
-            love.graphics.setColor(255, 0, 0, 64)
-            love.graphics.line(0, actor.baseline,
-                love.graphics.getHeight(), actor.baseline)
-        end
-    end
-
-    love.graphics.setColor(r, g, b, a)
-
-end
 
 --      _           _
 --  ___| |__   __ _(_)_ __  ___
@@ -1345,12 +1312,12 @@ end
 --- Clears backgrounds, actors, floors and layers.
 function slime.clear (self)
 
-    backgrounds:clear ()
-    speech:clear ()
     actors:clear ()
-    self.debug.log = {}
-    hotspots:clear ()
+    backgrounds:clear ()
+    debug:clear ()
     floors:clear ()
+    hotspots:clear ()
+    speech:clear ()
     self.statusText = nil
 
 end
@@ -1581,7 +1548,7 @@ function slime.setAnimation (self, name, key)
     local actor = self:getActor(name)
 
     if (not actor) then
-        slime:log ("Set animation failed: no actor named " .. name)
+        debug:append ("Set animation failed: no actor named " .. name)
     else
         actor.customAnimationKey = key
         -- reset the animation counter
@@ -1620,7 +1587,7 @@ function slime.setImage (self, image)
     local actor = self
 
     if (not actor) then
-        slime:log ("slime.Image method should be called from an actor instance")
+        debug:append ("slime.Image method should be called from an actor instance")
     else
         image = love.graphics.newImage(image)
         actor.image = image
@@ -1798,6 +1765,37 @@ end
 
 
 
+slime.tilesets = {}
+
+-- Internal callback fired on any animation loop
+function slime.internalAnimationLoop (frames, counter)
+    local pack = frames.pack
+    pack.loopcounter = pack.loopcounter + 1
+    if pack.loopcounter > 255 then
+        pack.loopcounter = 0
+    end
+    slime.animationLooped (pack.anim.actor.name, pack.key, pack.loopcounter)
+end
+
+
+
+-- Cache a tileset image in slime, or return an already cached one.
+function slime.cache (self, path)
+
+    -- cache tileset image to save loading duplicate images
+    local image = self.tilesets[path]
+
+    if not image then
+        image = love.graphics.newImage(path)
+        self.tilesets[path] = image
+    end
+
+    return image
+
+end
+
+
+
 
                             --~ _
 --~   _____  ___ __   ___  _ __| |_
@@ -1817,6 +1815,7 @@ slime.actors = actors
 slime.backgrounds = backgrounds
 slime.bags = bags
 slime.cursor = cursor
+slime.debug = debug
 slime.floors = floors
 slime.layers = layers
 slime.settings = settings

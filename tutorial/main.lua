@@ -179,25 +179,33 @@ end
 function cell.pickUpDust ()
     slime:bagInsert("ego",
         { ["name"] = "cement dust", ["image"] = "images/inv-dust.png" })
-    slime.actors.remove ("dust")
+    slime.actors:remove ("dust")
 end
 
 
 -- Creates an animation of falling dust where ego digs into the wall
 function cell.addDustAnimation ()
+
     local dustActor = slime:actor("dust", 96, 34)
     local dustAnim = dustActor:tileset("images/dust.png", {w=5, h=6})
-    dustAnim:define("fall", {'1-14', 1}, 0.2)
-    dustAnim:define("still", {14, 1})
+
+    dustAnim
+		:define ("fall")
+		:frames ({'1-14', 1})
+		:delays (0.2)
+
+    dustAnim:define ("still")
+		:frames ({14, 1})
+		:delays (1)
+
     slime:setAnimation("dust", "fall")
+
 end
 
 
 function cell.callback (event, object)
 
   if not event then return end
-
-    slime:log(event .. " on " .. object.name)
 
     if (event == "moved" and object.name == "ego") then
         slime:interact(object.clickedX, object.clickedY)
@@ -290,7 +298,7 @@ function love.draw ()
     love.graphics.scale(scale)
     slime:draw(scale)
     love.graphics.pop()
-    slime:debugdraw()
+    slime.debug:draw(scale)
 end
 
 function love.update (dt)
