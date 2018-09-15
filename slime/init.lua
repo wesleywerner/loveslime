@@ -162,13 +162,45 @@ end
 
 --- Sort actors and layers for correct zorder drawing
 function actors.sortLayers (self)
+
     table.sort(self.list, function (a, b)
-            local m = a.isactor and a.y or a.baseline
-            local n = b.isactor and b.y or b.baseline
-            if a.isactor and a.nozbuffer then m = 10000 end
-            if b.isactor and b.nozbuffer then n = 10001 end
-            return m < n
-            end)
+
+            --~ local m = a.isactor and a.y or a.baseline
+            --~ local n = b.isactor and b.y or b.baseline
+            --~ if a.isactor and a.nozbuffer then m = 10000 end
+            --~ if b.isactor and b.nozbuffer then n = 10001 end
+            --~ return m < n
+
+			-- layers only have a baseline.
+			-- actors can optionally have a baseline.
+
+			local aY = 0
+			local bY = 0
+
+			if a.islayer then
+				aY = a.baseline
+			elseif a.onTop then
+				aY = 10000
+			elseif a.onBottom then
+				aY = -10000
+			else
+				aY = a.y + (a.baseline or 0)
+			end
+
+			if b.islayer then
+				bY = b.baseline
+			elseif b.onTop then
+				bY = 10001
+			elseif b.onBottom then
+				bY = -10001
+			else
+				bY = b.y + (b.baseline or 0)
+			end
+
+            return aY < bY
+
+	end)
+
 end
 
 function actors.moveActorOnPath (self, actor, dt)
@@ -728,8 +760,7 @@ function debug.draw (self, scale)
     for _, actor in ipairs(actors.list) do
         if actor.isactor then
 			love.graphics.setColor (self.actorColor)
-            love.graphics.rectangle("line", actor.x - actor.base[1],
-                actor.y - actor.base[2], actor.w, actor.h)
+            love.graphics.rectangle("line", actor.x - actor.base[1], actor.y - actor.base[2], actor.w, actor.h)
             love.graphics.circle("line", actor.x, actor.y, 1, 6)
         elseif actor.islayer then
             -- draw baselines for layers

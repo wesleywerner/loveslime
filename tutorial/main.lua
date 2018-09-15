@@ -21,7 +21,7 @@ function cell.setup ()
     cell.addEgoActor(70, 50)
 
     -- Add the cell door
-    cell.addCellDoor(50, 49)
+    cell.addCellDoor(50, 20)
 
     -- Hole in the wall
     local x, y, width, height = 92, 23, 8, 8
@@ -115,7 +115,8 @@ function cell.addCellDoor (x, y)
     -- Add the door as an actor
     local cellDoor = slime:actor("door", x, y)
 
-    cellDoor.baseline = 5
+	-- shift the point of walk-behind up
+    --cellDoor.baseline = -10
 
     -- Sprite frames
     local frameWidth, frameHeight = 9, 30
@@ -147,6 +148,9 @@ function cell.addCellDoor (x, y)
 
     -- Start off closed
     slime:setAnimation("door", "closed")
+
+	-- adjust the base (the "feet" of the door")
+    cellDoor.base[2] = 0
 
 end
 
