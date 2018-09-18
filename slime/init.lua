@@ -50,6 +50,7 @@ local anim8 = require 'slime.anim8'
 local actors = { }
 local backgrounds = { }
 local bags = { }
+local events = { }
 local debug = { }
 local cursor = { }
 local hotspots = { }
@@ -238,6 +239,11 @@ function actors.moveActorOnPath (self, actor, dt)
 			debug:append (actor.name .. " moved complete")
             actor.path = nil
             actor.action = "idle"
+
+			-- notify the moved callback
+            events.moved (self, actor)
+
+            -- OBSOLETE: replaced by events.move callback
             slime.callback ("moved", actor)
         end
 
@@ -568,7 +574,10 @@ function bags.add (self, bag, object)
 	-- add object to the bag
     table.insert(self.contents[bag], object)
 
-    -- notify of changes
+    -- notify bag callback
+    events.bag (self, bag)
+
+    -- OBSOLETE: replaced by events.bag
     slime.inventoryChanged (bag)
 
     debug:append ("Added " .. object.name .. " to bag \"" .. bag .. "\"")
@@ -602,11 +611,72 @@ function bags.contains (self, bag, item)
 
 end
 
+--                       _
+--   _____   _____ _ __ | |_ ___
+--  / _ \ \ / / _ \ '_ \| __/ __|
+-- |  __/\ V /  __/ | | | |_\__ \
+--  \___| \_/ \___|_| |_|\__|___/
+--
 
---~   ___ _   _ _ __ ___  ___  _ __
---~  / __| | | | '__/ __|/ _ \| '__|
---~ | (__| |_| | |  \__ \ (_) | |
---~  \___|\__,_|_|  |___/\___/|_|
+--- Callback when an actor reached their destination.
+--
+-- @param self
+-- The slime instance
+--
+-- @param actor
+-- The actor that moved
+function events.moved (self, actor)
+
+end
+
+--- Callback when a mouse interaction occurs.
+--
+-- @param self
+-- The slime instance
+--
+-- @param event
+-- The name of the cursor
+--
+-- @param actor
+-- The actor being interacted with
+function events.interact (self, event, actor)
+
+end
+
+--- Callback when an animation loops
+--
+-- @param self
+-- The slime instance
+--
+-- @param actor
+-- The actor being interacted with
+--
+-- @param key
+-- The animation key that looped
+--
+-- @param counter
+-- The number of times the animation has looped
+function events.animation (self, actor, key, counter)
+
+end
+
+--- Callback when a bag contents has changed
+--
+-- @param self
+-- The slime instance
+--
+-- @param bag
+-- The name of the bag that changed
+function events.bag (self, bag)
+
+end
+
+
+--   ___ _   _ _ __ ___  ___  _ __
+--  / __| | | | '__/ __|/ _ \| '__|
+-- | (__| |_| | |  \__ \ (_) | |
+--  \___|\__,_|_|  |___/\___/|_|
+--
 
 
 --- Clears all cursor data
@@ -1136,6 +1206,11 @@ function slime.interact (self, x, y)
 
     for i, object in pairs(objects) do
 		debug:append (cursorname .. " on " .. object.name)
+
+		-- notify the interact callback
+		events.interact (self, cursorname, object)
+
+		-- OBSOLETE: slime.callback replaced by events
         slime.callback (cursorname, object)
     end
 
@@ -1805,6 +1880,11 @@ function slime.internalAnimationLoop (frames, counter)
     if pack.loopcounter > 255 then
         pack.loopcounter = 0
     end
+
+	-- notify the animation callback
+    events.animation (slime, pack.anim.actor.name, pack.key, pack.loopcounter)
+
+    -- OBSOLETE: replaced by events.animation
     slime.animationLooped (pack.anim.actor.name, pack.key, pack.loopcounter)
 end
 
@@ -1847,6 +1927,7 @@ slime.backgrounds = backgrounds
 slime.bags = bags
 slime.cursor = cursor
 slime.debug = debug
+slime.events = events
 slime.floors = floors
 slime.layers = layers
 slime.settings = settings

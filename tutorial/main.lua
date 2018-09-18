@@ -362,3 +362,11 @@ function love.mousepressed (x, y, button)
     end
 
 end
+
+function slime.events.interact (self, event, actor)
+	print("EVENT: ", event, actor.name)
+end
+
+function slime.events.moved (self, actor)
+	print("EVENT: moved", actor.name)
+end
