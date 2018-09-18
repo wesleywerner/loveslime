@@ -50,6 +50,7 @@ local anim8 = require 'slime.anim8'
 local actors = { }
 local backgrounds = { }
 local bags = { }
+local chains = { }
 local events = { }
 local debug = { }
 local cursor = { }
@@ -368,9 +369,24 @@ function actors.draw (self)
 
 end
 
-
 --- Move an actor to point xy using A Star path finding
 function actors.move (self, name, x, y)
+
+	-- intercept chaining
+	if chains.capturing then
+		debug:append (string.format("chaining %s move", name))
+		chains:add (actors.move,
+			{self, name, x, y},
+			-- expires when actor path is empty
+			function (parameters)
+				local actor = actors:get (parameters[2])
+				if not actor or not actor.path then
+					return true
+				end
+			end
+			)
+		return
+	end
 
     if (floors.astar == nil) then
         debug:append ("No walkable area defined")
@@ -412,6 +428,13 @@ function actors.move (self, name, x, y)
 end
 
 function actors.turn (self, name, direction)
+
+	-- intercept chaining
+	if chains.capturing then
+		debug:append (string.format("chaining %s turn %s", name, direction))
+		chains:add (actors.turn, {self, name, direction})
+		return
+	end
 
     local actor = self:get (name)
 
@@ -610,6 +633,184 @@ function bags.contains (self, bag, item)
     end
 
 end
+
+
+--       _           _
+--   ___| |__   __ _(_)_ __  ___
+--  / __| '_ \ / _` | | '_ \/ __|
+-- | (__| | | | (_| | | | | \__ \
+--  \___|_| |_|\__,_|_|_| |_|___/
+
+-- Provides ways to chain actions to run in sequence
+
+--- Removes all action chains
+-- @param self
+-- The slime instance
+function chains.clear (self)
+
+	-- Allow calling this table like it was a function.
+	setmetatable (chains, {
+		__call = function (self, ...)
+			return self:capture (...)
+		end
+	})
+
+	self.list = { }
+
+	-- when capturing all other actions will queue themselves
+	-- to the chain instead of actioning instantly.
+	self.capturing = nil
+
+end
+
+--- Begins chain capturing mode.
+-- While in this mode, the next call to a slime function
+-- will be added to the chain action list instead of executing
+-- immediately.
+--
+-- @param self
+--
+-- @param name
+-- Optional name of the chain
+-- Specifying a name allows creating multiple, concurrent chains.
+--
+-- @param userFunction
+-- Optional user provided function
+-- Adds a user function to the chain that will be called in turn.
+--
+-- @return The slime instance to allow further action chaining
+function chains.capture (self, name, userFunction)
+
+	-- catch obsolete usage
+	if type (name) == "table" then
+		assert (false, "slime:chain is obsolete. use slime.chain()... notation")
+	end
+
+	-- use a default chain name if none is provided
+	name = name or "default"
+
+	-- fetch the chain from storage
+	self.capturing = self.list[name]
+
+	-- create a new chain instead
+	if not self.capturing then
+		self.capturing = { name = name, actions = { } }
+		self.list[name] = self.capturing
+		debug:append (string.format ("created chain %q", name))
+	end
+
+	-- queue custom function
+	if type (userFunction) == "function" then
+		self:add (userFunction, { })
+		debug:append (string.format("user function chained"))
+	end
+
+	-- return the slime instance to allow further action chaining
+	return slime
+
+end
+
+--- Adds a action to the capturing chain.
+--
+-- @param self
+--
+-- @param func
+-- The function to call
+--
+-- @param parameters
+-- The function parameters
+--
+-- @param expired
+-- Optional function that returns true when the action
+-- has expired, which does so instantly if this parameter
+-- is not given.
+function chains.add (self, func, parameters, expired)
+
+	local command = {
+		-- the function to be called
+		func = func,
+		-- parameters to pass the function
+		parameters = parameters,
+		-- a function that tests if the command has expired
+		expired = expired,
+		-- a flag to ensure the function is only called once
+		ran = false
+	}
+
+	-- queue this command in the capturing chain
+	table.insert (self.capturing.actions, command)
+
+	-- release this capture
+	self.capturing = nil
+
+end
+
+--- Process chain actions
+--
+-- @param self
+-- Slime instance
+--
+-- @param dt
+-- The delta time since the last update
+function chains.update (self, dt)
+
+	-- for each chain
+	for key, chain in pairs(self.list) do
+
+		-- the next command in this chain
+		local command = chain.actions[1]
+
+		if command then
+
+			-- run the action once only
+			if not command.ran then
+				--debug:append (string.format("running chain command"))
+				command.ran = true
+				command.func (unpack (command.parameters))
+			end
+
+			-- test if the action expired
+			local skipTest = type (command.expired) ~= "function"
+
+			-- remove expired actions from this chain
+			if skipTest or command.expired (command.parameters, dt) then
+				--debug:append (string.format("chain action expired"))
+				table.remove (chain.actions, 1)
+			end
+
+		end
+
+	end
+
+end
+
+--- Pause the chain
+--
+-- @param seconds
+-- The number of seconds to wait
+function chains.wait (self, seconds)
+
+	if chains.capturing then
+
+		--debug:append (string.format("waiting %ds", seconds))
+
+		chains:add (chains.wait,
+
+					-- pack parameter twice, the second being
+					-- our countdown
+					{seconds, seconds},
+
+					-- expires when the countdown reaches zero
+					function (p, dt)
+						p[2] = p[2] - dt
+						return p[2] < 0
+					end
+					)
+
+	end
+
+end
+
 
 --                       _
 --   _____   _____ _ __ | |_ ___
@@ -877,6 +1078,12 @@ end
 
 function floors.set (self, filename)
 
+	-- intercept chaining
+	if chains.capturing then
+		chains:add (floors.set, {self, filename})
+		return
+	end
+
     self.handler = SlimeMapHandler()
     self.handler:convert(filename)
     self.astar = AStar(self.handler)
@@ -1047,12 +1254,25 @@ end
 -- @param time
 -- Number of seconds to display the words.
 -- Optional. Defaults to 3 seconds.
-function speech.say (self, name, text, time)
+function speech.say (self, name, text, seconds)
+
+	-- intercept chaining
+	if chains.capturing then
+		debug:append (string.format("chaining %s say", name))
+		chains:add (speech.say,
+					{self, name, text, seconds},
+					-- expires when actor is not talking
+					function (parameters)
+						return not speech:talking (parameters[2])
+					end
+					)
+		return
+	end
 
     local newSpeech = {
         ["actor"] = actors:get (name),
         ["text"] = text,
-        ["time"] = time or 3
+        ["time"] = seconds or 3
         }
 
     if (not newSpeech.actor) then
@@ -1177,20 +1397,19 @@ end
 
 
 
---        _
---     __| |_ __ __ ___      __
---    / _` | '__/ _` \ \ /\ / /
---   | (_| | | | (_| |\ V  V /
---    \__,_|_|  \__,_| \_/\_/
+--      _ _
+--  ___| (_)_ __ ___   ___
+-- / __| | | '_ ` _ \ / _ \
+-- \__ \ | | | | | | |  __/
+-- |___/_|_|_| |_| |_|\___|
+--
 
 function slime.update (self, dt)
 
+	chains:update (dt)
     backgrounds:update (dt)
 	actors:update (dt)
 	speech:update (dt)
-
-    -- Update chained actions
-    self:updateChains(dt)
 
 end
 
@@ -1288,164 +1507,6 @@ function slime.interact (self, x, y)
 end
 
 
---      _           _
---  ___| |__   __ _(_)_ __  ___
--- / __| '_ \ / _` | | '_ \/ __|
---| (__| | | | (_| | | | | \__ \
--- \___|_| |_|\__,_|_|_| |_|___/
-
--- Provides ways to chain actions to run in sequence
-
-slime.chains = { queue={}, current=nil}
-
-function slime.chain(self)
-
-    local thischain = {}
-    table.insert(self.chains.queue, thischain)
-    return {
-        slime = self,
-        ref = thischain,
-        image = slime.chainImage,
-        move = slime.chainMove,
-        turn = slime.chainTurn,
-        wait = slime.chainWait,
-        anim = slime.chainAnim,
-        floor = slime.chainFloor,
-        func = slime.chainFunc,
-        say = slime.chainSay,
-        sound = slime.chainSound,
-        }
-end
-
-function slime.chainImage (self, actor, path)
-    table.insert(self.ref, {method="image", actor=actor, path=path})
-end
-
-function slime.chainMove (self, actor, position, y)
-    if type(position) == "number" then
-        position = {x=position, y=y}
-    end
-    table.insert(self.ref, {method="move", actor=actor, position=position})
-end
-
-function slime.chainTurn (self, actor, direction)
-    table.insert(self.ref, {method="turn", actor=actor, direction=direction})
-end
-
-function slime.chainWait (self, duration)
-    table.insert(self.ref, {method="wait", duration=duration})
-end
-
-function slime.chainAnim (self, actor, key, wait)
-    table.insert(self.ref, {method="anim", actor=actor, key=key})
-    -- if wait is true, wait for the duration of the animation
-    if wait then
-        local duration = self.slime:animationDuration(actor, key)
-        self:wait(duration)
-    end
-end
-
-function slime.chainFloor (self, path)
-    table.insert(self.ref, {method="floor", path=path})
-end
-
-function slime.chainFunc (self, func, params)
-    table.insert(self.ref, {method="func", func=func, params=params})
-end
-
-function slime.chainSay (self, actor, words)
-    table.insert(self.ref, {method="talk", actor=actor, words=words})
-end
-
-function slime.chainSound (self, source)
-    if type(source) == "string" then
-        source = love.audio.newSource(source, "static")
-    end
-    table.insert(self.ref, {method="sound", source=source})
-end
-
-
-function slime.updateChains (self, dt)
-
-    -- process the first link in each chain
-    for cidx, chain in pairs(self.chains.queue) do
-
-        local link = chain[1] or {}
-        local expired = false
-
-        -- Action this link (one-time only)
-        if not link.processed then
-            link.processed = true
-            if link.method == "image" then
-                local actor = self:getActor(link.actor)
-                if actor then actor:setImage(link.path) end
-            elseif link.method == "floor" then
-                self:floor(link.path)
-            elseif link.method == "move" then
-                if type(link.position) == "string" then
-                    self:moveActorTo(link.actor, link.position)
-                else
-                    self:moveActor(link.actor, link.position.x, link.position.y)
-                end
-            elseif link.method == "turn" then
-                self:turnActor(link.actor, link.direction)
-            elseif link.method == "talk" then
-                self:say(link.actor, link.words)
-            elseif link.method == "wait" then
-                -- no action
-            elseif link.method == "anim" then
-                self:setAnimation(link.actor, link.key)
-            elseif link.method == "func" then
-                link.func(unpack(link.params or {}))
-            elseif link.method == "sound" then
-                love.audio.play(link.source)
-            end
-        end
-
-        -- Test if the link expires
-        if link.method == "image" then
-            expired = true
-        elseif link.method == "floor" then
-            expired = true
-        elseif link.method == "move" then
-            -- skip link if not actor exists
-            local actor = self:getActor(link.actor)
-            if not actor then
-                expired = true
-            elseif not actor.path then
-                expired = true
-            end
-        elseif link.method == "turn" then
-            expired = true
-        elseif link.method == "talk" then
-            if not self:actorTalking(link.actor) then
-                expired = true
-            end
-        elseif link.method == "wait" then
-            link.duration = link.duration - dt
-            expired = link.duration < 0
-        elseif link.method == "anim" then
-            expired = true
-        elseif link.method == "func" then
-            expired = true
-        elseif link.method == "sound" then
-            expired = true
-        end
-
-        -- remove expired links
-        if expired and #chain > 0 then
-            table.remove(chain, 1)
-        end
-
-        -- remove empty chains
-        if #chain == 0 then
-            table.remove(self.chains.queue, cidx)
-        end
-
-    end
-
-end
-
 --~           _   _   _
 --~  ___  ___| |_| |_(_)_ __   __ _ ___
 --~ / __|/ _ \ __| __| | '_ \ / _` / __|
@@ -1489,6 +1550,7 @@ function slime.clear (self)
 
     actors:clear ()
     backgrounds:clear ()
+    chains:clear ()
     debug:clear ()
     floors:clear ()
     hotspots:clear ()
@@ -1719,6 +1781,12 @@ end
 
 -- OBSOLETE IN FUTURE
 function slime.setAnimation (self, name, key)
+
+	-- intercept chaining
+	if chains.capturing then
+		chains:add (slime.setAnimation, {self, name, key})
+		return
+	end
 
     local actor = self:getActor(name)
 
@@ -1994,6 +2062,7 @@ settings:clear ()
 slime.actors = actors
 slime.backgrounds = backgrounds
 slime.bags = bags
+slime.chain = chains
 slime.cursor = cursor
 slime.debug = debug
 slime.events = events
@@ -2001,6 +2070,7 @@ slime.floors = floors
 slime.layers = layers
 slime.settings = settings
 slime.speech = speech
+slime.wait = chains.wait
 
 return slime
 

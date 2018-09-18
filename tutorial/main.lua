@@ -364,18 +364,29 @@ function love.mousepressed (x, y, button)
 end
 
 function slime.events.interact (self, event, actor)
-	print("EVENT: ", event, actor.name)
+	--print("EVENT: ", event, actor.name)
 
 	if event == "interact" and actor.name == "door" then
-		slime.speech:say ("ego", "hello, world", 1)
+
+		slime.chain().speech:say ("ego", "watch this", 0.5)
+		slime.chain():setAnimation ("ego", "dig")
+		slime.chain():wait (1.5)
+		slime.chain():setAnimation ("ego")
+		slime.chain().actors:turn ("ego", "east")
+
+		-- user function
+		slime.chain(nil, function()
+				slime.speech:say ("ego", "magic", 1)
+			end)
+
 	end
 
 end
 
 function slime.events.moved (self, actor)
-	print("EVENT: moved", actor.name)
+	--print("EVENT: moved", actor.name)
 end
 
 function slime.events.speech (self, actor, started, ended)
-	print("EVENT: speech", started and "started" or "ended", actor.name)
+	--print("EVENT: speech", started and "started" or "ended", actor.name)
 end
