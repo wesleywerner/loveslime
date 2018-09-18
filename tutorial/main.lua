@@ -365,8 +365,17 @@ end
 
 function slime.events.interact (self, event, actor)
 	print("EVENT: ", event, actor.name)
+
+	if event == "interact" and actor.name == "door" then
+		slime.speech:say ("ego", "hello, world", 1)
+	end
+
 end
 
 function slime.events.moved (self, actor)
 	print("EVENT: moved", actor.name)
+end
+
+function slime.events.speech (self, actor, started, ended)
+	print("EVENT: speech", started and "started" or "ended", actor.name)
 end

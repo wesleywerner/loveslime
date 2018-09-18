@@ -618,31 +618,6 @@ end
 --  \___| \_/ \___|_| |_|\__|___/
 --
 
---- Callback when an actor reached their destination.
---
--- @param self
--- The slime instance
---
--- @param actor
--- The actor that moved
-function events.moved (self, actor)
-
-end
-
---- Callback when a mouse interaction occurs.
---
--- @param self
--- The slime instance
---
--- @param event
--- The name of the cursor
---
--- @param actor
--- The actor being interacted with
-function events.interact (self, event, actor)
-
-end
-
 --- Callback when an animation loops
 --
 -- @param self
@@ -668,6 +643,48 @@ end
 -- @param bag
 -- The name of the bag that changed
 function events.bag (self, bag)
+
+end
+
+--- Callback when a mouse interaction occurs.
+--
+-- @param self
+-- The slime instance
+--
+-- @param event
+-- The name of the cursor
+--
+-- @param actor
+-- The actor being interacted with
+function events.interact (self, event, actor)
+
+end
+
+--- Callback when an actor reached their destination.
+--
+-- @param self
+-- The slime instance
+--
+-- @param actor
+-- The actor that moved
+function events.moved (self, actor)
+
+end
+
+--- Callback when an actor begins speaking a new line
+--
+-- @param self
+-- The slime instance
+--
+-- @param actor
+-- The talking actor
+--
+-- @param started
+-- true if the actor has started speaking
+--
+-- @param ended
+-- true if the actor has ended speaking
+function events.speech (self, actor, started, ended)
 
 end
 
@@ -1002,12 +1019,12 @@ function layers.convertMask (self, source, mask)
 end
 
 
---~                           _
---~  ___ _ __   ___  ___  ___| |__
---~ / __| '_ \ / _ \/ _ \/ __| '_ \
---~ \__ \ |_) |  __/  __/ (__| | | |
---~ |___/ .__/ \___|\___|\___|_| |_|
---~     |_|
+--                           _
+--  ___ _ __   ___  ___  ___| |__
+-- / __| '_ \ / _ \/ _ \/ __| '_ \
+-- \__ \ |_) |  __/  __/ (__| | | |
+-- |___/ .__/ \___|\___|\___|_| |_|
+--     |_|
 
 --- Clears all current or queued speeches
 function speech.clear (self)
@@ -1017,12 +1034,25 @@ function speech.clear (self)
 end
 
 --- Make an actor say something
-function speech.say (self, name, text)
+--
+-- @param self
+-- Slime instance
+--
+-- @param name
+-- Name of the actor
+--
+-- @param text
+-- The words to display
+--
+-- @param time
+-- Number of seconds to display the words.
+-- Optional. Defaults to 3 seconds.
+function speech.say (self, name, text, time)
 
     local newSpeech = {
-        ["actor"] = slime:getActor(name),
+        ["actor"] = actors:get (name),
         ["text"] = text,
-        ["time"] = 3
+        ["time"] = time or 3
         }
 
     if (not newSpeech.actor) then
@@ -1034,7 +1064,16 @@ function speech.say (self, name, text)
 
 end
 
---- Returns if any actor is busy talking
+--- Returns if an actor is busy talking
+--
+-- @param self
+-- Slime instance
+--
+-- @param actor
+-- Optional name of the actor to test against.
+-- If not given, any talking actor is tested.
+--
+-- @return true if any actor, or the specified actor is talking.
 function speech.talking (self, actor)
 
 	if actor then
@@ -1047,33 +1086,63 @@ function speech.talking (self, actor)
 
 end
 
+--- Skips the current spoken line.
 function speech.skip (self)
 
-    local spc = self.queue[1]
-    if (spc) then
+    local speech = self.queue[1]
+
+    if (speech) then
+
+		-- remove the line
         table.remove(self.queue, 1)
-        spc.actor.action = "idle"
+
+        -- restore the actor animation to idle
+        speech.actor.action = "idle"
+
+        -- clear the current spoken line
+        self.currentLine = nil
+
+        -- notify speech ended event
+        events.speech (slime, speech.actor, false, true)
+
     end
+
 end
 
+--- Update spoken words
+--
+-- @param self
+-- Slime instance
+--
+-- @param dt
+-- Time Delta since the last update
 function speech.update (self, dt)
 
-    -- Update the speech display time.
     if (#self.queue > 0) then
-        local spc = self.queue[1]
-        spc.time = spc.time - dt
-        if (spc.time < 0) then
+
+        local speech = self.queue[1]
+        speech.time = speech.time - dt
+
+        -- notify speech started event
+        if self.currentLine ~= speech.text then
+			self.currentLine = speech.text
+			events.speech (slime, speech.actor, true)
+		end
+
+        if (speech.time < 0) then
             self:skip ()
         else
-            spc.actor.action = "talk"
+            speech.actor.action = "talk"
             if not settings["walk and talk"] then
-                spc.actor.path = nil
+                speech.actor.path = nil
             end
         end
+
     end
 
 end
 
+--- Draw spoken words on screen.
 function speech.draw (self)
 
     if (#self.queue > 0) then
@@ -1931,6 +2000,7 @@ slime.events = events
 slime.floors = floors
 slime.layers = layers
 slime.settings = settings
+slime.speech = speech
 
 return slime
 
