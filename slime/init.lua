@@ -401,12 +401,6 @@ function actors.move (self, name, x, y)
 		return
 	end
 
-	-- test if a floor map is loaded
-    if not floors:hasMap () then
-        debug:append ("No walkable area defined")
-        return
-    end
-
 	-- test if the actor is on the stage
     local actor = self:get (name)
 
@@ -419,8 +413,10 @@ function actors.move (self, name, x, y)
 	local goal = { x = x, y = y }
 
 	-- If the goal is on a solid block find the nearest open point
-	if not floors.isWalkable (goal.x, goal.y) then
-		goal = floors:findNearestOpenPoint (goal)
+	if floors:hasMap () then
+		if not floors.isWalkable (goal.x, goal.y) then
+			goal = floors:findNearestOpenPoint (goal)
+		end
 	end
 
 	local useCache = false
@@ -509,6 +505,16 @@ function backgrounds.add (self, filename, delay)
     -- If no delay is given, the background will draw forever.
 
     local image = love.graphics.newImage(filename)
+    local width, height = image:getDimensions ()
+
+    -- set the background size
+    if not self.width or not self.height then
+		self.width, self.height = width, height
+    end
+
+    -- ensure consistent background sizes
+    assert (width == self.width, "backgrounds must have the same size")
+    assert (height == self.height, "backgrounds must have the same size")
 
     local data = {
         ["image"] = image,
@@ -536,6 +542,9 @@ function backgrounds.clear (self)
 
 	-- time remaining until the background cycles
 	self.timeout = 1
+
+	-- background size
+	self.width, self.height = nil, nil
 
 end
 
@@ -1162,7 +1171,7 @@ end
 -- @return true if the position is open to walk
 function floors.isWalkable (x, y)
 
-	if floors.walkableMap then
+	if floors:hasMap () then
 		-- clamp to floor boundary
 		x = path:clamp (x, 1, floors.width - 1)
 		y = path:clamp (y, 1, floors.height - 1)
@@ -1179,6 +1188,9 @@ function floors.size (self)
 
 	if self.walkableMap then
 		return self.width, self.height
+	else
+		-- without a floor map, we return the background size
+		return backgrounds.width, backgrounds.height
 	end
 
 end
