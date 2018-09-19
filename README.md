@@ -4,8 +4,8 @@ SLIME is a point-and-click adventure game library for L&Ouml;VE. It is inspired 
 
 The name is an acronym for "SLUDGE to L&Ouml;VE Inspired Mimicry Environment".
 
-**Status:** In Development  
-**Version:** 0.1  
+**Status:** In Development
+**Version:** 0.1
 
 ---
 
@@ -47,7 +47,6 @@ The name is an acronym for "SLUDGE to L&Ouml;VE Inspired Mimicry Environment".
 I want to thank these people for making use of their code:
 
 * kikito, for your animation library, [anim8](https://love2d.org/wiki/anim8).
-* GloryFish, for your [A* path finding](https://github.com/GloryFish/lua-astar) lua code.
 * Bresenham's Line Algorithm [from roguebasin.com](http://www.roguebasin.com/index.php?title=Bresenham%27s_Line_Algorithm#Lua)
 
 Thank you!
@@ -63,7 +62,7 @@ To use SLIME simply `require`:
     slime = require ("slime")
 
 ## Notes
-  
+
 * The cardinal directions are oriented so that `SOUTH` points to the bottom of your screen, and `NORTH` to the top. So an actor facing `SOUTH` is looking at the player.
 * Whenever an image is passed to SLIME, assume it is the filename of the image. The image data will be loaded for you.
 
@@ -115,12 +114,12 @@ These SLIME callbacks trigger on certain game events.
 
 This callback notifies you when an actor has moved, or the player interacts something.
 
-**event**:  
+**event**:
 
 * moved: an actor was told to move and has reached their destination.
 * interact: an object was clicked on (via `interact (x, y)`).
 
-**object**:  
+**object**:
 
 The related actor or hotspot. When this is an actor from a "moved" event, you can access the `x/y` where the actor was told to move with:
 
@@ -135,7 +134,7 @@ This callback notifies you when a bag's content has changed. The name of the bag
 
 ![func](api/func.png) `slime.animationLooped (actor, key, counter)`
 
-Called when an actor's animation loops. 
+Called when an actor's animation loops.
 
 **actor**:
 
@@ -188,13 +187,13 @@ Adds an actor to the stage. The actor object is returned:
     local boss = slime:actor ("Big Boss", 100, 100)
     boss.speechcolor = {255, 0, 0}     -- Set the speech color for this actor as {red, green, blue}
 
-![func](api/func.png) `slime:removeActor (name)`  
+![func](api/func.png) `slime:removeActor (name)`
 
 Removes the actor named `name`
 
-![func](api/func.png) `slime:getActor (name)`  
+![func](api/func.png) `slime:getActor (name)`
 
-Gets the actor by name. 
+Gets the actor by name.
 
 ![func](api/func.png) `actor:setImage (path)`
 
@@ -210,18 +209,18 @@ Set this property to `true` if this actor draws above all layers.
 
 You define animations on actor objects.
 
-![func](api/func.png) `actor:tileset (path, {w, h})`  
+![func](api/func.png) `actor:tileset (path, {w, h})`
 
 Loads a tileset for the actor, and returns the object used to define animation frames. The `size` is the width and height of each frame.
 
     local tileset = ego:tileset("ego.png", {w=12, h=12})
 
-![func](api/func.png) `{tileset}:define (key)`  
+![func](api/func.png) `{tileset}:define (key)`
 
 Defines a new animation on a tileset object. This returns the object used to define animation frames.
 
-![func](api/func.png) `{animation}:frames (frames)`  
-![func](api/func.png) `{animation}:delays (delays)`  
+![func](api/func.png) `{animation}:frames (frames)`
+![func](api/func.png) `{animation}:delays (delays)`
 
 Sets the frames that make up an animation.
 
@@ -238,7 +237,7 @@ The animation object can chain calls for cleaner code:
     tileset:define("walk south"):frames({'1-5', 1):delays(0.2)
     tileset:define("walk north"):frames({'6-9', 1):delays(0.2)
 
-![func](api/func.png) `{animation}:flip ()`  
+![func](api/func.png) `{animation}:flip ()`
 
 You can mirror an animation:
 
@@ -246,7 +245,7 @@ You can mirror an animation:
     tileset:define("walk west"):frames({'10-15', 1):delays(0.2)
     tileset:define("walk east"):frames({'10-15', 1):delays(0.2):flip()
 
-![func](api/func.png) `{animation}:sounds (sounds)`  
+![func](api/func.png) `{animation}:sounds (sounds)`
 
 The `sounds` function takes an indexed table of sound sources, each sound plays when the corresponding frame position is drawn.
 
@@ -256,11 +255,11 @@ The `sounds` function takes an indexed table of sound sources, each sound plays 
         :delays(0.2)
         :sounds( {[1] = "step.wav"} )
 
-![func](api/func.png) `{animation}:offset ({x, y})`  
+![func](api/func.png) `{animation}:offset ({x, y})`
 
 The `offset` function takes `{x, y}` which displaces the drawing of frames. This is used in special cases when your actor has a certain animation with a different tileset size than it's normal frames. Switching to such an animtion makes the draw position jump since the center of the larger frames don't line up with the normal frames. Compensate for this variation with the offset.
 
-![func](api/func.png) `slime:animationDuration(actor, key)`  
+![func](api/func.png) `slime:animationDuration(actor, key)`
 
 Returns the duration of an animation in seconds. This value is the sum of all frame delays on an animation, and totals to one loop of the animation.
 
@@ -279,14 +278,14 @@ Here is a sample of combinations of actor animation names that are picked up by 
 * "walk east"
 * "talk south"
 
-![func](api/func.png) `slime:moveActor (name, x, y)`  
+![func](api/func.png) `slime:moveActor (name, x, y)`
 
 Move an actor. There has to be a valid floor set for movement to find a path.
 
 Example:
 
     slime:moveActor("ego", 90, 34)
-    
+
 ![func](api/func.png) `slime:moveActorTo (name, target)`
 
 Move an actor to another actor.
@@ -295,7 +294,7 @@ Move an actor to another actor.
 
 Turns an Actor to face a direction, one of `south`, `west`, `north` or `east`.
 
-![func](api/func.png) `slime:stopActor (name)`  
+![func](api/func.png) `slime:stopActor (name)`
 
 Stops a moving actor.
 
@@ -369,37 +368,37 @@ Removes an item (`name`) from a `bag`.
 
 ![func](api/func.png) `slime:bagButton (name, image, x, y)`
 
-Add a hotspot with an image that draws on screen. 
+Add a hotspot with an image that draws on screen.
 
 
 ## Chains
 
 Chains give you a way to script actor movement and dialogue in sequence. If your main actor needs to walk to a tree, says something witty, walk down to a pond and then jump in, chains allow you to script this.
 
-![func](api/func.png) `slime:chain()`  
+![func](api/func.png) `slime:chain()`
 
 Creates and returns a new chain of events. Use this chain object to add the links to your chain. Links process in sequence, each waiting in turn until the one before it resolves.
 
-![func](api/func.png) `chain:image (actor, path)`  
+![func](api/func.png) `chain:image (actor, path)`
 
 Calls `actor:setImage`. Resolves immediately.
 
-![func](api/func.png) `chain:move (actor, x, y)`  
-![func](api/func.png) `chain:move (actor, target)`  
+![func](api/func.png) `chain:move (actor, x, y)`
+![func](api/func.png) `chain:move (actor, target)`
 
 Calls `slime:moveActor` or `slime:moveActorTo`, depending which paramters are given. Target is a string of another actor's name. Resolves when the given actor's movement path is emptied.
 
 Also note that this fires the `slime.callback` event for "moved" as usual, that is to say, chained actions behave like the player performed them.
 
-![func](api/func.png) `chain:turn (actor, direction)`  
+![func](api/func.png) `chain:turn (actor, direction)`
 
 Calls `slime:turnActor`. Resolves immediately.
 
-![func](api/func.png) `chain:wait (duration)`  
+![func](api/func.png) `chain:wait (duration)`
 
 Waits at this link for a duration of seconds.
 
-![func](api/func.png) `chain:anim (actor, key [,wait])`  
+![func](api/func.png) `chain:anim (actor, key [,wait])`
 
 Calls `slime:setAnimation`. Resolves immediately.
 
@@ -414,15 +413,15 @@ gives the same result as this line:
 
     chain:anim("ego", "throw dust", true)
 
-![func](api/func.png) `chain:floor (path)`  
+![func](api/func.png) `chain:floor (path)`
 
 Calls `slime:floor`. Resolves immediately.
 
-![func](api/func.png) `chain:func (func, params)`  
+![func](api/func.png) `chain:func (func, params)`
 
 Calls the function `func` with the given parameters. Resolves immediately.
 
-![func](api/func.png) `chain:say (actor, words)`  
+![func](api/func.png) `chain:say (actor, words)`
 
 Calls `slime:say`. Resolves when the given actor is not busy speaking. If `slime:skipSpeech` is called while the actor is talking, then this link will be resolved.
 
@@ -442,13 +441,13 @@ Plays the given audio source. Resolves immediately.
 
 ## Cursors
 
-![func](api/func.png) `slime:loadCursors (path, w, h [, names, hotspots])`  
+![func](api/func.png) `slime:loadCursors (path, w, h [, names, hotspots])`
 
 Loads a tileset sprite containing multiple cursor images. `w` and `h` is each cursor size, and optional `hotspots` position where the click-zone on the icon lies. Defaults to {x=0, y=0} if not given.
 
 The names list sets the `event` passed when interacting on objects.
 
-![func](api/func.png) `slime:useCursor (index)`  
+![func](api/func.png) `slime:useCursor (index)`
 
 Uses the cursor at `index` position.
 
@@ -456,7 +455,7 @@ Uses the cursor at `index` position.
     local cursorNames = {"interact", "look", "talk", "take", "busy" }
     slime:loadCursors("images/cursors.png", 12, 12, cursorNames, cursorHotspots)
     slime:useCursor(2)
-    
+
     -- slime:interact(x, y) will pass "look" as the `event` parameter during `slime.callback`
 
 
@@ -496,12 +495,12 @@ To animate an actor once, like an opening door, hook into the Animation Looped c
 
 
     function slime.animationLooped (actor, key, counter)
-        
+
         -- Keep the door closed after the closing animation played.
         if actor == "door" and key == "closing" then
             slime:setAnimation ("door", "closed")
         end
-        
+
     end
 
 Of course this assume you have added a "door" actor with the "closing" and "closed" custom animations.
