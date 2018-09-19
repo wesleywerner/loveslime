@@ -370,12 +370,14 @@ function slime.events.interact (self, event, actor)
 
 		slime.chain().speech:say ("ego", "watch this", 0.5)
 		slime.chain():setAnimation ("ego", "dig")
-		slime.chain():wait (1.5)
+		slime.chain():wait (0.5)
 		slime.chain():setAnimation ("ego")
 		slime.chain().actors:turn ("ego", "east")
+		slime.chain().floors:set ("images/cell-floor-open.png")
 
 		-- user function
-		slime.chain(nil, function()
+		slime.chain(nil,
+			function()
 				slime.speech:say ("ego", "magic", 1)
 			end)
 

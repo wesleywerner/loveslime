@@ -36,10 +36,6 @@ local slime = {
   ]]
 }
 
--- Uses Lua A* by GloryFish
--- https://github.com/GloryFish/lua-astar
-require 'slime.slimemaphandler'
-
 -- bresenham line algorithm
 require 'slime.bresenham'
 
@@ -57,6 +53,7 @@ local cursor = { }
 local hotspots = { }
 local floors = { }
 local layers = { }
+local path = { }
 local settings = { }
 local speech = { }
 
@@ -140,7 +137,7 @@ function actors.update (self, dt)
     for _, actor in ipairs(self.list) do
         if actor.isactor then
 
-            if self:moveActorOnPath (actor, dt) then
+            if self:updatePath (actor, dt) then
 				actorsMoved = true
             end
 
@@ -205,38 +202,53 @@ function actors.sortLayers (self)
 
 end
 
-function actors.moveActorOnPath (self, actor, dt)
+function actors.updatePath (self, actor, dt)
 
     if (actor.path and #actor.path > 0) then
+
         -- Check if the actor's speed is set to delay movement.
         -- If no speed is set, we move on every update.
         if (actor.movedelay) then
+
             -- start a new move delay counter
             if (not actor.movedelaydelta) then
                 actor.movedelaydelta = actor.movedelay
             end
+
             actor.movedelaydelta = actor.movedelaydelta - dt
+
             -- the delay has not yet passed
             if (actor.movedelaydelta > 0) then
                 return
             end
+
             -- the delay has passed. Reset it and continue.
             actor.movedelaydelta = actor.movedelay
+
         end
 
-        local point = table.remove(actor.path)
+		-- load the next point in the path
+        local point = table.remove (actor.path, 1)
+
         if (point) then
-            actor.x, actor.y = point.location.x, point.location.y
+
+			-- update actor position
+            actor.x, actor.y = point.x, point.y
+
             -- Test if we should calculate actor direction
             actor["direction recalc delay"] = actor["direction recalc delay"] - 1
+
             if (actor["direction recalc delay"] <= 0) then
                 actor["direction recalc delay"] = 5
-                actor.direction = self:calculateDirection(actor.lastx, actor.lasty, actor.x, actor.y)
+                actor.direction = self:calculateDirection (actor.lastx, actor.lasty, actor.x, actor.y)
                 actor.lastx, actor.lasty = actor.x, actor.y
             end
+
         end
 
+		-- the goal is reached
         if (#actor.path == 0) then
+
 			debug:append (actor.name .. " moved complete")
             actor.path = nil
             actor.action = "idle"
@@ -246,6 +258,7 @@ function actors.moveActorOnPath (self, actor, dt)
 
             -- OBSOLETE: replaced by events.move callback
             slime.callback ("moved", actor)
+
         end
 
 		-- return movement signal
@@ -388,42 +401,47 @@ function actors.move (self, name, x, y)
 		return
 	end
 
-    if (floors.astar == nil) then
+	-- test if a floor map is loaded
+    if not floors:hasMap () then
         debug:append ("No walkable area defined")
         return
     end
 
-    local actor = self:get(name)
+	-- test if the actor is on the stage
+    local actor = self:get (name)
 
     if (actor == nil) then
         debug:append ("No actor named " .. name)
-    else
-        -- Our path runs backwards so we can pop the points off the stack
-        local start = { x = actor.x, y = actor.y }
-        local goal = { x = x, y = y }
-
-        -- If the goal is on a solid block find the nearest open node.
-        if (floors.handler:nodeBlocking(goal)) then
-            goal = floors:findNearestOpenPoint (goal)
-        end
-
-        -- Calculate a path
-        local path = floors.astar:findPath(goal, start)
-        if (path == nil) then
-            debug:append ("no actor path found")
-        else
-            actor.clickedX = x
-            actor.clickedY = y
-            actor.path = path:getNodes()
-            -- Default to walking animation
-            actor.action = "walk"
-            -- Calculate actor direction immediately
-            actor.lastx, actor.lasty = actor.x, actor.y
-            actor.direction = self:calculateDirection(actor.x, actor.y, x, y)
-            -- Output debug
-            debug:append ("move " .. name .. " to " .. x .. " : " .. y)
-        end
+        return
     end
+
+	local start = { x = actor.x, y = actor.y }
+	local goal = { x = x, y = y }
+
+	-- If the goal is on a solid block find the nearest open point
+	if not floors.isWalkable (goal.x, goal.y) then
+		goal = floors:findNearestOpenPoint (goal)
+	end
+
+	local useCache = false
+	local width, height = floors:size ()
+	local route = path:find (width, height, start, goal, floors.isWalkable, useCache)
+
+	-- we have a path
+	if route then
+		actor.clickedX = x
+		actor.clickedY = y
+		actor.path = route
+		-- Default to walking animation
+		actor.action = "walk"
+		-- Calculate actor direction immediately
+		actor.lastx, actor.lasty = actor.x, actor.y
+		actor.direction = actors:calculateDirection (actor.x, actor.y, x, y)
+		-- Output debug
+		debug:append ("move " .. name .. " to " .. x .. " : " .. y)
+	else
+		debug:append ("no actor path found")
+	end
 
 end
 
@@ -1072,7 +1090,14 @@ end
 --- Clears all walkable floors.
 function floors.clear (self)
 
-	self.astar = nil
+	self.walkableMap = nil
+
+end
+
+--- Test if a walkable map is loaded
+function floors.hasMap (self)
+
+	return self.walkableMap ~= nil
 
 end
 
@@ -1084,9 +1109,77 @@ function floors.set (self, filename)
 		return
 	end
 
-    self.handler = SlimeMapHandler()
-    self.handler:convert(filename)
-    self.astar = AStar(self.handler)
+	self:convert (filename)
+
+end
+
+--- Convert a walkable floor mask to a point map
+-- Any non-black pixel is walkable.
+--
+-- @param self
+-- Slime instance
+--
+-- @param filename
+-- The floor map image filename
+function floors.convert (self, filename)
+
+    -- Converts a walkable image mask into map points.
+    local mask = love.image.newImageData(filename)
+    local w = mask:getWidth()
+    local h = mask:getHeight()
+
+    -- store the size
+    self.width, self.height = w, h
+
+    local row = nil
+    local r = nil
+    local g = nil
+    local b = nil
+    local a = nil
+    self.walkableMap = { }
+
+    -- builds a 2D array of the image size, each index references
+    -- a pixel in the mask
+    for ih = 1, h - 1 do
+        row = { }
+        for iw = 1, w - 1 do
+            r, g, b, a = mask:getPixel (iw, ih)
+            if (r + g + b == 0) then
+				-- not walkable
+                table.insert(row, false)
+            else
+				-- walkable
+                table.insert(row, true)
+            end
+        end
+        table.insert(self.walkableMap, row)
+    end
+
+end
+
+--- Test if the floor point is walkable
+-- Callback used by path finding.
+-- @return true if the position is open to walk
+function floors.isWalkable (x, y)
+
+	if floors.walkableMap then
+		-- clamp to floor boundary
+		x = path:clamp (x, 1, floors.width - 1)
+		y = path:clamp (y, 1, floors.height - 1)
+		return floors.walkableMap[y][x]
+	else
+		-- no floor is always walkable
+		return true
+	end
+
+end
+
+--- Gets the size of the floor
+function floors.size (self)
+
+	if self.walkableMap then
+		return self.width, self.height
+	end
 
 end
 
@@ -1098,14 +1191,14 @@ end
 function floors.findNearestOpenPoint (self, point)
 
     -- Get the dimensions of the walkable floor map.
-    local size = floors.handler:size()
+    local width, height = floors:size ()
 
     -- Define the cardinal direction to test against relative to the point.
     local directions = {
-        { ["x"] = point.x, ["y"] = size.h },    -- S
+        { ["x"] = point.x, ["y"] = height },    -- S
         { ["x"] = 1, ["y"] = point.y },         -- W
         { ["x"] = point.x, ["y"] = 1 },         -- N
-        { ["x"] = size.w, ["y"] = point.y }     -- E
+        { ["x"] = width, ["y"] = point.y }      -- E
         }
 
     -- Stores the four directional points found and their distance.
@@ -1114,13 +1207,13 @@ function floors.findNearestOpenPoint (self, point)
     for idirection, direction in pairs(directions) do
         local goal = point
         local walkTheLine = bresenham (direction, goal)
-        local findNearestPoint = true
-        while (findNearestPoint) do
+        local continueSearch = true
+        while (continueSearch) do
             if (#walkTheLine == 0) then
-                findNearestPoint = false
+                continueSearch = false
             else
                 goal = table.remove(walkTheLine)
-                findNearestPoint = floors.handler:nodeBlocking(goal)
+                continueSearch = not self.isWalkable (goal.x, goal.y)
             end
         end
         -- math.sqrt( (x2 - x1)^2 + (y2 - y1)^2 )
@@ -1224,6 +1317,207 @@ function layers.convertMask (self, source, mask)
     return love.graphics.newImage(layerData)
 
 end
+
+
+--              _   _
+--  _ __   __ _| |_| |__
+-- | '_ \ / _` | __| '_ \
+-- | |_) | (_| | |_| | | |
+-- | .__/ \__,_|\__|_| |_|
+-- |_|
+--
+
+--- Clear all cached paths
+function path.clear (self)
+
+    self.cache = nil
+
+end
+
+--- Gets a unique start/goal key
+function path.keyOf (self, start, goal)
+
+    return string.format("%d,%d>%d,%d", start.x, start.y, goal.x, goal.y)
+
+end
+
+-- Returns the cached path
+function path.getCached (self, start, goal)
+
+    if self.cache then
+        local key = self:keyOf (start, goal)
+        return self.cache[key]
+    end
+
+end
+
+-- Saves a path to the cache
+function path.saveCached (self, start, goal, path)
+
+    self.cache = self.cache or { }
+    local key = self:keyOf (start, goal)
+    self.cache[key] = path
+
+end
+
+-- Get the distance between two points
+-- This method doesn't bother getting the square root of s, it is faster
+-- and it still works for our use.
+function path.distance (self, x1, y1, x2, y2)
+
+	local dx = x1 - x2
+	local dy = y1 - y2
+	local s = dx * dx + dy * dy
+	return s
+
+end
+
+-- Clamp a value to a range.
+function path.clamp (self, x, min, max)
+
+	return x < min and min or (x > max and max or x)
+
+end
+
+-- (Internal) Return the score of a node.
+-- G is the cost from START to this node.
+-- H is a heuristic cost, in this case the distance from this node to the goal.
+-- Returns F, the sum of G and H.
+function path.calculateScore (self, previous, node, goal)
+
+    local G = previous.score + 1
+    local H = self:distance (node.x, node.y, goal.x, goal.y)
+    return G + H, G, H
+
+end
+
+-- Returns true if the given list contains the specified item.
+function path.listContains (self, list, item)
+    for _, test in ipairs(list) do
+        if test.x == item.x and test.y == item.y then
+            return true
+        end
+    end
+    return false
+end
+
+-- Returns the item in the given list.
+function path.listItem (self, list, item)
+    for _, test in ipairs(list) do
+        if test.x == item.x and test.y == item.y then
+            return test
+        end
+    end
+end
+
+-- Requests adjacent map values around the given node.
+function path.getAdjacent (self, width, height, node, positionIsOpenFunc)
+
+    local result = { }
+
+    local positions = {
+        { x = 0, y = -1 },  -- top
+        { x = -1, y = 0 },  -- left
+        { x = 0, y = 1 },   -- bottom
+        { x = 1, y = 0 },   -- right
+        -- include diagonal movements
+        { x = -1, y = -1 },   -- top left
+        { x = 1, y = -1 },   -- top right
+        { x = -1, y = 1 },   -- bot left
+        { x = 1, y = 1 },   -- bot right
+    }
+
+    for _, point in ipairs(positions) do
+        local px = self:clamp (node.x + point.x, 1, width)
+        local py = self:clamp (node.y + point.y, 1, height)
+        local value = positionIsOpenFunc( px, py )
+        if value then
+            table.insert( result, { x = px, y = py  } )
+        end
+    end
+
+    return result
+
+end
+
+-- Returns the path from start to goal, or false if no path exists.
+function path.find (self, width, height, start, goal, positionIsOpenFunc, useCache)
+
+    if useCache then
+        local cachedPath = self:getCached (start, goal)
+        if cachedPath then
+            return cachedPath
+        end
+    end
+
+    local success = false
+    local open = { }
+    local closed = { }
+
+    start.score = 0
+    start.G = 0
+    start.H = self:distance (start.x, start.y, goal.x, goal.y)
+    start.parent = { x = 0, y = 0 }
+    table.insert(open, start)
+
+    while not success and #open > 0 do
+
+        -- sort by score: high to low
+        table.sort(open, function(a, b) return a.score > b.score end)
+
+        local current = table.remove(open)
+
+        table.insert(closed, current)
+
+        success = self:listContains (closed, goal)
+
+        if not success then
+
+            local adjacentList = self:getAdjacent (width, height, current, positionIsOpenFunc)
+
+            for _, adjacent in ipairs(adjacentList) do
+
+                if not self:listContains (closed, adjacent) then
+
+                    if not self:listContains (open, adjacent) then
+
+                        adjacent.score = self:calculateScore (current, adjacent, goal)
+                        adjacent.parent = current
+                        table.insert(open, adjacent)
+
+                    end
+
+                end
+
+            end
+
+        end
+
+    end
+
+    if not success then
+        return false
+    end
+
+    -- traverse the parents from the last point to get the path
+    local node = self:listItem (closed, closed[#closed])
+    local path = { }
+
+    while node do
+
+        table.insert(path, 1, { x = node.x, y = node.y } )
+        node = self:listItem (closed, node.parent)
+
+    end
+
+    self:saveCached (start, goal, path)
+
+    -- reverse the closed list to get the solution
+    return path
+
+end
+
+
 
 
 --                           _
