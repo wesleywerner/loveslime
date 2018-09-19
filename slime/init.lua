@@ -1,10 +1,12 @@
+--- A point-and-click adventure game library for LÖVE.
+-- @module slime
+--
 --        _ _
 --    ___| (_)_ __ ___   ___
 --   / __| | | '_ ` _ \ / _ \
 --   \__ \ | | | | | | |  __/
 --   |___/_|_|_| |_| |_|\___|
 --
--- SLIME is a point-and-click adventure game library for LÖVE.
 
 local slime = {
   _VERSION     = 'slime v0.1',

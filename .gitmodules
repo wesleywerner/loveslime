@@ -1,3 +1,6 @@
 [submodule "anim8"]
 	path = anim8
 	url = git@github.com:kikito/anim8.git
+[submodule "LDoc"]
+	path = LDoc
+	url = https://github.com/stevedonovan/LDoc.git
