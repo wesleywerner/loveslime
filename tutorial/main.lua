@@ -6,7 +6,7 @@ local cell = {}
 function cell.setup ()
 
     -- Clear the stage
-    slime:reset()
+    --slime:reset()
 
     -- Add the background
     slime:background("images/cell-background.png")
