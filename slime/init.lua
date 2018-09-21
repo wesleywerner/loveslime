@@ -149,6 +149,8 @@ end
 --
 -- @tparam int dt
 -- The delta time since the last update.
+--
+-- @local
 function actors:update (dt)
 
 	local actorsMoved = false
@@ -184,6 +186,8 @@ end
 -- Orders actors and layers for correct z-order drawing.
 -- It sorts by actor feet position (for actors)
 -- and baselines (for layers).
+--
+-- @local
 function actors:sort ( )
 
     table.sort(self.list, function (a, b)
@@ -234,6 +238,8 @@ end
 --
 -- @tparam int dt
 -- The delta time since last update.
+--
+-- @local
 function actors:updatePath (actor, dt)
 
     if (actor.path and #actor.path > 0) then
@@ -316,6 +322,8 @@ end
 --
 -- @return nearest cardinal direction represented by the angle:
 -- north south east or west.
+--
+-- @local
 function actors:directionOf (x1, y1, x2, y2)
 
     -- function angle(x1, y1, x2, y2)
@@ -414,6 +422,8 @@ function actors:remove (name)
 end
 
 --- Draw actors on screen.
+--
+-- @local
 function actors:draw ()
 
     for _, actor in ipairs(self.list) do
@@ -631,6 +641,8 @@ function backgrounds:clear ()
 end
 
 --- Draw the background.
+--
+-- @local
 function backgrounds:draw ()
 
     local bg = self.list[self.index]
@@ -646,6 +658,8 @@ end
 --
 -- @tparam int dt
 -- Delta time since the last update.
+--
+-- @local
 function backgrounds:update (dt)
 
 	-- skip background rotation if there is no more than one
@@ -852,6 +866,8 @@ end
 -- Function that returns true when the action
 -- has expired, which does so instantly if this parameter
 -- is not given.
+--
+-- @local
 function chains:add (func, parameters, expired)
 
 	local command = {
@@ -877,6 +893,8 @@ end
 --
 -- @tparam int dt
 -- Delta time since the last update
+--
+-- @local
 function chains:update (dt)
 
 	-- for each chain
@@ -1031,6 +1049,8 @@ function cursor:clear ()
 end
 
 --- Draw the cursor.
+--
+-- @local
 function cursor:draw ()
 
     local quad = self.quads[self.current]
@@ -1059,6 +1079,8 @@ function cursor:draw ()
 end
 
 --- Get the current cursor name.
+--
+-- @local
 function cursor:getName ()
 
 	-- TODO tidy up with if-else
@@ -1132,6 +1154,8 @@ end
 
 
 --- Append to the log.
+--
+-- @local
 function debug:append (text)
 
     table.insert(self.log, text)
@@ -1211,6 +1235,8 @@ function floors:clear ()
 end
 
 --- Test if a walkable map is loaded.
+--
+-- @local
 function floors:hasMap ()
 
 	return self.walkableMap ~= nil
@@ -1240,6 +1266,8 @@ end
 --
 -- @tparam string filename
 -- The floor map image filename
+--
+-- @local
 function floors:convert (filename)
 
     -- Converts a walkable image mask into map points.
@@ -1286,6 +1314,8 @@ end
 -- Y-position to test.
 --
 -- @return true if the position is open to walk
+--
+-- @local
 function floors:isWalkable (x, y)
 
 	if self:hasMap () then
@@ -1301,6 +1331,8 @@ function floors:isWalkable (x, y)
 end
 
 --- Get the size of the floor.
+--
+-- @local
 function floors:size ()
 
 	if self.walkableMap then
@@ -1322,6 +1354,8 @@ end
 -- {x, y} of the line end.
 --
 -- @return table of list of points from start to goal.
+--
+-- @local
 function floors:bresenham (start, goal)
 
   local linepath = { }
@@ -1377,6 +1411,8 @@ end
 --
 -- @tparam table point
 -- {x, y} of the point to reach.
+--
+-- @local
 function floors:findNearestOpenPoint (point)
 
     -- Get the dimensions of the walkable floor map.
@@ -1508,6 +1544,8 @@ end
 -- Mask image filename.
 --
 -- @return the cut out image.
+--
+-- @local
 function layers:convertMask (source, mask)
 
     -- Returns a copy of the source image with transparent pixels where
@@ -1581,6 +1619,13 @@ end
 --- Distance between two points.
 -- This method doesn't bother getting the square root of s, it is faster
 -- and it still works for our use.
+--
+-- @tparam int x1
+-- @tparam int y1
+-- @tparam int x2
+-- @tparam int y2
+--
+-- @local
 function path:distance (x1, y1, x2, y2)
 
 	local dx = x1 - x2
@@ -1590,7 +1635,18 @@ function path:distance (x1, y1, x2, y2)
 
 end
 
---- Value clamping.
+--- Clamp a value to a range.
+--
+-- @tparam int x
+-- The value to test.
+--
+-- @tparam int min
+-- Minimum value.
+--
+-- @tparam int max
+-- Maximum value.
+--
+-- @local
 function path:clamp (x, min, max)
 
 	return x < min and min or (x > max and max or x)
@@ -1609,7 +1665,12 @@ function path:calculateScore (previous, node, goal)
 
 end
 
--- Returns true if the given list contains the specified item.
+--- Test an item is in a list.
+--
+-- @tparam table list
+-- @table item
+--
+-- @local
 function path:listContains (list, item)
     for _, test in ipairs(list) do
         if test.x == item.x and test.y == item.y then
@@ -1619,7 +1680,13 @@ function path:listContains (list, item)
     return false
 end
 
--- Returns the item in the given list.
+--- Get an item in a list.
+--
+-- @tparam table list
+--
+-- @tparam table item
+--
+-- @local
 function path:listItem (list, item)
     for _, test in ipairs(list) do
         if test.x == item.x and test.y == item.y then
@@ -1628,8 +1695,24 @@ function path:listItem (list, item)
     end
 end
 
--- Requests adjacent map values around the given node.
-function path:getAdjacent (width, height, node, positionIsOpenFunc)
+--- Get adjacent map points.
+--
+-- @tparam int width
+--
+--
+-- @tparam int height
+--
+--
+-- @tparam table point
+-- {x, y} point to test.
+--
+-- @tparam function openTest
+-- Function that should return if a point is open.
+--
+-- @return table of points adjacent to the point.
+--
+-- @local
+function path:getAdjacent (width, height, point, openTest)
 
     local result = { }
 
@@ -1645,10 +1728,10 @@ function path:getAdjacent (width, height, node, positionIsOpenFunc)
         { x = 1, y = 1 },   -- bot right
     }
 
-    for _, point in ipairs(positions) do
-        local px = self:clamp (node.x + point.x, 1, width)
-        local py = self:clamp (node.y + point.y, 1, height)
-        local value = positionIsOpenFunc (floors, px, py)
+    for _, position in ipairs(positions) do
+        local px = self:clamp (point.x + position.x, 1, width)
+        local py = self:clamp (point.y + position.y, 1, height)
+        local value = openTest (floors, px, py)
         if value then
             table.insert( result, { x = px, y = py  } )
         end
@@ -1657,6 +1740,7 @@ function path:getAdjacent (width, height, node, positionIsOpenFunc)
     return result
 
 end
+
 
 --- Find a walkable path.
 --
@@ -1680,6 +1764,8 @@ end
 -- Caching is not used at the moment.
 --
 -- @return the path from start to goal, or false if no path exists.
+--
+-- @local
 function path:find (width, height, start, goal, openTest, useCache)
 
     if useCache then
@@ -1758,7 +1844,6 @@ end
 
 
 
-
 --                           _
 --  ___ _ __   ___  ___  ___| |__
 -- / __| '_ \ / _ \/ _ \/ __| '_ \
@@ -1766,12 +1851,14 @@ end
 -- |___/ .__/ \___|\___|\___|_| |_|
 --     |_|
 
+
 --- Clear queued speeches.
 function speech:clear ()
 
 	self.queue = { }
 
 end
+
 
 --- Make an actor talk.
 -- Call this multiple times to queue speech.
@@ -1817,6 +1904,7 @@ function speech:say (name, text, seconds)
 
 end
 
+
 --- Test if someone is talking.
 --
 -- @tparam[opt] string actor
@@ -1839,6 +1927,7 @@ function speech:isTalking (actor)
 	end
 
 end
+
 
 --- Skip the current spoken line.
 -- Jumps to the next line in the queue.
@@ -1864,10 +1953,13 @@ function speech:skip ()
 
 end
 
+
 --- Update speech.
 --
 -- @tparam int dt
 -- Delta time since the last update.
+--
+-- @local
 function speech:update (dt)
 
     if (#self.queue > 0) then
@@ -1894,7 +1986,10 @@ function speech:update (dt)
 
 end
 
+
 --- Draw speech.
+--
+-- @local
 function speech:draw ()
 
     if (#self.queue > 0) then
@@ -1926,7 +2021,6 @@ function speech:draw ()
     end
 
 end
-
 
 
 --      _ _
