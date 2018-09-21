@@ -1,16 +1,5 @@
 --- A point-and-click adventure game library for LÖVE.
--- Most of the functions take the `self` parameter, which denotes
--- calling the function using the colon syntax, `slime.namespace:function()`
---
--- @module slime
---
---        _ _
---    ___| (_)_ __ ___   ___
---   / __| | | '_ ` _ \ / _ \
---   \__ \ | | | | | | |  __/
---   |___/_|_|_| |_| |_|\___|
---
-
+-- @module init
 local slime = {
   _VERSION     = 'slime v0.1',
   _DESCRIPTION = 'A point-and-click adventure game library for LÖVE',
@@ -69,6 +58,7 @@ local speech = { }
 
 --- Actors are items on your stage that walk or talk, like people, animals and robots.
 -- They can also be inanimate objects and are animated, like doors, toasters and computers.
+--
 -- @table actor
 --
 -- @tparam string name
@@ -81,15 +71,21 @@ local speech = { }
 -- @tparam string feet
 -- Position of the actor's feet relative to the sprite.
 
---- Clear all actors from the stage
+--- Clear actors.
 function actors:clear ( )
 
 	self.list = { }
 
 end
 
---- Add an actor to the stage
--- TODO change this function signature.
+--- Add an actor.
+--
+-- @tparam string name
+-- The name of the actor
+--
+-- @tparam int x
+--
+-- @tparam int y
 function actors:add (name, x, y)
 
     -- Add an actor to the stage.
@@ -141,12 +137,18 @@ function actors:add (name, x, y)
     -- set slime host reference
     newActor.host = self
 
-    self:sortLayers()
+    self:sort ()
 
     return newActor
 
 end
 
+--- Update actors
+--
+--  animations and movement.
+--
+-- @tparam int dt
+-- The delta time since the last update.
 function actors:update (dt)
 
 	local actorsMoved = false
@@ -172,13 +174,17 @@ function actors:update (dt)
 
 	-- reorder if any actors moved
 	if actorsMoved then
-		self:sortLayers()
+		self:sort ()
     end
 
 end
 
---- Sort actors and layers for correct zorder drawing
-function actors:sortLayers ( )
+--- Sort actors.
+--
+-- Orders actors and layers for correct z-order drawing.
+-- It sorts by actor feet position (for actors)
+-- and baselines (for layers).
+function actors:sort ( )
 
     table.sort(self.list, function (a, b)
 
@@ -220,6 +226,14 @@ function actors:sortLayers ( )
 
 end
 
+--- Update actor path.
+-- Moves an actor to the next point in their movement path.
+--
+-- @tparam actor actor
+-- The actor to update.
+--
+-- @tparam int dt
+-- The delta time since last update.
 function actors:updatePath (actor, dt)
 
     if (actor.path and #actor.path > 0) then
@@ -286,9 +300,21 @@ function actors:updatePath (actor, dt)
 
 end
 
-
---- Gets the direction from two points.
--- @return nearest cardinal direction represented by the angle,
+--- Get direction between two points.
+--
+-- @tparam int x1
+-- Point 1 x
+--
+-- @tparam int y1
+-- Point 1 y
+--
+-- @tparam int x2
+-- Point 2 x
+--
+-- @tparam int y2
+-- Point 2 y
+--
+-- @return nearest cardinal direction represented by the angle:
 -- north south east or west.
 function actors:directionOf (x1, y1, x2, y2)
 
@@ -354,6 +380,13 @@ function actors:directionOf (x1, y1, x2, y2)
     --return 'south'
 end
 
+--- Get an actor.
+-- Find an actor by name.
+--
+-- @tparam string name
+-- The name of the actor
+--
+-- @return the @{actor} or nil if not found.
 function actors:get (name)
 
     for _, actor in ipairs(self.list) do
@@ -364,6 +397,11 @@ function actors:get (name)
 
 end
 
+--- Remove an actor.
+-- Removes an actor by name
+--
+-- @tparam string name
+-- The name of the actor to remove.
 function actors:remove (name)
 
     for i, actor in ipairs(self.list) do
@@ -375,6 +413,7 @@ function actors:remove (name)
 
 end
 
+--- Draw actors on screen.
 function actors:draw ()
 
     for _, actor in ipairs(self.list) do
@@ -402,7 +441,20 @@ function actors:draw ()
 
 end
 
---- Move an actor to point xy using A Star path finding
+--- Move an actor.
+-- Uses path finding when a walkable floor is set, otherwise
+-- if no floor is set an actor can walk anywhere.
+--
+-- @tparam string name
+-- Name of the actor to move.
+--
+-- @tparam int x
+-- X-position to move to.
+--
+-- @tparam int y
+-- Y-position to move to.
+--
+-- @see floors:set
 function actors:move (name, x, y)
 
 	-- intercept chaining
@@ -461,7 +513,14 @@ function actors:move (name, x, y)
 
 end
 
---- Face an actor in a direction
+--- Turn an actor.
+-- Turn to face a cardinal direction, north south east or west.
+--
+-- @tparam string name
+-- The actor to turn.
+--
+-- @tparam string direction
+-- A cardinal direction: north, south, east or west.
 function actors:turn (name, direction)
 
 	-- intercept chaining
@@ -479,7 +538,15 @@ function actors:turn (name, direction)
 
 end
 
---- Move an actor to another actor
+--- Move an actor.
+-- Moves towards another actor, as close as possible as
+-- the walkable floor allows.
+--
+-- @tparam string name
+-- Name of the actor to move.
+--
+-- @tparam string target
+-- Name of the actor to move towards.
 function actors:moveTowards (name, target)
 
     local targetActor = self:get (target)
@@ -492,7 +559,11 @@ function actors:moveTowards (name, target)
 
 end
 
---- Stop an actor moving
+--- Stop and actor.
+-- Stop an actor from moving along their movement path.
+--
+-- @tparam string name
+-- Name of the actor.
 function actors:stop (name)
 
     local actor = self:get (name)
@@ -511,22 +582,22 @@ end
 --~ |_.__/ \__,_|\___|_|\_\__, |_|  \___/ \__,_|_| |_|\__,_|___/
 --~ 				      |___/
 
---- Add a background image to the room.
--- This can be called many times to create an animated background.
+--- Add a background.
+-- Called multiple times, is how one creates animated backgrounds,
+-- with a delay (in seconds), which when expired,
+-- cycles to the next background.
 --
--- @param filename
--- The image filename of the background.
+-- The image size of each one, has to match the background before it.
+-- If no delay is given, the background will draw forever.
 --
--- @param delay
--- The seconds to display the background.
--- When the delay has expired the next background is displayed.
-function backgrounds:add (filename, delay)
+-- @tparam string path
+-- The image path.
+--
+-- @tparam[opt] int seconds
+-- Seconds to display before cycling the background.
+function backgrounds:add (path, seconds)
 
-    -- Add a background to the stage, drawn at x, y for the given delay
-    -- before drawing the next available background.
-    -- If no delay is given, the background will draw forever.
-
-    local image = love.graphics.newImage(filename)
+    local image = love.graphics.newImage (path)
     local width, height = image:getDimensions ()
 
     -- set the background size
@@ -538,22 +609,14 @@ function backgrounds:add (filename, delay)
     assert (width == self.width, "backgrounds must have the same size")
     assert (height == self.height, "backgrounds must have the same size")
 
-    local data = {
-        ["image"] = image,
-        ["delay"] = delay
-        }
-
-    table.insert(self.list, data)
-
-    -- default to the first background
-    if #self.list == 1 then
-        self.index = 1
-        self.timeout = delay
-    end
+    table.insert(self.list, {
+		image = image,
+		seconds = seconds
+	})
 
 end
 
---- Clears all backgrounds.
+--- Clear all backgrounds.
 function backgrounds:clear ()
 
 	-- stores the list of backgrounds
@@ -562,15 +625,12 @@ function backgrounds:clear ()
 	-- the index of the current background
 	self.index = 1
 
-	-- time remaining until the background cycles
-	self.timeout = 1
-
 	-- background size
 	self.width, self.height = nil, nil
 
 end
 
---- Draws the current background to screen.
+--- Draw the background.
 function backgrounds:draw ()
 
     local bg = self.list[self.index]
@@ -581,36 +641,40 @@ function backgrounds:draw ()
 
 end
 
---- Rotates to the next background if there is one and delay expired.
+--- Update backgrounds.
+-- Tracks background delays and performs their rotation.
+--
+-- @tparam int dt
+-- Delta time since the last update.
 function backgrounds:update (dt)
 
-    if (#self.list <= 1) then
-        -- skip background rotation if there is one or none
+	-- skip background rotation if there is no more than one
+    if not self.list[2] then
         return
     end
 
     local index = self.index
     local background = self.list[index]
-    local timer = self.timeout
+    local timer = self.timer
 
-    if (timer == nil or background == nil) then
+    if (timer == nil) then
         -- start a new timer
         index = 1
-        timer = background.delay
+        timer = background.seconds
     else
         timer = timer - dt
         -- this timer has expired
         if (timer < 0) then
-            -- move to the next index (with wrapping)
+            -- move to the next background
             index = (index == #self.list) and 1 or index + 1
             if (self.list[index]) then
-                timer = self.list[index].delay
+                timer = self.list[index].seconds
             end
         end
     end
 
     self.index = index
-    self.timeout = timer
+    self.timer = timer
 
 end
 
@@ -623,60 +687,78 @@ end
 --~ |_.__/ \__,_|\__, |___/
 --~              |___/
 
---- Clears the contents of all bags.
+--- Clear all bags.
 function bags:clear ()
 
 	self.contents = { }
 
 end
 
---- Adds an item to a named bag.
-function bags:add (bag, object)
+--- Add a thing to a bag.
+--
+-- @tparam string name
+-- Name of the bag to store in.
+--
+-- @tparam table object
+-- TODO: this bag object thing is a bit under-developed.
+-- define it's structure.
+function bags:add (name, object)
 
-    -- load the image data
+    -- load the image
     if type(object.image) == "string" then
         object.image = love.graphics.newImage(object.image)
     end
 
-    -- create the bag
-    if not self.contents[bag] then
-		self.contents[bag] = { }
-	end
+    -- create it
+    self.contents[name] = self.contents[name] or { }
 
-	-- add object to the bag
-    table.insert(self.contents[bag], object)
+	-- add the object to it
+    table.insert(self.contents[name], object)
 
-    -- notify bag callback
-    events.bag (self, bag)
+    -- notify the callback
+    events.bag (self, name)
 
     -- OBSOLETE: replaced by events.bag
-    slime.inventoryChanged (bag)
+    slime.inventoryChanged (name)
 
-    debug:append ("Added " .. object.name .. " to bag \"" .. bag .. "\"")
+	debug:append (string.format("Added %s to bag", object.name))
 
 end
 
-function bags:remove (bag, name)
+--- Remove a thing from a bag.
+--
+-- @tparam string name
+-- Name of the bag.
+--
+-- @tparam string thingName
+-- Name of the thing to remove.
+function bags:remove (name, thingName)
 
-    local inv = self.contents[bag] or { }
+    local inv = self.contents[name] or { }
 
 	for i, item in pairs(inv) do
-		if (item.name == name) then
+		if (item.name == thingName) then
 			table.remove(inv, i)
-			debug:append ("Removed " .. name .. " from bag \"" .. bag .. "\"")
-			slime.inventoryChanged (bag)
+			debug:append (string.format("Removed %s", thingName))
+			slime.inventoryChanged (name)
 		end
 	end
 
 end
 
---- Test if a bag contains a named item.
-function bags:contains (bag, item)
+--- Test if a bag has a thing.
+--
+-- @tparam string name
+-- Name of bag to search.
+--
+-- @tparam string thingName
+-- Name of thing to find.
+function bags:contains (name, thingName)
 
-    local inv = self.contents[bag] or { }
+    local inv = self.contents[name] or { }
 
     for _, v in pairs(inv) do
-        if v.name == item then
+        if v.name == thingName then
             return true
         end
     end
@@ -692,12 +774,12 @@ end
 
 -- Provides ways to chain actions to run in sequence
 
---- Removes all action chains
--- @param self
--- The slime instance
+--- Clear all chained actions.
+-- Call this to start or append an actor action to build a chain of events.
 function chains:clear ()
 
 	-- Allow calling this table like it was a function.
+	-- We do this for brevity sake.
 	setmetatable (chains, {
 		__call = function (self, ...)
 			return self:capture (...)
@@ -706,7 +788,7 @@ function chains:clear ()
 
 	self.list = { }
 
-	-- when capturing all other actions will queue themselves
+	-- when capturing: certain actor functions will queue themselves
 	-- to the chain instead of actioning instantly.
 	self.capturing = nil
 
@@ -717,17 +799,16 @@ end
 -- will be added to the chain action list instead of executing
 -- immediately.
 --
--- @param self
---
--- @param name
--- Optional name of the chain
+-- @tparam[opt] string name
 -- Specifying a name allows creating multiple, concurrent chains.
 --
--- @param userFunction
--- Optional user provided function
--- Adds a user function to the chain that will be called in turn.
+-- @tparam[opt] function userFunction
+-- User provided function to add to the chain.
 --
--- @return The slime instance to allow further action chaining
+-- @return The slime instance
+--
+-- @function chain
+-- @see @{chains_example.lua}
 function chains:capture (name, userFunction)
 
 	-- catch obsolete usage
@@ -759,18 +840,16 @@ function chains:capture (name, userFunction)
 
 end
 
---- Adds a action to the capturing chain.
+--- Add an action to the capturing chain.
 --
--- @param self
---
--- @param func
+-- @tparam function func
 -- The function to call
 --
--- @param parameters
+-- @tparam table parameters
 -- The function parameters
 --
--- @param expired
--- Optional function that returns true when the action
+-- @tparam[opt] function expired
+-- Function that returns true when the action
 -- has expired, which does so instantly if this parameter
 -- is not given.
 function chains:add (func, parameters, expired)
@@ -794,13 +873,10 @@ function chains:add (func, parameters, expired)
 
 end
 
---- Process chain actions
+--- Process chains.
 --
--- @param self
--- Slime instance
---
--- @param dt
--- The delta time since the last update
+-- @tparam int dt
+-- Delta time since the last update
 function chains:update (dt)
 
 	-- for each chain
@@ -833,10 +909,10 @@ function chains:update (dt)
 
 end
 
---- Pause the chain
+--- Pause the chain.
 --
--- @param seconds
--- The number of seconds to wait
+-- @tparam int seconds
+-- Seconds to wait before the next action is run.
 function chains:wait (seconds)
 
 	if chains.capturing then
@@ -868,29 +944,29 @@ end
 --  \___| \_/ \___|_| |_|\__|___/
 --
 
---- Callback when an animation loops
+--- Actor animation looped callback.
 --
 -- @param self
 -- The slime instance
 --
--- @param actor
+-- @tparam actor actor
 -- The actor being interacted with
 --
--- @param key
+-- @tparam string key
 -- The animation key that looped
 --
--- @param counter
+-- @tparam int counter
 -- The number of times the animation has looped
 function events.animation (self, actor, key, counter)
 
 end
 
---- Callback when a bag contents has changed
+--- Bag contents changed callback.
 --
 -- @param self
 -- The slime instance
 --
--- @param bag
+-- @tparam string bag
 -- The name of the bag that changed
 function events.bag (self, bag)
 
@@ -901,39 +977,39 @@ end
 -- @param self
 -- The slime instance
 --
--- @param event
+-- @tparam string event
 -- The name of the cursor
 --
--- @param actor
+-- @tparam actor actor
 -- The actor being interacted with
 function events.interact (self, event, actor)
 
 end
 
---- Callback when an actor reached their destination.
+--- Actor finished moving callback.
 --
 -- @param self
 -- The slime instance
 --
--- @param actor
+-- @tparam actor actor
 -- The actor that moved
 function events.moved (self, actor)
 
 end
 
---- Callback when an actor begins speaking a new line
+--- Actor speaking callback.
 --
 -- @param self
 -- The slime instance
 --
--- @param actor
+-- @tparam actor actor
 -- The talking actor
 --
--- @param started
--- true if the actor has started speaking
+-- @tparam bool started
+-- true if the actor has started talking
 --
--- @param ended
--- true if the actor has ended speaking
+-- @tparam bool ended
+-- true if the actor has stopped talking
 function events.speech (self, actor, started, ended)
 
 end
@@ -946,7 +1022,7 @@ end
 --
 
 
---- Clears all cursor data
+--- Clear cursors.
 function cursor:clear ()
 
 	self.quads = { }
@@ -954,7 +1030,7 @@ function cursor:clear ()
 
 end
 
---- Draws the cursor on screen
+--- Draw the cursor.
 function cursor:draw ()
 
     local quad = self.quads[self.current]
@@ -982,8 +1058,7 @@ function cursor:draw ()
 
 end
 
---- Get the current cursor name
--- TODO rename to "name"
+--- Get the current cursor name.
 function cursor:getName ()
 
 	-- TODO tidy up with if-else
@@ -993,7 +1068,17 @@ function cursor:getName ()
 
 end
 
--- Set a custom cursor.
+--- Set a cursor.
+--
+-- @tparam string name
+-- Name of the cursor, this is passed back to the @{events.interact} callback.
+--
+-- @tparam image image
+-- Cursor image
+--
+-- @tparam table hotspot
+-- {x=0, y=0} of the click point.
+--
 -- TODO change signature to take a table of cursor data.
 -- also rename "hotspot", it is too ambiguous with the hotspots namespace.
 function cursor:set (name, image, hotspot)
@@ -1019,7 +1104,7 @@ end
 --                           |___/
 -- Provides helpful debug information while building your game.
 
---- Clears the debug log
+--- Clear the debug log
 function debug:clear ()
 
 	self.log = { }
@@ -1046,7 +1131,7 @@ function debug:clear ()
 end
 
 
---- Appends an entry to the debugging log.
+--- Append to the log.
 function debug:append (text)
 
     table.insert(self.log, text)
@@ -1059,7 +1144,7 @@ function debug:append (text)
 end
 
 
---- Draws debug information and object outlines.
+--- Draw the debug overlay.
 function debug:draw (scale)
 
 	-- draw the debug frame
@@ -1072,10 +1157,10 @@ function debug:draw (scale)
     love.graphics.print (tostring(love.timer.getFPS()) .. " fps", self.padding, self.padding)
 
     -- print background info
-    if (backgrounds.index and backgrounds.timeout) then
+    if (backgrounds.index and backgrounds.timer) then
         love.graphics.print(
 			string.format("background #%d showing for %.1f",
-			backgrounds.index, backgrounds.timeout), 60, 10)
+			backgrounds.index, backgrounds.timer), 60, 10)
     end
 
 	-- print log
@@ -1118,20 +1203,26 @@ end
 --~ |_| |_|\___/ \___/|_|  |___/
 
 
---- Clears all walkable floors.
+--- Clear walkable floors.
 function floors:clear ()
 
 	self.walkableMap = nil
 
 end
 
---- Test if a walkable map is loaded
+--- Test if a walkable map is loaded.
 function floors:hasMap ()
 
 	return self.walkableMap ~= nil
 
 end
 
+--- Set a walkable floor.
+-- The floor mask defines where actors can walk.
+-- Any non-black pixel is walkable.
+--
+-- @tparam string filename
+-- The image mask defining walkable areas.
 function floors:set (filename)
 
 	-- intercept chaining
@@ -1144,13 +1235,10 @@ function floors:set (filename)
 
 end
 
---- Convert a walkable floor mask to a point map
--- Any non-black pixel is walkable.
+--- Convert a walkable floor mask.
+-- Prepares the mask for use in path finding.
 --
--- @param self
--- Slime instance
---
--- @param filename
+-- @tparam string filename
 -- The floor map image filename
 function floors:convert (filename)
 
@@ -1188,8 +1276,15 @@ function floors:convert (filename)
 
 end
 
---- Test if the floor point is walkable
--- Callback used by path finding.
+--- Test if a point is walkable.
+-- This is the callback used by path finding.
+--
+-- @tparam int x
+-- X-position to test.
+--
+-- @tparam int y
+-- Y-position to test.
+--
 -- @return true if the position is open to walk
 function floors:isWalkable (x, y)
 
@@ -1205,7 +1300,7 @@ function floors:isWalkable (x, y)
 
 end
 
---- Gets the size of the floor
+--- Get the size of the floor.
 function floors:size ()
 
 	if self.walkableMap then
@@ -1217,8 +1312,16 @@ function floors:size ()
 
 end
 
---- Get the points of a line
+--- Get the points of a line.
 -- http://www.roguebasin.com/index.php?title=Bresenham%27s_Line_Algorithm#Lua
+--
+-- @tparam table start
+-- {x, y} of the line start.
+--
+-- @tparam table goal
+-- {x, y} of the line end.
+--
+-- @return table of list of points from start to goal.
 function floors:bresenham (start, goal)
 
   local linepath = { }
@@ -1267,10 +1370,13 @@ function floors:bresenham (start, goal)
 
 end
 
--- Find the nearest open point to the south, west, north or east.
+--- Find the nearest open point.
 -- Use the bresenham line algorithm to project four lines from the goal:
--- (S, W, N, E) and find the first open node on each line.
+-- North, south, East and West, and find the first open point on each line.
 -- We then choose the point with the shortest distance from the goal.
+--
+-- @tparam table point
+-- {x, y} of the point to reach.
 function floors:findNearestOpenPoint (point)
 
     -- Get the dimensions of the walkable floor map.
@@ -1321,12 +1427,22 @@ end
 --   |_| |_|\___/ \__|___/ .__/ \___/ \__|___/
 --                       |_|
 
+--- Clear hotspots.
 function hotspots:clear ()
 
 	self.list = { }
 
 end
 
+--- Add a hotspot.
+--
+-- @tparam string name
+-- Name of the hotspot.
+--
+-- @tparam int x
+-- @tparam int y
+-- @tparam int w
+-- @tparam int h
 function hotspots:add (name, x, y, w, h)
 
     local hotspot = {
@@ -1353,6 +1469,17 @@ end
 -- Layers define areas of the background that actors can walk behind.
 
 --- Add a walk-behind layer.
+-- The layer mask is used to cut out a piece of the background, and
+-- drawn over other actors to create a walk-behind layer.
+--
+-- @tparam string background
+-- Filename of the background to cut out.
+--
+-- @tparam string mask
+-- Filename of the mask.
+--
+-- @tparam int baseline
+-- The Y-position on the mask that defines the behind/in-front point.
 function layers:add (background, mask, baseline)
 
     local newLayer = {
@@ -1365,7 +1492,7 @@ function layers:add (background, mask, baseline)
 	-- efficient sorting, enabling drawing of actors behind layers.
     table.insert(actors.list, newLayer)
 
-    actors:sortLayers()
+    actors:sort()
 
 end
 
@@ -1373,6 +1500,14 @@ end
 -- All corresponding black pixels from the mask will cut and discard
 -- pixels (they become transparent), and only non-black mask pixels
 -- preserve the matching source pixels.
+--
+-- @tparam string source
+-- Source image filename.
+--
+-- @tparam string mask
+-- Mask image filename.
+--
+-- @return the cut out image.
 function layers:convertMask (source, mask)
 
     -- Returns a copy of the source image with transparent pixels where
@@ -1410,14 +1545,14 @@ end
 -- |_|
 --
 
---- Clear all cached paths
+-- Clear all cached paths
 function path:clear ()
 
     self.cache = nil
 
 end
 
---- Gets a unique start/goal key
+-- Gets a unique start/goal key
 function path:keyOf (start, goal)
 
     return string.format("%d,%d>%d,%d", start.x, start.y, goal.x, goal.y)
@@ -1443,7 +1578,7 @@ function path:saveCached (start, goal, path)
 
 end
 
--- Get the distance between two points
+--- Distance between two points.
 -- This method doesn't bother getting the square root of s, it is faster
 -- and it still works for our use.
 function path:distance (x1, y1, x2, y2)
@@ -1455,14 +1590,14 @@ function path:distance (x1, y1, x2, y2)
 
 end
 
--- Clamp a value to a range.
+--- Value clamping.
 function path:clamp (x, min, max)
 
 	return x < min and min or (x > max and max or x)
 
 end
 
--- (Internal) Return the score of a node.
+-- Get movement cost.
 -- G is the cost from START to this node.
 -- H is a heuristic cost, in this case the distance from this node to the goal.
 -- Returns F, the sum of G and H.
@@ -1523,8 +1658,29 @@ function path:getAdjacent (width, height, node, positionIsOpenFunc)
 
 end
 
--- Returns the path from start to goal, or false if no path exists.
-function path:find (width, height, start, goal, positionIsOpenFunc, useCache)
+--- Find a walkable path.
+--
+-- @tparam int width
+-- Width of the floor.
+--
+-- @tparam int height
+-- Height of the floor.
+--
+-- @tparam table start
+-- {x, y} of the starting point.
+--
+-- @tparam table goal
+-- {x, y} of the goal to reach.
+--
+-- @tparam function openTest
+-- Called when querying if a point is open.
+--
+-- @tparam bool useCache
+-- Cache paths for future re-use.
+-- Caching is not used at the moment.
+--
+-- @return the path from start to goal, or false if no path exists.
+function path:find (width, height, start, goal, openTest, useCache)
 
     if useCache then
         local cachedPath = self:getCached (start, goal)
@@ -1556,7 +1712,7 @@ function path:find (width, height, start, goal, positionIsOpenFunc, useCache)
 
         if not success then
 
-            local adjacentList = self:getAdjacent (width, height, current, positionIsOpenFunc)
+            local adjacentList = self:getAdjacent (width, height, current, openTest)
 
             for _, adjacent in ipairs(adjacentList) do
 
@@ -1610,28 +1766,28 @@ end
 -- |___/ .__/ \___|\___|\___|_| |_|
 --     |_|
 
---- Clears all current or queued speeches
+--- Clear queued speeches.
 function speech:clear ()
 
 	self.queue = { }
 
 end
 
---- Make an actor say something
+--- Make an actor talk.
+-- Call this multiple times to queue speech.
 --
--- @param self
--- Slime instance
+-- @tparam string name
+-- Name of the actor.
 --
--- @param name
--- Name of the actor
+-- @tparam string text
+-- The words to display.
 --
--- @param text
--- The words to display
---
--- @param time
--- Number of seconds to display the words.
--- Optional. Defaults to 3 seconds.
+-- @tparam[opt=3] int seconds
+-- Seconds to display the words.
 function speech:say (name, text, seconds)
+
+	-- default seconds
+	seconds = seconds or 3
 
 	-- intercept chaining
 	if chains.capturing then
@@ -1649,7 +1805,7 @@ function speech:say (name, text, seconds)
     local newSpeech = {
         ["actor"] = actors:get (name),
         ["text"] = text,
-        ["time"] = seconds or 3
+        ["time"] = seconds
         }
 
     if (not newSpeech.actor) then
@@ -1661,17 +1817,18 @@ function speech:say (name, text, seconds)
 
 end
 
---- Returns if an actor is busy talking
+--- Test if someone is talking.
 --
--- @param self
--- Slime instance
---
--- @param actor
--- Optional @{actor} to test against.
+-- @tparam[opt] string actor
+-- The actor to test against.
 -- If not given, any talking actor is tested.
 --
 -- @return true if any actor, or the specified actor is talking.
 function speech:isTalking (actor)
+
+	if type (actor) == "string" then
+		actor = actors:get (actor)
+	end
 
 	if actor then
 		-- if a specific actor is talking
@@ -1683,7 +1840,8 @@ function speech:isTalking (actor)
 
 end
 
---- Skips the current spoken line.
+--- Skip the current spoken line.
+-- Jumps to the next line in the queue.
 function speech:skip ()
 
     local speech = self.queue[1]
@@ -1706,13 +1864,10 @@ function speech:skip ()
 
 end
 
---- Update spoken words
+--- Update speech.
 --
--- @param self
--- Slime instance
---
--- @param dt
--- Time Delta since the last update
+-- @tparam int dt
+-- Delta time since the last update.
 function speech:update (dt)
 
     if (#self.queue > 0) then
@@ -1739,7 +1894,7 @@ function speech:update (dt)
 
 end
 
---- Draw spoken words on screen.
+--- Draw speech.
 function speech:draw ()
 
     if (#self.queue > 0) then
@@ -1782,8 +1937,7 @@ end
 --
 
 
---- Clear the room
--- from backgrounds and actors.
+--- Clear the room.
 -- Call this when setting up a room.
 function slime:clear ()
 
@@ -1799,9 +1953,8 @@ function slime:clear ()
 
 end
 
---- Reset slime
--- from backgrounds, actors, walk-behind layers, walkable floors,
--- hotspots, inventory bags and slime settings.
+--- Reset slime.
+-- Clears everything, even bags and settings.
 -- Call this when starting a new game.
 function slime:reset ()
 
@@ -1814,6 +1967,10 @@ function slime:reset ()
 
 end
 
+--- Update the game.
+--
+-- @tparam int dt
+-- Delta time since the last update.
 function slime:update (dt)
 
 	chains:update (dt)
@@ -1823,7 +1980,10 @@ function slime:update (dt)
 
 end
 
-
+--- Draw the room.
+--
+-- @tparam[opt=1] int scale
+-- Draw at the given scale.
 function slime:draw (scale)
 
     scale = scale or 1
@@ -1857,7 +2017,16 @@ function slime:draw (scale)
 
 end
 
--- Gets the object under xy.
+--- Get objects at a point.
+-- Includes actors, hotspots.
+--
+-- @tparam int x
+-- X-position to test.
+--
+-- @tparam int y
+-- Y-position to test.
+--
+-- @return table of objects.
 function slime:getObjects (x, y)
 
     local objects = { }
@@ -1895,7 +2064,16 @@ function slime:getObjects (x, y)
 
 end
 
-function slime:interact ( x, y)
+--- Interact with objects.
+-- This triggers the @{events.interact} callback for every
+-- object that is interacted with, passing the current cursor name.
+--
+-- @tparam int x
+-- X-position to interact with.
+--
+-- @tparam int y
+-- Y-position to interact with.
+function slime:interact (x, y)
 
     local objects = self:getObjects(x, y)
     if (not objects) then return end
@@ -1924,7 +2102,7 @@ end
 --~ |___/\___|\__|\__|_|_| |_|\__, |___/
                           --~ |___/
 
---- Clears slime settings to defaults.
+--- Clear slime settings.
 function settings:clear ()
 
 	-- Let slime handle displaying of speech text on screen,
@@ -1970,7 +2148,6 @@ function slime.background (self, ...)
 
 end
 
--- OBSOLETE IN FUTURE
 function slime.setCursor (self, ...)
 
 	print ("slime.setCursor will be obsoleted, use slime.cursor:set()")
@@ -1978,8 +2155,6 @@ function slime.setCursor (self, ...)
 
 end
 
---- Loads the cursors as a spritemap, w and h is the size of each quad
--- OBSOLETE IN FUTURE
 function slime.loadCursors (self, path, w, h, names, hotspots)
 
 	print ("slime.loadCursors will be obsoleted, use slime.cursor:set()")
@@ -2004,8 +2179,6 @@ function slime.loadCursors (self, path, w, h, names, hotspots)
 
 end
 
--- Uses a preloaded cursor
--- OBSOLETE IN FUTURE
 function slime.useCursor (self, index)
 	--print ("slime.useCursor will be obsoleted, use slime.cursor:set()")
     cursor.current = index
@@ -2016,14 +2189,12 @@ function slime.getCursor (self)
     return self.cursor.current
 end
 
--- Set the floor mask that determines walkable areas.
 function slime.floor (self, filename)
 
 	print ("slime.floors will be obsoleted, use slime.floors:set()")
 	floors:set (filename)
 
 end
-
 
 function slime.actor (self, ...)
 
@@ -2032,8 +2203,6 @@ function slime.actor (self, ...)
 
 end
 
-
--- Gets the actor by name
 function slime.getActor (self, ...)
 
 	-- OBSOLETE IN FUTURE
@@ -2050,9 +2219,6 @@ function slime.removeActor (self, ...)
 
 end
 
-
--- Helper method to add an animation to an actor
--- OBSOLETE IN FUTURE
 function slime.defineTileset (self, tileset, size)
 
 	print ("slime.defineTileset will be obsoleted.")
@@ -2075,8 +2241,6 @@ function slime.defineTileset (self, tileset, size)
 
 end
 
--- A helper method to define frames against an animation object.
--- OBSOLETE IN FUTURE
 function slime.defineAnimation (self, key)
 
     local pack = {
@@ -2096,13 +2260,11 @@ function slime.defineAnimation (self, key)
 
 end
 
--- OBSOLETE IN FUTURE
 function slime.defineFrames (self, frames)
     self.framesDefinition = frames
     return self
 end
 
--- OBSOLETE IN FUTURE
 function slime.defineDelays (self, delays)
 
     local image = slime:cache(self.anim.tileset)
@@ -2127,7 +2289,6 @@ function slime.defineDelays (self, delays)
     return self
 end
 
--- OBSOLETE IN FUTURE
 function slime.defineSounds (self, sounds)
     sounds = sounds or {}
     for i, v in pairs(sounds) do
@@ -2139,19 +2300,16 @@ function slime.defineSounds (self, sounds)
     return self
 end
 
--- OBSOLETE IN FUTURE
 function slime.defineOffset (self, x, y)
     self._offset = {x=x, y=y}
     return self
 end
 
--- OBSOLETE IN FUTURE
 function slime.defineFlip (self)
     self._frames:flipH()
     return self
 end
 
--- OBSOLETE IN FUTURE
 function slime.setAnimation (self, name, key)
 
 	-- intercept chaining
@@ -2180,9 +2338,6 @@ function slime.setAnimation (self, name, key)
 
 end
 
-
--- Gets the duration of a given animation
--- OBSOLETE IN FUTURE
 function slime.animationDuration(self, name, key)
     local a = self:getActor(name)
     if a then
@@ -2194,9 +2349,6 @@ function slime.animationDuration(self, name, key)
     return 0
 end
 
-
--- Set a static image as an actor's sprite.
--- OBSOLETE IN FUTURE
 function slime.setImage (self, image)
 
     local actor = self
@@ -2212,7 +2364,6 @@ function slime.setImage (self, image)
     end
 
 end
-
 
 function slime.turnActor (self, ...)
 
@@ -2238,7 +2389,6 @@ function slime.moveActorTo (self, ...)
 
 end
 
--- Stops an actor from moving
 function slime.stopActor (self, ...)
 
 	-- OBSOLETE IN FUTURE
@@ -2247,7 +2397,6 @@ function slime.stopActor (self, ...)
 
 end
 
-
 function slime.say (self, name, text)
 
 	print ("slime.say will be obsoleted, use slime.speech:say()")
@@ -2255,9 +2404,6 @@ function slime.say (self, name, text)
 
 end
 
-
--- Checks if there is an actor talking.
--- OBSOLETE IN FUTURE
 function slime.someoneTalking (self)
 
 	print ("slime.someoneTalking will be obsoleted, use slime.speech:isTalking()")
@@ -2265,9 +2411,6 @@ function slime.someoneTalking (self)
 
 end
 
-
--- Checks if specific actor is talking
--- OBSOLETE IN FUTURE
 function slime.actorTalking (self, actor)
 
 	print ("slime.actorTalking will be obsoleted, use slime.speech:isTalking()")
@@ -2275,16 +2418,12 @@ function slime.actorTalking (self, actor)
 
 end
 
-
--- Skips the current speech
--- OBSOLETE IN FUTURE
 function slime.skipSpeech (self)
 
 	print ("slime.skipSpeech will be obsoleted, use slime.speech:skip()")
 	speech:skip ()
 
 end
-
 
 function slime.layer (self, ...)
 
@@ -2307,17 +2446,13 @@ function slime.hotspot(self, ...)
 
 end
 
-
--- OBSOLETE IN FUTURE
 slime.bagButtons = { }
 
--- Placeholder for the inventory changed callback
 function slime.inventoryChanged ( )
 	-- OBSOLETE IN FUTURE
 	-- replace with the future room structure
 end
 
--- Add an item to a bag.
 function slime.bagInsert (self, ...)
 
 	print ("slime.bagInsert will be obsoleted, use slime.bags:add()")
@@ -2325,8 +2460,6 @@ function slime.bagInsert (self, ...)
 
 end
 
--- Get items from a bag.
--- OBSOLETE IN FUTURE
 function slime.bagContents (self, bag)
 
 	print ("slime.bagContents will be obsoleted, use slime.bags.contents[<key>]")
@@ -2334,13 +2467,11 @@ function slime.bagContents (self, bag)
 
 end
 
--- Checks if an item is inside a bag
 function slime.bagContains (self, ...)
 	print ("slime.bagContains will be obsoleted, use slime.bags:contains()")
 	return bags:contains (...)
 end
 
--- Remove an item from a bag.
 function slime.bagRemove (self, ...)
 
 	print ("slime.bagRemove will be obsoleted, use slime.bags:remove()")
@@ -2368,7 +2499,6 @@ function slime.bagButton (self, name, image, x, y)
 
 end
 
--- Set a status text
 function slime.status (self, text)
 
 	--print ("slime.status will be obsoleted")
@@ -2377,12 +2507,8 @@ function slime.status (self, text)
 end
 
 
-
-
-
 slime.tilesets = {}
 
--- Internal callback fired on any animation loop
 function slime.internalAnimationLoop (frames, counter)
     local pack = frames.pack
     pack.loopcounter = pack.loopcounter + 1
@@ -2396,8 +2522,6 @@ function slime.internalAnimationLoop (frames, counter)
     -- OBSOLETE: replaced by events.animation
     slime.animationLooped (pack.anim.actor.name, pack.key, pack.loopcounter)
 end
-
-
 
 -- Cache a tileset image in slime, or return an already cached one.
 function slime.cache (self, path)
@@ -2415,8 +2539,6 @@ function slime.cache (self, path)
 end
 
 
-
-
                             --~ _
 --~   _____  ___ __   ___  _ __| |_
 --~  / _ \ \/ / '_ \ / _ \| '__| __|
@@ -2424,9 +2546,6 @@ end
 --~  \___/_/\_\ .__/ \___/|_|   \__|
           --~ |_|
 
-
--- Clear these components on load
-slime:reset ()
 
 slime.actors = actors
 slime.backgrounds = backgrounds
@@ -2440,6 +2559,5 @@ slime.layers = layers
 slime.settings = settings
 slime.speech = speech
 slime.wait = chains.wait
-
+slime:reset ()
 return slime
-

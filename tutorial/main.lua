@@ -9,7 +9,8 @@ function cell.setup ()
     --slime:reset()
 
     -- Add the background
-    slime:background("images/cell-background.png")
+    slime:background("images/cell-background.png", 10)
+    slime:background("images/cell-background.png", 4)
 
     -- Apply the walk-behind layer
     slime:layer("images/cell-background.png", "images/cell-layer.png", 50)
@@ -222,11 +223,6 @@ function cell.callback (event, object)
             cell.pickUpSpoon()
         end
 
-        -- Look at the hole in the wall
-        if object.name == "hole" then
-            slime:say("ego", "I see a hole in the wall")
-        end
-
         -- Set the cursor when interacting on bag items
         if object.name == "spoon" then
             slime:setCursor(object.name, object.image, scale, 0, 0)
@@ -306,6 +302,12 @@ function love.draw ()
 end
 
 function love.update (dt)
+
+	local fpslimit = 1/24
+	if dt < fpslimit then
+		love.timer.sleep(fpslimit - dt)
+	end
+
     slime:update(dt)
 
     -- display hover over objects
@@ -368,9 +370,9 @@ function slime.events.interact (self, event, actor)
 
 	if event == "interact" and actor.name == "door" then
 
-		slime.chain().speech:say ("ego", "watch this", 0.5)
+		slime.chain().speech:say ("ego", "watch this", 2)
 		slime.chain():setAnimation ("ego", "dig")
-		slime.chain():wait (0.5)
+		slime.chain():wait (1)
 		slime.chain():setAnimation ("ego")
 		slime.chain().actors:turn ("ego", "east")
 		slime.chain().floors:set ("images/cell-floor-open.png")
@@ -380,6 +382,13 @@ function slime.events.interact (self, event, actor)
 			function()
 				slime.speech:say ("ego", "magic", 1)
 			end)
+
+	end
+
+	if event == "interact" and actor.name == "hole" then
+
+		slime:say("ego", "It is a hole", 1)
+		slime:say("ego", "Someone has been digging here")
 
 	end
 
