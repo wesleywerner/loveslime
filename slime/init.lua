@@ -130,6 +130,10 @@ function animations:update (entity, dt)
 	local sprites = entity.sprites
 	local frames = sprites.animations[entity.key]
 
+	if not frames then
+		return
+	end
+
 	-- initialize and clamp the index.
 	-- when switching between animation keys, the index
 	-- is not reset.
@@ -2085,9 +2089,8 @@ function speech:skip ()
 		-- remove the line
         table.remove(self.queue, 1)
 
-        -- restore the actor animation to idle
-        --speech.actor.action = "idle"
-        actors:animate (speech.actor.name, "idle")
+        -- restore the idle animation
+        speech.actor.action = "idle"
 
         -- clear the current spoken line
         self.currentLine = nil
