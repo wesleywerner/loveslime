@@ -34,6 +34,7 @@ local slime = {
 -- https://github.com/kikito/anim8
 local anim8 = require 'slime.anim8'
 
+local animations = { }
 local actors = { }
 local backgrounds = { }
 local bags = { }
@@ -49,6 +50,140 @@ local settings = { }
 local speech = { }
 
 
+--              _                 _   _
+--   __ _ _ __ (_)_ __ ___   __ _| |_(_) ___  _ __  ___
+--  / _` | '_ \| | '_ ` _ \ / _` | __| |/ _ \| '_ \/ __|
+-- | (_| | | | | | | | | | | (_| | |_| | (_) | | | \__ \
+--  \__,_|_| |_|_|_| |_| |_|\__,_|\__|_|\___/|_| |_|___/
+--
+
+--- Draw an actor's animation frame.
+--
+-- @tparam actor actor
+-- The actor to draw.
+--
+-- @local
+function animations:getDrawParameters (entity)
+
+	local sprites = entity.sprites
+	local frames = sprites.animations[entity.key]
+
+	if frames then
+
+		local frame = frames[sprites.index]
+
+		if not frame.quad then
+			frame.quad = love.graphics.newQuad (
+				frame.x, frame.y,
+				frame.width, frame.height,
+				sprites.size.width, sprites.size.height)
+		end
+
+		-- position
+		local x, y = entity.drawX, entity.drawY
+		-- rotation
+		local r = 0
+		-- scale
+		local sx, sy = 1, 1
+		-- origin
+		local ox, oy = 0, 0
+
+		-- invert scale to flip
+		if frame.flip == true then
+			sx = -1
+			-- adjust draw position, the flip aligns to the
+			-- left edge of the image
+			x = x + entity.width
+		end
+
+		local tileset = slime:cache(entity.sprites.filename)
+
+		return tileset, frame.quad, x, y, r, sx, sy, ox, oy
+
+	end
+
+end
+
+
+--- Update animation.
+--
+-- @tparam string actor
+-- Name of the actor being updated.
+--
+-- @tparam sprites sprites
+-- Table of sprite animation info.
+--
+-- @tparam string key
+-- The animation key to update.
+--
+-- @tparam int dt
+-- Delta time since last update.
+--
+-- @local
+function animations:update (entity, dt)
+
+	-- entity.sprites: sprite animation definition
+	-- entity.name: fed back to the event.animation callback on loop
+	-- entity.key: animation key to update
+	-- entity.x, entity.y: position on screen
+
+	local sprites = entity.sprites
+	local frames = sprites.animations[entity.key]
+
+	-- initialize and clamp the index.
+	-- when switching between animation keys, the index
+	-- is not reset.
+	sprites.index = sprites.index or 1
+	sprites.index = math.min (sprites.index, #frames)
+
+	if frames then
+
+		local frame = frames[sprites.index]
+
+		if not frame then
+			print (sprites.index, #frames, entity.key, sprites.lastkey)
+			error ("frame is empty")
+		end
+		sprites.lastkey = entity.key
+
+		-- reduce the frame timer
+		sprites.timer = (sprites.timer or 1) - dt
+
+		if sprites.timer <= 0 then
+
+			-- move to the next frame
+			sprites.index = sprites.index + 1
+
+			-- wrap the animation
+			if sprites.index > #frames then
+				-- animation loop ended
+				sprites.index = 1
+				-- reload the correct frame
+				frame = frames[sprites.index]
+				-- notify event
+				events.animation (slime, actor, entity.key)
+			end
+
+			-- set the timer for this frame
+			sprites.timer = frame.delay or 0.2
+
+		end
+
+		if not frame then
+			print (sprites.index, entity.key, #frames)
+			error ("frame is empty")
+		end
+
+		-- update the draw offset for actor sprites
+		if entity.x and entity.feet then
+			entity.drawX = entity.x - entity.feet.x + frame.xoffset
+			entity.drawY = entity.y - entity.feet.y + frame.yoffset
+		end
+
+	end
+
+end
+
 
 --               _
 --     __ _  ___| |_ ___  _ __ ___
@@ -56,19 +191,20 @@ local speech = { }
 --   | (_| | (__| || (_) | |  \__ \
 --    \__,_|\___|\__\___/|_|  |___/
 
---- Actors are items on your stage that walk or talk, like people, animals and robots.
--- They can also be inanimate objects and are animated, like doors, toasters and computers.
+--- Actors are items on your stage that walk or talk,
+-- like people, animals and robots.
+-- They can also be inanimate objects like doors, toasters and computers.
 --
 -- @table actor
 --
--- @tparam string name
+-- @tfield string name
 -- The name of the actor.
 --
--- @tparam int x
+-- @tfield int x
 --
--- @tparam int y
+-- @tfield int y
 --
--- @tparam string feet
+-- @tfield[opt="bottom"] string feet
 -- Position of the actor's feet relative to the sprite.
 
 --- Clear actors.
@@ -80,68 +216,43 @@ end
 
 --- Add an actor.
 --
--- @tparam string name
--- The name of the actor
---
--- @tparam int x
---
--- @tparam int y
-function actors:add (name, x, y)
+-- @tparam actor actor
+function actors:add (actor)
 
-    -- Add an actor to the stage.
-    -- Allows adding the same actor name multiple times, but only
-    -- the first instance uses the "name" as the key, subsequent
-    -- duplicates will use the natural numbering of the table.
+	assert (actor, "Actor definition must be given.")
+	assert (actor.x, "Actor x position must be given.")
+	assert (actor.y, "Actor y position must be given.")
+	assert (actor.width, "Actor width must be given.")
+	assert (actor.height, "Actor height must be given.")
 
-    -- default sprite size
-    local w = 10
-    local h = 10
+    actor.isactor = true
+    actor["direction recalc delay"] = 0
+    actor.feet = actor.feet or "bottom"
+    actor.direction = "south"
+    actor.speechcolor = {1, 1, 1}
+    actor.action = "idle"
 
-    local newActor = {
-        ["isactor"] = true,
-        ["name"] = name,
-        ["x"] = x,
-        ["y"] = y,
-        ["direction recalc delay"] = 0,     -- delay direction calc counter.
-        ["w"] = w,
-        ["h"] = h,
-        ["feet"] = {0, 0},                  -- position of actor's feet (relative to the sprite)
-        ["image"] = nil,                    -- a static image of this actor.
-        ["animations"] = { },
-        ["direction"] = "south",
-        ["action"] = "idle",
-        ["speechcolor"] = {255, 255, 255},
-        ["inventory"] = { }
-        }
-
-    function newActor:getAnim ()
-        local priorityAction = self.action == "talk" or self.action == "walk"
-        if (self.customAnimationKey and not priorityAction) then
-            return self.animations[self.customAnimationKey]
-        else
-            local key = self.action .. " " .. self.direction
-            return self.animations[key]
-        end
+    -- map the feet position from string to a table
+    if actor.feet == "bottom" then
+		actor.feet = { x = actor.width / 2, y = actor.height}
+    elseif actor.feet == "top" then
+		actor.feet = { x = actor.width / 2, y = 0}
+    elseif actor.feet == "left" then
+		actor.feet = { x = 0, y = actor.height / 2}
+    elseif actor.feet == "right" then
+		actor.feet = { x = actor.width, y = actor.height / 2}
     end
 
-    table.insert(self.list, newActor)
+	assert (type(actor.feet) == "table", "Actor feet property must be string or a table")
+    assert (actor.feet.x, "Actor feet must have x position")
+    assert (actor.feet.y, "Actor feet must have y position")
 
-    -- set actor image method
-    newActor.setImage = slime.setImage
-
-    -- set the actor new animation method
-    -- TODO refactor this, pass animation data to this add() method
-    -- instead of all this chaining business.
-    newActor.tileset = slime.defineTileset
-
-    -- set slime host reference
-    newActor.host = self
-
+    table.insert(self.list, actor)
     self:sort ()
-
-    return newActor
+    return actor
 
 end
+
 
 --- Update actors
 --
@@ -153,28 +264,42 @@ end
 -- @local
 function actors:update (dt)
 
+	-- remember if any actors moved during this update
 	local actorsMoved = false
 
-    -- Update animations
     for _, actor in ipairs(self.list) do
         if actor.isactor then
 
+			-- update the movement path
             if self:updatePath (actor, dt) then
 				actorsMoved = true
             end
 
-            local anim = actor:getAnim()
-            if anim then
-                anim._frames:update(dt)
-                local framesound = anim._sounds[anim._frames.position]
-                if framesound then
-                    love.audio.play(framesound)
-                end
-            end
+			-- set the animation key.
+			-- walking or talking includes the facing direction.
+			if actor.action == "talk"
+			or actor.action == "walk"
+			or actor.action == "idle" then
+				actor.key = string.format("%s %s", actor.action, actor.direction)
+			else
+				actor.key = actor.action
+			end
+
+			animations:update (actor, dt)
+
+            --~ local anim = actor:getAnim()
+            --~ if anim then
+                --~ anim._frames:update(dt)
+                --~ local framesound = anim._sounds[anim._frames.position]
+                --~ if framesound then
+                    --~ love.audio.play(framesound)
+                --~ end
+            --~ end
+
         end
     end
 
-	-- reorder if any actors moved
+	-- sort the draw order of actor if any moved
 	if actorsMoved then
 		self:sort ()
     end
@@ -276,10 +401,13 @@ function actors:updatePath (actor, dt)
             -- Test if we should calculate actor direction
             actor["direction recalc delay"] = actor["direction recalc delay"] - 1
 
-            if (actor["direction recalc delay"] <= 0) then
+			-- TODO: delete this direction delay. works better without it.
+            do --(actor["direction recalc delay"] <= 0) then
                 actor["direction recalc delay"] = 5
-                actor.direction = self:directionOf (actor.lastx, actor.lasty, actor.x, actor.y)
-                actor.lastx, actor.lasty = actor.x, actor.y
+                actor.direction = self:directionOf (actor.previousX, actor.previousY, actor.x, actor.y)
+                -- store previous position, to calculate the
+                -- facing direction on the next iteration.
+                actor.previousX, actor.previousY = actor.x, actor.y
             end
 
         end
@@ -429,20 +557,25 @@ function actors:draw ()
     for _, actor in ipairs(self.list) do
         if actor.isactor then
 
-			local anim = actor:getAnim()
+			local tileset, quad, x, y, r, sx, sy, ox, oy = animations:getDrawParameters (actor)
 
-			if anim then
-				local tileset = slime:cache(anim.anim.tileset)
-				anim._frames:draw(tileset,
-					actor.x - actor.feet[1] + anim._offset.x,
-					actor.y - actor.feet[2] + anim._offset.y)
-			elseif (actor.image) then
-				love.graphics.draw(actor.image,
-					actor.x - actor.feet[1],
-					actor.y - actor.feet[2])
-			else
-				love.graphics.rectangle ("fill", actor.x - actor.feet[1], actor.y - actor.feet[2], actor.w, actor.h)
+			if quad and tileset then
+				love.graphics.draw (tileset, quad, x, y, r, sx, sy, ox, oy)
 			end
+
+			--~ local anim = actor:getAnim()
+			--~ if anim then
+				--~ local tileset = slime:cache(anim.anim.tileset)
+				--~ anim._frames:draw(tileset,
+					--~ actor.x - actor.feet[1] + anim._offset.x,
+					--~ actor.y - actor.feet[2] + anim._offset.y)
+			--~ elseif (actor.image) then
+				--~ love.graphics.draw(actor.image,
+					--~ actor.x - actor.feet[1],
+					--~ actor.y - actor.feet[2])
+			--~ else
+				--~ love.graphics.rectangle ("fill", actor.x - actor.feet[1], actor.y - actor.feet[2], actor.w, actor.h)
+			--~ end
 
         elseif actor.islayer then
             love.graphics.draw(actor.image, 0, 0)
@@ -513,7 +646,7 @@ function actors:move (name, x, y)
 		-- Default to walking animation
 		actor.action = "walk"
 		-- Calculate actor direction immediately
-		actor.lastx, actor.lasty = actor.x, actor.y
+		actor.previousX, actor.previousY = actor.x, actor.y
 		actor.direction = actors:directionOf (actor.x, actor.y, x, y)
 		-- Output debug
 		debug:append ("move " .. name .. " to " .. x .. " : " .. y)
@@ -1217,7 +1350,8 @@ function debug:draw (scale)
     for _, actor in ipairs(actors.list) do
         if actor.isactor then
 			love.graphics.setColor (self.actorColor)
-            love.graphics.rectangle("line", actor.x - actor.feet[1], actor.y - actor.feet[2], actor.w, actor.h)
+			-- TODO calculate draw position in actor:update
+            love.graphics.rectangle("line", actor.drawX, actor.drawY, actor.width, actor.height)
             love.graphics.circle("line", actor.x, actor.y, 1, 6)
         elseif actor.islayer then
             -- draw baselines for layers
@@ -1952,7 +2086,8 @@ function speech:skip ()
         table.remove(self.queue, 1)
 
         -- restore the actor animation to idle
-        speech.actor.action = "idle"
+        --speech.actor.action = "idle"
+        actors:animate (speech.actor.name, "idle")
 
         -- clear the current spoken line
         self.currentLine = nil
@@ -2142,10 +2277,10 @@ function slime:getObjects (x, y)
 
     for _, actor in pairs(actors.list) do
         if actor.isactor and
-            (x >= actor.x - actor.feet[1]
-            and x <= actor.x - actor.feet[1] + actor.w)
-        and (y >= actor.y - actor.feet[2]
-            and y <= actor.y - actor.feet[2] + actor.h) then
+            (x >= actor.x - actor.feet.x
+            and x <= actor.x - actor.feet.x + actor.width)
+        and (y >= actor.y - actor.feet.y
+            and y <= actor.y - actor.feet.y + actor.height) then
             table.insert(objects, actor)
         end
     end
@@ -2312,10 +2447,14 @@ function slime.floor (self, filename)
 
 end
 
-function slime.actor (self, ...)
+function slime.actor (self, name, x, y)
 
 	print ("slime.actor will be obsoleted, use slime.actors:add()")
-	return actors:add (...)
+	return actors:add ({
+		name = name,
+		x = x,
+		y = y
+	})
 
 end
 
