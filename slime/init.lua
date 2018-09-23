@@ -38,6 +38,7 @@ local animations = { }
 local actors = { }
 local backgrounds = { }
 local bags = { }
+local cache = { }
 local chains = { }
 local events = { }
 local debug = { }
@@ -48,145 +49,6 @@ local layers = { }
 local path = { }
 local settings = { }
 local speech = { }
-
-
---              _                 _   _
---   __ _ _ __ (_)_ __ ___   __ _| |_(_) ___  _ __  ___
---  / _` | '_ \| | '_ ` _ \ / _` | __| |/ _ \| '_ \/ __|
--- | (_| | | | | | | | | | | (_| | |_| | (_) | | | \__ \
---  \__,_|_| |_|_|_| |_| |_|\__,_|\__|_|\___/|_| |_|___/
---
-
---- Draw an actor's animation frame.
---
--- @tparam actor actor
--- The actor to draw.
---
--- @local
-function animations:getDrawParameters (entity)
-
-	local sprites = entity.sprites
-	local frames = sprites.animations[entity.key]
-
-	if frames then
-
-		local frame = frames[sprites.index]
-
-		if not frame.quad then
-			frame.quad = love.graphics.newQuad (
-				frame.x, frame.y,
-				frame.width, frame.height,
-				sprites.size.width, sprites.size.height)
-		end
-
-		-- position
-		local x, y = entity.drawX, entity.drawY
-		-- rotation
-		local r = 0
-		-- scale
-		local sx, sy = 1, 1
-		-- origin
-		local ox, oy = 0, 0
-
-		-- invert scale to flip
-		if frame.flip == true then
-			sx = -1
-			-- adjust draw position, the flip aligns to the
-			-- left edge of the image
-			x = x + entity.width
-		end
-
-		local tileset = slime:cache(entity.sprites.filename)
-
-		return tileset, frame.quad, x, y, r, sx, sy, ox, oy
-
-	end
-
-end
-
-
---- Update animation.
---
--- @tparam string actor
--- Name of the actor being updated.
---
--- @tparam sprites sprites
--- Table of sprite animation info.
---
--- @tparam string key
--- The animation key to update.
---
--- @tparam int dt
--- Delta time since last update.
---
--- @local
-function animations:update (entity, dt)
-
-	-- entity.sprites: sprite animation definition
-	-- entity.name: fed back to the event.animation callback on loop
-	-- entity.key: animation key to update
-	-- entity.x, entity.y: position on screen
-
-	local sprites = entity.sprites
-	local frames = sprites.animations[entity.key]
-
-	if not frames then
-		return
-	end
-
-	-- initialize and clamp the index.
-	-- when switching between animation keys, the index
-	-- is not reset.
-	sprites.index = sprites.index or 1
-	sprites.index = math.min (sprites.index, #frames)
-
-	if frames then
-
-		local frame = frames[sprites.index]
-
-		if not frame then
-			print (sprites.index, #frames, entity.key, sprites.lastkey)
-			error ("frame is empty")
-		end
-		sprites.lastkey = entity.key
-
-		-- reduce the frame timer
-		sprites.timer = (sprites.timer or 1) - dt
-
-		if sprites.timer <= 0 then
-
-			-- move to the next frame
-			sprites.index = sprites.index + 1
-
-			-- wrap the animation
-			if sprites.index > #frames then
-				-- animation loop ended
-				sprites.index = 1
-				-- reload the correct frame
-				frame = frames[sprites.index]
-				-- notify event
-				events.animation (slime, actor, entity.key)
-			end
-
-			-- set the timer for this frame
-			sprites.timer = frame.delay or 0.2
-
-		end
-
-		if not frame then
-			print (sprites.index, entity.key, #frames)
-			error ("frame is empty")
-		end
-
-		-- update the draw offset for actor sprites
-		if entity.x and entity.feet then
-			entity.drawX = entity.x - entity.feet.x + frame.xoffset
-			entity.drawY = entity.y - entity.feet.y + frame.yoffset
-		end
-
-	end
-
-end
 
 
 --               _
@@ -567,20 +429,6 @@ function actors:draw ()
 				love.graphics.draw (tileset, quad, x, y, r, sx, sy, ox, oy)
 			end
 
-			--~ local anim = actor:getAnim()
-			--~ if anim then
-				--~ local tileset = slime:cache(anim.anim.tileset)
-				--~ anim._frames:draw(tileset,
-					--~ actor.x - actor.feet[1] + anim._offset.x,
-					--~ actor.y - actor.feet[2] + anim._offset.y)
-			--~ elseif (actor.image) then
-				--~ love.graphics.draw(actor.image,
-					--~ actor.x - actor.feet[1],
-					--~ actor.y - actor.feet[2])
-			--~ else
-				--~ love.graphics.rectangle ("fill", actor.x - actor.feet[1], actor.y - actor.feet[2], actor.w, actor.h)
-			--~ end
-
         elseif actor.islayer then
             love.graphics.draw(actor.image, 0, 0)
         end
@@ -718,6 +566,144 @@ function actors:stop (name)
     if actor then
         actor.path = nil
     end
+
+end
+
+--              _                 _   _
+--   __ _ _ __ (_)_ __ ___   __ _| |_(_) ___  _ __  ___
+--  / _` | '_ \| | '_ ` _ \ / _` | __| |/ _ \| '_ \/ __|
+-- | (_| | | | | | | | | | | (_| | |_| | (_) | | | \__ \
+--  \__,_|_| |_|_|_| |_| |_|\__,_|\__|_|\___/|_| |_|___/
+--
+
+--- Draw an actor's animation frame.
+--
+-- @tparam actor actor
+-- The actor to draw.
+--
+-- @local
+function animations:getDrawParameters (entity)
+
+	local sprites = entity.sprites
+	local frames = sprites.animations[entity.key]
+
+	if frames then
+
+		local frame = frames[sprites.index]
+
+		if not frame.quad then
+			frame.quad = love.graphics.newQuad (
+				frame.x, frame.y,
+				frame.width, frame.height,
+				sprites.size.width, sprites.size.height)
+		end
+
+		-- position
+		local x, y = entity.drawX, entity.drawY
+		-- rotation
+		local r = 0
+		-- scale
+		local sx, sy = 1, 1
+		-- origin
+		local ox, oy = 0, 0
+
+		-- invert scale to flip
+		if frame.flip == true then
+			sx = -1
+			-- adjust draw position, the flip aligns to the
+			-- left edge of the image
+			x = x + entity.width
+		end
+
+		local tileset = cache(entity.sprites.filename)
+
+		return tileset, frame.quad, x, y, r, sx, sy, ox, oy
+
+	end
+
+end
+
+
+--- Update animation.
+--
+-- @tparam string actor
+-- Name of the actor being updated.
+--
+-- @tparam sprites sprites
+-- Table of sprite animation info.
+--
+-- @tparam string key
+-- The animation key to update.
+--
+-- @tparam int dt
+-- Delta time since last update.
+--
+-- @local
+function animations:update (entity, dt)
+
+	-- entity.sprites: sprite animation definition
+	-- entity.name: fed back to the event.animation callback on loop
+	-- entity.key: animation key to update
+	-- entity.x, entity.y: position on screen
+
+	local sprites = entity.sprites
+	local frames = sprites.animations[entity.key]
+
+	if not frames then
+		return
+	end
+
+	-- initialize and clamp the index.
+	-- when switching between animation keys, the index
+	-- is not reset.
+	sprites.index = sprites.index or 1
+	sprites.index = math.min (sprites.index, #frames)
+
+	if frames then
+
+		local frame = frames[sprites.index]
+
+		if not frame then
+			print (sprites.index, #frames, entity.key, sprites.lastkey)
+			error ("frame is empty")
+		end
+		sprites.lastkey = entity.key
+
+		-- reduce the frame timer
+		sprites.timer = (sprites.timer or 1) - dt
+
+		if sprites.timer <= 0 then
+
+			-- move to the next frame
+			sprites.index = sprites.index + 1
+
+			-- wrap the animation
+			if sprites.index > #frames then
+				-- animation loop ended
+				sprites.index = 1
+				-- reload the correct frame
+				frame = frames[sprites.index]
+				-- notify event
+				events.animation (slime, actor, entity.key)
+			end
+
+			-- set the timer for this frame
+			sprites.timer = frame.delay or 0.2
+
+		end
+
+		if not frame then
+			print (sprites.index, entity.key, #frames)
+			error ("frame is empty")
+		end
+
+		-- update the draw offset for actor sprites
+		if entity.x and entity.feet then
+			entity.drawX = entity.x - entity.feet.x + frame.xoffset
+			entity.drawY = entity.y - entity.feet.y + frame.yoffset
+		end
+
+	end
 
 end
 
@@ -913,6 +899,51 @@ function bags:contains (name, thingName)
             return true
         end
     end
+
+end
+
+
+--                 _
+--   ___ __ _  ___| |__   ___
+--  / __/ _` |/ __| '_ \ / _ \
+-- | (_| (_| | (__| | | |  __/
+--  \___\__,_|\___|_| |_|\___|
+--
+
+--- Initialize image cache.
+-- Clears cached image references.
+--
+-- @local
+function cache:init ()
+
+	-- Calling a table like a function
+	setmetatable (self, {
+		__call = function (self, ...)
+			return self:interface (...)
+		end
+	})
+
+	self.store = { }
+
+end
+
+--- Save to cache and return a copy.
+--
+-- @tparam string path
+-- Path to the image to load.
+--
+-- @local
+function cache:interface (path)
+
+    -- cache tileset image to save loading duplicate images
+    local image = self.store[path]
+
+    if not image then
+        image = love.graphics.newImage(path)
+        self.store[path] = image
+    end
+
+    return image
 
 end
 
@@ -2205,6 +2236,7 @@ function slime:reset ()
 	self:clear ()
 	bags:clear ()
 	settings:clear ()
+	cache:init ()
 
 end
 
@@ -2765,8 +2797,6 @@ function slime.status (self, text)
 end
 
 
-slime.tilesets = {}
-
 function slime.internalAnimationLoop (frames, counter)
     local pack = frames.pack
     pack.loopcounter = pack.loopcounter + 1
@@ -2779,21 +2809,6 @@ function slime.internalAnimationLoop (frames, counter)
 
     -- OBSOLETE: replaced by events.animation
     slime.animationLooped (pack.anim.actor.name, pack.key, pack.loopcounter)
-end
-
--- Cache a tileset image in slime, or return an already cached one.
-function slime.cache (self, path)
-
-    -- cache tileset image to save loading duplicate images
-    local image = self.tilesets[path]
-
-    if not image then
-        image = love.graphics.newImage(path)
-        self.tilesets[path] = image
-    end
-
-    return image
-
 end
 
 
