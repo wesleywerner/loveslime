@@ -6,7 +6,7 @@ local cell = {}
 function cell.setup ()
 
     -- Clear the stage
-    --slime:reset()
+    slime:reset()
 
     -- Add the background
     slime:background("images/cell-background.png", 10)
@@ -225,7 +225,7 @@ function cell.callback (event, object)
 
         -- Set the cursor when interacting on bag items
         if object.name == "spoon" then
-            slime:setCursor(object.name, object.image, scale, 0, 0)
+            slime.cursor:set ({name = object.name, image = object.image})
         end
 
         if object.name == "dust" then
@@ -362,6 +362,12 @@ function love.mousepressed (x, y, button)
     if button == 2 then
         slime:setCursor()
     end
+
+end
+
+function love.mousemoved (x, y, dx, dy, istouch)
+
+	slime:mousemoved (x, y, dx, dy, istouch)
 
 end
 

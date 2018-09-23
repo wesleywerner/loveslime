@@ -1039,12 +1039,30 @@ end
 --  \___|\__,_|_|  |___/\___/|_|
 --
 
+--- Custom cursor data
+--
+-- @table cursor
+--
+-- @tfield string name
+-- Name of the cursor. This gets passed back to the
+-- @{events.interact} callback event.
+--
+-- @tfield image image
+-- The cursor image.
+--
+-- @tfield[opt] quad quad
+-- If image is a spritesheet, then quad defines the position
+-- in of the cursor in the image.
+--
+-- @tfield[opt] table hotspot
+-- The {x, y} point on the cursor that identifies as the click point.
+-- Defaults to the top-left corner if not specified.
 
---- Clear cursors.
+
+--- Clear the custom cursor.
 function cursor:clear ()
 
-	self.quads = { }
-	self.names = { }
+	self.cursor = nil
 
 end
 
@@ -1053,28 +1071,13 @@ end
 -- @local
 function cursor:draw ()
 
-    local quad = self.quads[self.current]
-
-    if quad then
-
-        local x, y = love.mouse.getPosition()
-        x = x / scale
-        y = y / scale
-
-		-- A custom cursor (like that of an inventory item)
-		-- set through setCursor
-        if self.custom then
-            local cursorhotspot = self.custom.hotspot
-            love.graphics.draw(self.custom.image,
-                x-cursorhotspot.x, y-cursorhotspot.y)
-        else
-
-            local cursorhotspot = self.hotspots[self.current]
-            cursorhotspot = cursorhotspot or {x=0, y=0}
-            love.graphics.draw(self.image, quad,
-                x-cursorhotspot.x, y-cursorhotspot.y)
-        end
-    end
+	if self.cursor and self.x then
+		if self.cursor.quad then
+			love.graphics.draw (self.cursor.image, self.cursor.quad, self.x, self.y)
+		else
+			love.graphics.draw (self.cursor.image, self.x, self.y)
+		end
+	end
 
 end
 
@@ -1083,37 +1086,45 @@ end
 -- @local
 function cursor:getName ()
 
-	-- TODO tidy up with if-else
-	local cursorname = self.custom and self.custom.name
-	cursorname = cursorname or (self.names[self.current])
-	return cursorname or "interact"
+	if self.cursor then
+		return self.cursor.name
+	else
+		return "interact"
+	end
 
 end
 
---- Set a cursor.
+--- Set a custom cursor.
 --
--- @tparam string name
--- Name of the cursor, this is passed back to the @{events.interact} callback.
---
--- @tparam image image
--- Cursor image
---
--- @tparam table hotspot
--- {x=0, y=0} of the click point.
---
--- TODO change signature to take a table of cursor data.
--- also rename "hotspot", it is too ambiguous with the hotspots namespace.
-function cursor:set (name, image, hotspot)
+-- @tparam cursor cursor
+-- The cursor data.
+function cursor:set (cursor)
 
-    if name then
-        cursor.custom = {
-            name=name,
-            image=image,
-            hotspot=hotspot or {x=0, y=0}
-            }
-    else
-        cursor.custom = nil
-    end
+	assert (cursor.name, "cursor needs a name")
+	assert (cursor.image, "cursor needs an image")
+
+	-- default hotspot to top-left corner
+	cursor.hotspot = cursor.hotspot or {x = 0, y = 0}
+
+	self.cursor = cursor
+
+	debug:append (string.format("set cursor %q", cursor.name))
+
+end
+
+function cursor:mousemoved (x, y, dx, dy, istouch)
+
+	-- adjust to scale
+	x = math.floor (x / slime.scale)
+	y = math.floor (y / slime.scale)
+
+	-- adjust draw position to center around the hotspot
+	if self.cursor then
+		self.x = x - self.cursor.hotspot.x
+		self.y = y - self.cursor.hotspot.y
+	else
+		self.x, self.y = x, y
+	end
 
 end
 
@@ -2035,6 +2046,7 @@ end
 -- Call this when setting up a room.
 function slime:clear ()
 
+	self.scale = 1
     actors:clear ()
     backgrounds:clear ()
     chains:clear ()
@@ -2052,12 +2064,9 @@ end
 -- Call this when starting a new game.
 function slime:reset ()
 
-	if not self.isReady then
-		self.isReady = true
-		self:clear ()
-		bags:clear ()
-		settings:clear ()
-	end
+	self:clear ()
+	bags:clear ()
+	settings:clear ()
 
 end
 
@@ -2080,7 +2089,7 @@ end
 -- Draw at the given scale.
 function slime:draw (scale)
 
-    scale = scale or 1
+    self.scale = scale or 1
 
     -- reset draw color
     love.graphics.setColor (1, 1, 1)
@@ -2097,7 +2106,7 @@ function slime:draw (scale)
     -- status text
     if (self.statusText) then
         local y = settings["status position"]
-        local w = love.graphics.getWidth() / scale
+        local w = love.graphics.getWidth() / self.scale
         love.graphics.setFont(settings["status font"])
         -- Outline
         love.graphics.setColor({0, 0, 0, 255})
@@ -2108,6 +2117,12 @@ function slime:draw (scale)
 
 	speech:draw ()
 	cursor:draw ()
+
+end
+
+function slime:mousemoved (x, y, dx, dy, istouch)
+
+	cursor:mousemoved (x, y, dx, dy, istouch)
 
 end
 
@@ -2242,10 +2257,17 @@ function slime.background (self, ...)
 
 end
 
-function slime.setCursor (self, ...)
+function slime.setCursor (self, name, image, hotspot, quad)
 
 	print ("slime.setCursor will be obsoleted, use slime.cursor:set()")
-	cursor:set (...)
+
+	local data = {
+		name = name,
+		image = image,
+		quad = quad,
+		hotspot = hotspot
+	}
+	cursor:set (data)
 
 end
 
@@ -2653,5 +2675,4 @@ slime.layers = layers
 slime.settings = settings
 slime.speech = speech
 slime.wait = chains.wait
-slime:reset ()
 return slime
