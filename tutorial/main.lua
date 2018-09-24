@@ -14,6 +14,8 @@ function cell.setup ()
 
     -- Apply the walk-behind layer
     slime:layer("images/cell-background.png", "images/cell-layer.png", 50)
+    --slime:layer("images/cell-background.png", "images/cell-floor-closed.png", 30)
+    --slime:layer("images/cell-background.png", "images/cell-floor-open.png", 40)
 
     -- Set the floor
     slime:floor("images/cell-floor-closed.png")
@@ -752,7 +754,7 @@ function love.draw ()
     love.graphics.scale(scale)
     slime:draw(scale)
     love.graphics.pop()
-    slime.debug:draw(scale)
+    slime.ooze:draw (scale)
 end
 
 function love.update (dt)
@@ -791,8 +793,9 @@ end
 -- Left clicking moves our Ego actor, and interacts with objects.
 function love.mousepressed (x, y, button)
 
-	if slime.debug:mousepressed (x, y, button, istouch, presses) then
-		-- debug handled this event
+	if slime.ooze:mousepressed (x, y, button, istouch, presses) then
+		-- handled this event
+		print ("triggered")
 		return
 	end
 
@@ -868,5 +871,5 @@ function slime.events.speech (self, actor, started, ended)
 end
 
 function slime.events.animation (self, actor, key)
-	print ("animation", actor, key)
+	--print ("animation", actor, key)
 end

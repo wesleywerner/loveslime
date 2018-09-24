@@ -98,7 +98,7 @@ local settings = { }
 local speech = { }
 
 -- Provides an integrated debugging environment
-local debug = { }
+local ooze = { }
 
 
 -- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
@@ -335,7 +335,7 @@ function actors:updatePath (actor, dt)
 		-- the goal is reached
         if (#actor.path == 0) then
 
-			debug:append (actor.name .. " moved complete")
+			ooze:append (actor.name .. " moved complete")
             actor.path = nil
             actor.action = "idle"
 
@@ -508,7 +508,7 @@ function actors:move (name, x, y)
 
 	-- intercept chaining
 	if chains.capturing then
-		debug:append (string.format("chaining %s move", name))
+		ooze:append (string.format("chaining %s move", name))
 		chains:add (actors.move,
 			{self, name, x, y},
 			-- expires when actor path is empty
@@ -526,7 +526,7 @@ function actors:move (name, x, y)
     local actor = self:get (name)
 
     if (actor == nil) then
-        debug:append ("No actor named " .. name)
+        ooze:append ("No actor named " .. name)
         return
     end
 
@@ -555,9 +555,9 @@ function actors:move (name, x, y)
 		actor.previousX, actor.previousY = actor.x, actor.y
 		actor.direction = actors:directionOf (actor.x, actor.y, x, y)
 		-- Output debug
-		debug:append ("move " .. name .. " to " .. x .. " : " .. y)
+		ooze:append ("move " .. name .. " to " .. x .. " : " .. y)
 	else
-		debug:append ("no actor path found")
+		ooze:append ("no actor path found")
 	end
 
 end
@@ -574,7 +574,7 @@ function actors:turn (name, direction)
 
 	-- intercept chaining
 	if chains.capturing then
-		debug:append (string.format("chaining %s turn %s", name, direction))
+		ooze:append (string.format("chaining %s turn %s", name, direction))
 		chains:add (actors.turn, {self, name, direction})
 		return
 	end
@@ -603,7 +603,7 @@ function actors:moveTowards (name, target)
     if (targetActor) then
         self:move (name, targetActor.x, targetActor.y)
     else
-        debug:append ("no actor named " .. target)
+        ooze:append ("no actor named " .. target)
     end
 
 end
@@ -914,7 +914,7 @@ function bags:add (name, object)
     -- OBSOLETE: replaced by events.bag
     slime.inventoryChanged (name)
 
-	debug:append (string.format("Added %s to bag", object.name))
+	ooze:append (string.format("Added %s to bag", object.name))
 
 end
 
@@ -932,7 +932,7 @@ function bags:remove (name, thingName)
 	for i, item in pairs(inv) do
 		if (item.name == thingName) then
 			table.remove(inv, i)
-			debug:append (string.format("Removed %s", thingName))
+			ooze:append (string.format("Removed %s", thingName))
 			slime.inventoryChanged (name)
 		end
 	end
@@ -1069,13 +1069,13 @@ function chains:capture (name, userFunction)
 	if not self.capturing then
 		self.capturing = { name = name, actions = { } }
 		self.list[name] = self.capturing
-		debug:append (string.format ("created chain %q", name))
+		ooze:append (string.format ("created chain %q", name))
 	end
 
 	-- queue custom function
 	if type (userFunction) == "function" then
 		self:add (userFunction, { })
-		debug:append (string.format("user function chained"))
+		ooze:append (string.format("user function chained"))
 	end
 
 	-- return the slime instance to allow further action chaining
@@ -1136,7 +1136,7 @@ function chains:update (dt)
 
 			-- run the action once only
 			if not command.ran then
-				--debug:append (string.format("running chain command"))
+				--ooze:append (string.format("running chain command"))
 				command.ran = true
 				command.func (unpack (command.parameters))
 			end
@@ -1146,7 +1146,7 @@ function chains:update (dt)
 
 			-- remove expired actions from this chain
 			if skipTest or command.expired (command.parameters, dt) then
-				--debug:append (string.format("chain action expired"))
+				--ooze:append (string.format("chain action expired"))
 				table.remove (chain.actions, 1)
 			end
 
@@ -1164,7 +1164,7 @@ function chains:wait (seconds)
 
 	if chains.capturing then
 
-		--debug:append (string.format("waiting %ds", seconds))
+		--ooze:append (string.format("waiting %ds", seconds))
 
 		chains:add (chains.wait,
 
@@ -1342,7 +1342,7 @@ function cursor:set (cursor)
 
 	self.cursor = cursor
 
-	debug:append (string.format("set cursor %q", cursor.name))
+	ooze:append (string.format("set cursor %q", cursor.name))
 
 end
 
@@ -1359,118 +1359,6 @@ function cursor:mousemoved (x, y, dx, dy, istouch)
 	else
 		self.x, self.y = x, y
 	end
-
-end
-
-
--- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
---   ___   ___ _______
---  / _ \ / _ \_  / _ \
--- | (_) | (_) / /  __/
---  \___/ \___/___\___|
---
--- Provides helpful debug information while building your game.
-
---- Clear and reset debug variables.
-function debug:clear ()
-
-	self.log = { }
-	self.enabled = true
-
-	-- debug border
-	self.padding = 10
-	self.width, self.height = love.graphics.getDimensions ()
-	self.width = self.width - (self.padding * 2)
-	self.height = self.height - (self.padding * 2)
-
-	-- the alpha for debug outlines
-	local alpha = 0.42
-
-	-- define colors for debug outlines
-	self.hotspotColor = {1, 1, 0, alpha}
-	self.actorColor = {0, 0, 1, alpha}
-	self.layerColor = {1, 0, 0, alpha}
-	self.textColor = {0, 1, 0, alpha}
-
-	-- the font for printing debug texts
-	self.font = love.graphics.newFont (12)
-
-end
-
-
---- Append to the log.
---
--- @local
-function debug:append (text)
-
-    table.insert(self.log, text)
-
-    -- cull the log
-    if (#self.log > 10) then
-		table.remove(self.log, 1)
-	end
-
-end
-
-
---- Draw the debug overlay.
-function debug:draw (scale)
-
-	-- draw the debug frame
-	love.graphics.setColor (self.textColor)
-	love.graphics.rectangle ("line", self.padding, self.padding, self.width, self.height)
-	love.graphics.setFont (self.font)
-	love.graphics.printf ("SLIME DEBUG", self.padding, self.padding, self.width, "center")
-
-    -- print fps
-    love.graphics.print (tostring(love.timer.getFPS()) .. " fps", self.padding, self.padding)
-
-    -- print background info
-    if (backgrounds.index and backgrounds.timer) then
-        love.graphics.print(
-			string.format("background #%d showing for %.1f",
-			backgrounds.index, backgrounds.timer), 60, 10)
-    end
-
-	-- print log
-    for i, n in ipairs(self.log) do
-        love.graphics.print (n, self.padding, self.padding * 3 + (16 * i))
-    end
-
-	-- draw object outlines to scale
-	love.graphics.push ()
-	love.graphics.scale (scale)
-
-    -- outline hotspots
-	love.graphics.setColor (self.hotspotColor)
-    for ihotspot, hotspot in pairs(hotspots.list) do
-        love.graphics.rectangle ("line", hotspot.x, hotspot.y, hotspot.w, hotspot.h)
-    end
-
-    -- outline actors
-    for _, actor in ipairs(actors.list) do
-        if actor.isactor then
-			love.graphics.setColor (self.actorColor)
-			-- TODO calculate draw position in actor:update
-            love.graphics.rectangle("line", actor.drawX, actor.drawY, actor.width, actor.height)
-            love.graphics.circle("line", actor.x, actor.y, 1, 6)
-        elseif actor.islayer then
-            -- draw baselines for layers
-			love.graphics.setColor (self.layerColor)
-            love.graphics.line(0, actor.baseline, self.width, actor.baseline)
-        end
-    end
-
-    love.graphics.pop ()
-
-end
-
-
-function debug:mousepressed (x, y, button, istouch, presses)
-
-end
-
-function debug:keypressed (key)
 
 end
 
@@ -1838,6 +1726,258 @@ function layers:convertMask (source, mask)
 end
 
 
+
+-- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+--   ___   ___ _______
+--  / _ \ / _ \_  / _ \
+-- | (_) | (_) / /  __/
+--  \___/ \___/___\___|
+--
+-- Provides helpful debug information while building your game.
+
+-- components inside ooze:
+
+-- Logs events
+ooze.logger = { }
+
+-- Outlines stage elements
+ooze.outliner = { }
+
+-- Handles the trigger area
+ooze.trigger = { }
+
+
+--- Clear and reset debug variables.
+function ooze:clear ()
+
+	self.trigger:init ()
+	self.logger:init ()
+	self.outliner:init ()
+
+	-- list available ooze states
+	self.states = { nil, self.logger, self.outliner }
+	self.index = 1
+
+end
+
+
+--- Append to the log.
+--
+-- @local
+function ooze:append (text)
+
+	self.logger:append (text)
+
+end
+
+
+--- Draw the debug overlay.
+function ooze:draw (scale)
+
+	self.trigger:draw (scale)
+
+	if self.states[self.index] then
+		self.states[self.index]:draw (scale)
+	end
+
+end
+
+
+function ooze:mousepressed (x, y, button, istouch, presses)
+
+	-- test if the trigger zone was clicked
+	if self.trigger:mousepressed (x, y) then
+
+		-- move to the next state
+		self.index = self.index + 1
+
+		-- wrap states
+		if self.index > #self.states then
+			self.index = 1
+		end
+
+		--print ("ooze state", self.index, self.states[self.index])
+
+		return true
+	end
+
+	-- pass this event through to the current state
+	local state = self.states[self.index]
+	if state and state.mousepressed then
+		state:mousepressed (x, y, button, istouch, presses)
+	end
+
+end
+
+
+--                       _
+--   ___   ___ _______  | | ___   __ _  __ _  ___ _ __
+--  / _ \ / _ \_  / _ \ | |/ _ \ / _` |/ _` |/ _ \ '__|
+-- | (_) | (_) / /  __/ | | (_) | (_| | (_| |  __/ |
+--  \___/ \___/___\___| |_|\___/ \__, |\__, |\___|_|
+--                               |___/ |___/
+--
+
+function ooze.logger:init ()
+
+	self.log = { }
+
+	-- debug border
+	self.padding = 10
+	self.width, self.height = love.graphics.getDimensions ()
+	self.width = self.width - (self.padding * 2)
+	self.height = self.height - (self.padding * 2)
+
+	-- the font for printing debug texts
+	self.font = love.graphics.newFont (12)
+	self.color = {0, 1, 0}
+
+end
+
+function ooze.logger:append (text)
+
+    table.insert(self.log, text)
+
+    -- cull the log
+    if (#self.log > 20) then
+		table.remove(self.log, 1)
+	end
+
+end
+
+function ooze.logger:draw (scale)
+
+	love.graphics.setColor (self.color)
+	love.graphics.setFont (self.font)
+
+    -- print fps
+    love.graphics.printf (
+		string.format("%d fps", love.timer.getFPS()),
+		self.padding, self.padding, self.width, "center")
+
+    -- print background info
+    if (backgrounds.index and backgrounds.timer) then
+		love.graphics.printf (
+			string.format("background #%d showing for %.1f",
+			backgrounds.index, backgrounds.timer),
+			self.padding, self.padding, self.width, "right")
+	end
+
+	-- print log
+    for i, n in ipairs(self.log) do
+		love.graphics.setColor ({0, 0, 0})
+        love.graphics.print (n, self.padding + 1, self.padding + 1 + (16 * i))
+		love.graphics.setColor (self.color)
+        love.graphics.print (n, self.padding, self.padding + (16 * i))
+    end
+
+end
+
+
+--                                   _   _ _
+--   ___   ___ _______    ___  _   _| |_| (_)_ __   ___ _ __
+--  / _ \ / _ \_  / _ \  / _ \| | | | __| | | '_ \ / _ \ '__|
+-- | (_) | (_) / /  __/ | (_) | |_| | |_| | | | | |  __/ |
+--  \___/ \___/___\___|  \___/ \__,_|\__|_|_|_| |_|\___|_|
+--
+
+function ooze.outliner:init ()
+
+	self.width, self.height = love.graphics.getDimensions ()
+
+	self.hotspotColor = {1, 1, 0, 0.8}	-- yellow
+	self.actorColor = {0, 0, 1, 0.8}	-- blue
+
+	-- list of colors we can cycle through so each layer has it's own.
+	self.layerColors = {
+		{1, 0, 0, 0.5},		-- red
+		{0, 1, 0, 0.5}, 	-- green
+		{0.5, 0, 1, 0.5}, 	-- purple
+		{1, 0, 1, 0.5}, 	-- magenta
+	}
+
+end
+
+function ooze.outliner:draw (scale)
+
+	-- draw object outlines to scale
+	love.graphics.push ()
+	love.graphics.scale (scale)
+
+    -- outline hotspots
+	love.graphics.setColor (self.hotspotColor)
+    for ihotspot, hotspot in pairs(hotspots.list) do
+        love.graphics.rectangle ("line", hotspot.x, hotspot.y, hotspot.w, hotspot.h)
+    end
+
+    -- track layer counter
+    local layerCounter = 1
+
+    -- outline actors
+    for _, actor in ipairs(actors.list) do
+        if actor.isactor then
+			love.graphics.setColor (self.actorColor)
+			-- TODO calculate draw position in actor:update
+            love.graphics.rectangle("line", actor.drawX, actor.drawY, actor.width, actor.height)
+            love.graphics.circle("line", actor.x, actor.y, 1, 6)
+        elseif actor.islayer then
+            -- draw baselines for layers
+            local layerColorIndex = math.max (1, layerCounter % (#self.layerColors + 1))
+			love.graphics.setColor (self.layerColors[layerColorIndex])
+			love.graphics.draw (actor.image)
+            love.graphics.line(0, actor.baseline, self.width, actor.baseline)
+            layerCounter = layerCounter + 1
+        end
+    end
+
+    love.graphics.pop ()
+
+end
+
+
+--                       _        _
+--   ___   ___ _______  | |_ _ __(_) __ _  __ _  ___ _ __
+--  / _ \ / _ \_  / _ \ | __| '__| |/ _` |/ _` |/ _ \ '__|
+-- | (_) | (_) / /  __/ | |_| |  | | (_| | (_| |  __/ |
+--  \___/ \___/___\___|  \__|_|  |_|\__, |\__, |\___|_|
+--                                  |___/ |___/
+
+function ooze.trigger:init ()
+
+	self.width, self.height = love.graphics.getDimensions ()
+	self.borderColor = {0, 1, 0}
+	self.triggerColor = {0, 1, 0, 0.42}
+
+	-- radius of the trigger area in the screen corner
+	self.triggerSize = 20
+
+	self.triggerX = 0
+	self.triggerY = self.height
+
+end
+
+function ooze.trigger:draw (scale)
+
+	love.graphics.setColor (self.borderColor)
+	love.graphics.rectangle ("line", 0, 0, self.width, self.height)
+	love.graphics.setColor (self.triggerColor)
+	love.graphics.circle ("fill", self.triggerX, self.triggerY, self.triggerSize)
+
+end
+
+function ooze.trigger:mousepressed (x, y, button, istouch, presses)
+
+	-- check distance to the trigger zone.
+	-- return true when the event should be handled.
+	local dx = x - self.triggerX
+	local dy = y - self.triggerY
+	local dist = math.sqrt (dx * dx + dy * dy)
+	return dist < self.triggerSize
+
+end
+
+
+
 -- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 --              _   _
 --  _ __   __ _| |_| |__
@@ -2199,7 +2339,7 @@ function speech:say (name, text, seconds)
 
 	-- intercept chaining
 	if chains.capturing then
-		debug:append (string.format("chaining %s say", name))
+		ooze:append (string.format("chaining %s say", name))
 		chains:add (speech.say,
 					{self, name, text, seconds},
 					-- expires when actor is not talking
@@ -2217,7 +2357,7 @@ function speech:say (name, text, seconds)
         }
 
     if (not newSpeech.actor) then
-        debug:append ("Speech failed: No actor named " .. name)
+        ooze:append ("Speech failed: No actor named " .. name)
         return
     end
 
@@ -2364,7 +2504,6 @@ function slime:clear ()
     backgrounds:clear ()
     chains:clear ()
 	cursor:clear ()
-    debug:clear ()
     floors:clear ()
     hotspots:clear ()
     speech:clear ()
@@ -2381,6 +2520,7 @@ function slime:reset ()
 	bags:clear ()
 	settings:clear ()
 	cache:init ()
+    ooze:clear ()
 
 end
 
@@ -2504,7 +2644,7 @@ function slime:interact (x, y)
 	local cursorname = cursor:getName ()
 
     for i, object in pairs(objects) do
-		debug:append (cursorname .. " on " .. object.name)
+		ooze:append (cursorname .. " on " .. object.name)
 
 		-- notify the interact callback
 		events.interact (self, cursorname, object)
@@ -2760,7 +2900,7 @@ function slime.setAnimation (self, name, key)
     local actor = self:getActor(name)
 
     if (not actor) then
-        debug:append ("Set animation failed: no actor named " .. name)
+        ooze:append ("Set animation failed: no actor named " .. name)
     else
         actor.customAnimationKey = key
         -- reset the animation counter
@@ -2793,7 +2933,7 @@ function slime.setImage (self, image)
     local actor = self
 
     if (not actor) then
-        debug:append ("slime.Image method should be called from an actor instance")
+        ooze:append ("slime.Image method should be called from an actor instance")
     else
         image = love.graphics.newImage(image)
         actor.image = image
@@ -2974,7 +3114,7 @@ slime.backgrounds = backgrounds
 slime.bags = bags
 slime.chain = chains
 slime.cursor = cursor
-slime.debug = debug
+slime.ooze = ooze
 slime.events = events
 slime.floors = floors
 slime.layers = layers
