@@ -1,4 +1,12 @@
 --- A point-and-click adventure game library for LÖVE.
+--
+-- Local functions are  used internally by SLIME, you are free
+-- to call these from your game if they fit a specific need.
+--
+-- If SLIME is missing some kind
+-- of feature that you need, don't hestiate to open a ticket at
+-- https://github.com/wesleywerner/loveslime
+--
 -- @module init
 local slime = {
   _VERSION     = 'slime v0.1',
@@ -34,23 +42,66 @@ local slime = {
 -- https://github.com/kikito/anim8
 local anim8 = require 'slime.anim8'
 
+-- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+--                                                   _
+--   ___ ___  _ __ ___  _ __   ___  _ __   ___ _ __ | |_ ___
+--  / __/ _ \| '_ ` _ \| '_ \ / _ \| '_ \ / _ \ '_ \| __/ __|
+-- | (_| (_) | | | | | | |_) | (_) | | | |  __/ | | | |_\__ \
+--  \___\___/|_| |_| |_| .__/ \___/|_| |_|\___|_| |_|\__|___/
+--                     |_|
+--
+-- SLIME is structured into a modular component pattern.
+-- Functionality is separated into logical tables (components) that
+-- isolate their behaviour from each other.
+
+-- Handles animated sprites and calling the events.animation event.
 local animations = { }
+
+-- Manages actors on stage.
 local actors = { }
+
+-- Manages still and animated backgrounds.
 local backgrounds = { }
+
+-- Simple inventory storage component.
 local bags = { }
+
+-- Cache images for optimized memory usage.
 local cache = { }
+
+-- Provides chaining of actions to create scripted scenes.
 local chains = { }
+
+-- Callback events which the calling code can hook into.
 local events = { }
-local debug = { }
+
+-- Manages the on-screen cursor.
 local cursor = { }
+
+-- Provides interactive hotspots on the stage, specifically areas
+-- that do draw themselves on screen.
 local hotspots = { }
+
+-- Manages the walkable areas.
 local floors = { }
+
+-- Manages walk-behind layers.
 local layers = { }
+
+-- Provides path finding for actor movement.
 local path = { }
+
+-- Collection of settings that changes SLIME behaviour.
 local settings = { }
+
+-- Manages talking actors.
 local speech = { }
 
+-- Provides an integrated debugging environment
+local debug = { }
 
+
+-- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 --               _
 --     __ _  ___| |_ ___  _ __ ___
 --    / _` |/ __| __/ _ \| '__/ __|
@@ -74,6 +125,9 @@ local speech = { }
 -- Position of the actor's feet relative to the sprite.
 
 --- Clear actors.
+-- This gets called by @{slime:clear}
+--
+-- @local
 function actors:clear ( )
 
 	self.list = { }
@@ -569,6 +623,7 @@ function actors:stop (name)
 
 end
 
+-- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 --              _                 _   _
 --   __ _ _ __ (_)_ __ ___   __ _| |_(_) ___  _ __  ___
 --  / _` | '_ \| | '_ ` _ \ / _` | __| |/ _ \| '_ \/ __|
@@ -578,7 +633,7 @@ end
 
 --- Draw an actor's animation frame.
 --
--- @tparam actor actor
+-- @tparam actor entity
 -- The actor to draw.
 --
 -- @local
@@ -626,14 +681,8 @@ end
 
 --- Update animation.
 --
--- @tparam string actor
--- Name of the actor being updated.
---
--- @tparam sprites sprites
--- Table of sprite animation info.
---
--- @tparam string key
--- The animation key to update.
+-- @tparam actor entity
+-- The entity to update.
 --
 -- @tparam int dt
 -- Delta time since last update.
@@ -708,12 +757,13 @@ function animations:update (entity, dt)
 end
 
 
---~  _                _                                   _
---~ | |__   __ _  ___| | ____ _ _ __ ___  _   _ _ __   __| |___
---~ | '_ \ / _` |/ __| |/ / _` | '__/ _ \| | | | '_ \ / _` / __|
---~ | |_) | (_| | (__|   < (_| | | | (_) | |_| | | | | (_| \__ \
---~ |_.__/ \__,_|\___|_|\_\__, |_|  \___/ \__,_|_| |_|\__,_|___/
---~ 				      |___/
+-- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+--  _                _                                   _
+-- | |__   __ _  ___| | ____ _ _ __ ___  _   _ _ __   __| |___
+-- | '_ \ / _` |/ __| |/ / _` | '__/ _ \| | | | '_ \ / _` / __|
+-- | |_) | (_| | (__|   < (_| | | | (_) | |_| | | | | (_| \__ \
+-- |_.__/ \__,_|\___|_|\_\__, |_|  \___/ \__,_|_| |_|\__,_|___/
+-- 				      |___/
 
 --- Add a background.
 -- Called multiple times, is how one creates animated backgrounds,
@@ -750,6 +800,9 @@ function backgrounds:add (path, seconds)
 end
 
 --- Clear all backgrounds.
+-- This gets called by @{slime:clear}
+--
+-- @local
 function backgrounds:clear ()
 
 	-- stores the list of backgrounds
@@ -816,15 +869,18 @@ function backgrounds:update (dt)
 end
 
 
-
---~  _
---~ | |__   __ _  __ _ ___
---~ | '_ \ / _` |/ _` / __|
---~ | |_) | (_| | (_| \__ \
---~ |_.__/ \__,_|\__, |___/
---~              |___/
+-- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+--  _
+-- | |__   __ _  __ _ ___
+-- | '_ \ / _` |/ _` / __|
+-- | |_) | (_| | (_| \__ \
+-- |_.__/ \__,_|\__, |___/
+--              |___/
 
 --- Clear all bags.
+-- This gets called by @{slime:clear}
+--
+-- @local
 function bags:clear ()
 
 	self.contents = { }
@@ -903,6 +959,7 @@ function bags:contains (name, thingName)
 end
 
 
+-- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 --                 _
 --   ___ __ _  ___| |__   ___
 --  / __/ _` |/ __| '_ \ / _ \
@@ -948,6 +1005,7 @@ function cache:interface (path)
 end
 
 
+-- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 --       _           _
 --   ___| |__   __ _(_)_ __  ___
 --  / __| '_ \ / _` | | '_ \/ __|
@@ -958,6 +1016,9 @@ end
 
 --- Clear all chained actions.
 -- Call this to start or append an actor action to build a chain of events.
+-- This gets called by @{slime:clear}
+--
+-- @local
 function chains:clear ()
 
 	-- Allow calling this table like it was a function.
@@ -990,7 +1051,7 @@ end
 -- @return The slime instance
 --
 -- @function chain
--- @see @{chains_example.lua}
+-- @see chains_example.lua
 function chains:capture (name, userFunction)
 
 	-- catch obsolete usage
@@ -1123,6 +1184,7 @@ function chains:wait (seconds)
 end
 
 
+-- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 --                       _
 --   _____   _____ _ __ | |_ ___
 --  / _ \ \ / / _ \ '_ \| __/ __|
@@ -1201,6 +1263,7 @@ function events.speech (self, actor, started, ended)
 end
 
 
+-- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 --   ___ _   _ _ __ ___  ___  _ __
 --  / __| | | | '__/ __|/ _ \| '__|
 -- | (__| |_| | |  \__ \ (_) | |
@@ -1228,6 +1291,9 @@ end
 
 
 --- Clear the custom cursor.
+-- This gets called by @{slime:clear}
+--
+-- @local
 function cursor:clear ()
 
 	self.cursor = nil
@@ -1297,15 +1363,15 @@ function cursor:mousemoved (x, y, dx, dy, istouch)
 end
 
 
---        _      _
---     __| | ___| |__  _   _  __ _
---    / _` |/ _ \ '_ \| | | |/ _` |
---   | (_| |  __/ |_) | |_| | (_| |
---    \__,_|\___|_.__/ \__,_|\__, |
---                           |___/
+-- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+--   ___   ___ _______
+--  / _ \ / _ \_  / _ \
+-- | (_) | (_) / /  __/
+--  \___/ \___/___\___|
+--
 -- Provides helpful debug information while building your game.
 
---- Clear the debug log
+--- Clear and reset debug variables.
 function debug:clear ()
 
 	self.log = { }
@@ -1400,14 +1466,27 @@ function debug:draw (scale)
 end
 
 
---~   __ _
---~  / _| | ___   ___  _ __ ___
---~ | |_| |/ _ \ / _ \| '__/ __|
---~ |  _| | (_) | (_) | |  \__ \
---~ |_| |_|\___/ \___/|_|  |___/
+function debug:mousepressed (x, y, button, istouch, presses)
+
+end
+
+function debug:keypressed (key)
+
+end
+
+
+-- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+--   __ _
+--  / _| | ___   ___  _ __ ___
+-- | |_| |/ _ \ / _ \| '__/ __|
+-- |  _| | (_) | (_) | |  \__ \
+-- |_| |_|\___/ \___/|_|  |___/
 
 
 --- Clear walkable floors.
+-- This gets called by @{slime:clear}
+--
+-- @local
 function floors:clear ()
 
 	self.walkableMap = nil
@@ -1635,7 +1714,7 @@ function floors:findNearestOpenPoint (point)
 end
 
 
-
+-- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 --    _           _                   _
 --   | |__   ___ | |_ ___ _ __   ___ | |_ ___
 --   | '_ \ / _ \| __/ __| '_ \ / _ \| __/ __|
@@ -1644,6 +1723,9 @@ end
 --                       |_|
 
 --- Clear hotspots.
+-- This gets called by @{slime:clear}
+--
+-- @local
 function hotspots:clear ()
 
 	self.list = { }
@@ -1675,6 +1757,7 @@ function hotspots:add (name, x, y, w, h)
 end
 
 
+-- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 --    _
 --   | | __ _ _   _  ___ _ __ ___
 --   | |/ _` | | | |/ _ \ '__/ __|
@@ -1755,6 +1838,7 @@ function layers:convertMask (source, mask)
 end
 
 
+-- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 --              _   _
 --  _ __   __ _| |_| |__
 -- | '_ \ / _` | __| '_ \
@@ -1763,21 +1847,48 @@ end
 -- |_|
 --
 
--- Clear all cached paths
+--- A 2D point.
+--
+-- @tparam int x
+-- @tparam int y
+-- @table point
+
+
+--- Clear all cached paths
+-- This gets called by @{slime:clear}
+--
+-- @local
 function path:clear ()
 
     self.cache = nil
 
 end
 
--- Gets a unique start/goal key
+--- Gets a unique key for a start and goal point.
+-- The key is used for caching paths.
+--
+-- @tparam point start
+-- The start point.
+--
+-- @tparam point goal
+-- The goal point.
+--
+-- @local
 function path:keyOf (start, goal)
 
     return string.format("%d,%d>%d,%d", start.x, start.y, goal.x, goal.y)
 
 end
 
--- Returns the cached path
+--- Get a cached path.
+--
+-- @tparam point start
+-- The start point.
+--
+-- @tparam point goal
+-- The goal point.
+--
+-- @local
 function path:getCached (start, goal)
 
     if self.cache then
@@ -1787,7 +1898,18 @@ function path:getCached (start, goal)
 
 end
 
--- Saves a path to the cache
+--- Saves a path to the cache.
+--
+-- @tparam point start
+-- The start point.
+--
+-- @tparam point goal
+-- The goal point.
+--
+-- @tparam table path
+-- List of points representing a path.
+--
+-- @local
 function path:saveCached (start, goal, path)
 
     self.cache = self.cache or { }
@@ -1833,10 +1955,21 @@ function path:clamp (x, min, max)
 
 end
 
--- Get movement cost.
+--- Get movement cost.
+--
+-- @tparam point previous
+-- The previous point in the path.
+--
+-- @tparam point node
+-- Current point in the path.
+--
+-- @tparam point goal
+-- The goal point to reach.
+--
 -- G is the cost from START to this node.
 -- H is a heuristic cost, in this case the distance from this node to the goal.
--- Returns F, the sum of G and H.
+--
+-- @return F, the sum of G and H.
 function path:calculateScore (previous, node, goal)
 
     local G = previous.score + 1
@@ -1852,12 +1985,15 @@ end
 --
 -- @local
 function path:listContains (list, item)
+
     for _, test in ipairs(list) do
         if test.x == item.x and test.y == item.y then
             return true
         end
     end
+
     return false
+
 end
 
 --- Get an item in a list.
@@ -1868,11 +2004,13 @@ end
 --
 -- @local
 function path:listItem (list, item)
+
     for _, test in ipairs(list) do
         if test.x == item.x and test.y == item.y then
             return test
         end
     end
+
 end
 
 --- Get adjacent map points.
@@ -2023,7 +2161,7 @@ function path:find (width, height, start, goal, openTest, useCache)
 end
 
 
-
+-- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 --                           _
 --  ___ _ __   ___  ___  ___| |__
 -- / __| '_ \ / _ \/ _ \/ __| '_ \
@@ -2033,6 +2171,9 @@ end
 
 
 --- Clear queued speeches.
+-- This gets called by @{slime:clear}
+--
+-- @local
 function speech:clear ()
 
 	self.queue = { }
@@ -2203,6 +2344,7 @@ function speech:draw ()
 end
 
 
+-- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 --      _ _
 --  ___| (_)_ __ ___   ___
 -- / __| | | '_ ` _ \ / _ \
@@ -2211,8 +2353,10 @@ end
 --
 
 
---- Clear the room.
--- Call this when setting up a room.
+--- Clear the stage.
+-- Call this before setting up a new stage.
+-- Clears actors, backgrounds, chained actions, cursors,
+-- walkable floors, walk-behind layers, hotspots, speeches.
 function slime:clear ()
 
 	self.scale = 1
@@ -2229,7 +2373,7 @@ function slime:clear ()
 end
 
 --- Reset slime.
--- Clears everything, even bags and settings.
+-- This calls @{slime:clear} in addition to clearing bags and settings.
 -- Call this when starting a new game.
 function slime:reset ()
 
@@ -2374,14 +2518,18 @@ function slime:interact (x, y)
 end
 
 
---~           _   _   _
---~  ___  ___| |_| |_(_)_ __   __ _ ___
---~ / __|/ _ \ __| __| | '_ \ / _` / __|
---~ \__ \  __/ |_| |_| | | | | (_| \__ \
---~ |___/\___|\__|\__|_|_| |_|\__, |___/
-                          --~ |___/
+-- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+--           _   _   _
+--  ___  ___| |_| |_(_)_ __   __ _ ___
+-- / __|/ _ \ __| __| | '_ \ / _` / __|
+-- \__ \  __/ |_| |_| | | | | (_| \__ \
+-- |___/\___|\__|\__|_|_| |_|\__, |___/
+                          -- |___/
 
 --- Clear slime settings.
+-- This gets called by @{slime:reset}
+--
+-- @local
 function settings:clear ()
 
 	-- Let slime handle displaying of speech text on screen,
@@ -2404,6 +2552,7 @@ function settings:clear ()
 end
 
 
+-- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 --~        _               _      _
 --~   ___ | |__  ___  ___ | | ___| |_ ___
 --~  / _ \| '_ \/ __|/ _ \| |/ _ \ __/ _ \
@@ -2812,13 +2961,13 @@ function slime.internalAnimationLoop (frames, counter)
 end
 
 
-                            --~ _
---~   _____  ___ __   ___  _ __| |_
---~  / _ \ \/ / '_ \ / _ \| '__| __|
---~ |  __/>  <| |_) | (_) | |  | |_
---~  \___/_/\_\ .__/ \___/|_|   \__|
-          --~ |_|
-
+-- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+--                             _        _    ____ ___
+--   _____  ___ __   ___  _ __| |_     / \  |  _ \_ _|
+--  / _ \ \/ / '_ \ / _ \| '__| __|   / _ \ | |_) | |
+-- |  __/>  <| |_) | (_) | |  | |_   / ___ \|  __/| |
+--  \___/_/\_\ .__/ \___/|_|   \__| /_/   \_\_|  |___|
+--           |_|
 
 slime.actors = actors
 slime.backgrounds = backgrounds

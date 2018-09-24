@@ -791,6 +791,11 @@ end
 -- Left clicking moves our Ego actor, and interacts with objects.
 function love.mousepressed (x, y, button)
 
+	if slime.debug:mousepressed (x, y, button, istouch, presses) then
+		-- debug handled this event
+		return
+	end
+
     -- Adjust for scale
     x = math.floor(x / scale)
     y = math.floor(y / scale)
