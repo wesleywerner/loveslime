@@ -765,6 +765,7 @@ function love.update (dt)
 	end
 
     slime:update(dt)
+    slime.ooze:update (dt)
 
     -- display hover over objects
     local x, y = love.mouse.getPosition()
@@ -795,7 +796,6 @@ function love.mousepressed (x, y, button)
 
 	if slime.ooze:mousepressed (x, y, button, istouch, presses) then
 		-- handled this event
-		print ("triggered")
 		return
 	end
 
@@ -829,7 +829,14 @@ end
 
 function love.mousemoved (x, y, dx, dy, istouch)
 
-	slime:mousemoved (x, y, dx, dy, istouch)
+	slime.cursor:update (x, y)
+	slime.ooze:mousemoved (x, y, dx, dy, istouch)
+
+end
+
+function love.wheelmoved (x, y)
+
+	slime.ooze:wheelmoved (x, y)
 
 end
 

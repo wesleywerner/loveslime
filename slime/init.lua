@@ -100,6 +100,9 @@ local speech = { }
 -- Provides an integrated debugging environment
 local ooze = { }
 
+-- Reusable functions
+local tools = { }
+
 
 -- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 --               _
@@ -1346,7 +1349,11 @@ function cursor:set (cursor)
 
 end
 
-function cursor:mousemoved (x, y, dx, dy, istouch)
+--- Update the cursor position.
+--
+-- @tparam int x
+-- @tparam int y
+function cursor:update (x, y)
 
 	-- adjust to scale
 	x = math.floor (x / slime.scale)
@@ -1467,8 +1474,8 @@ function floors:isWalkable (x, y)
 
 	if self:hasMap () then
 		-- clamp to floor boundary
-		x = path:clamp (x, 1, self.width - 1)
-		y = path:clamp (y, 1, self.height - 1)
+		x = tools:clamp (x, 1, self.width - 1)
+		y = tools:clamp (y, 1, self.height - 1)
 		return self.walkableMap[y][x]
 	else
 		-- no floor is always walkable
@@ -1746,6 +1753,12 @@ ooze.outliner = { }
 -- Handles the trigger area
 ooze.trigger = { }
 
+-- Handles viewing animated sprites
+ooze.spriteview = { }
+
+-- Provides a reusable menu system
+ooze.menu = { }
+
 
 --- Clear and reset debug variables.
 function ooze:clear ()
@@ -1753,10 +1766,14 @@ function ooze:clear ()
 	self.trigger:init ()
 	self.logger:init ()
 	self.outliner:init ()
+	self.spriteview:init ()
+	self.menu:init ()
 
 	-- list available ooze states
-	self.states = { nil, self.logger, self.outliner }
+	self.states = { nil, self.logger, self.outliner, self.spriteview }
 	self.index = 1
+
+	self:loadMenu ()
 
 end
 
@@ -1774,7 +1791,11 @@ end
 --- Draw the debug overlay.
 function ooze:draw (scale)
 
+	-- drawing enabled ooze updates
+	self.enabled = true
+
 	self.trigger:draw (scale)
+	self.menu:draw ()
 
 	if self.states[self.index] then
 		self.states[self.index]:draw (scale)
@@ -1782,6 +1803,12 @@ function ooze:draw (scale)
 
 end
 
+
+function ooze:mousemoved (x, y, dx, dy, istouch)
+
+	self.menu:mousemoved (x, y, dx, dy, istouch)
+
+end
 
 function ooze:mousepressed (x, y, button, istouch, presses)
 
@@ -1796,7 +1823,8 @@ function ooze:mousepressed (x, y, button, istouch, presses)
 			self.index = 1
 		end
 
-		--print ("ooze state", self.index, self.states[self.index])
+		-- load new menu options
+		self:loadMenu ()
 
 		return true
 	end
@@ -1804,8 +1832,39 @@ function ooze:mousepressed (x, y, button, istouch, presses)
 	-- pass this event through to the current state
 	local state = self.states[self.index]
 	if state and state.mousepressed then
-		state:mousepressed (x, y, button, istouch, presses)
+		local handled = state:mousepressed (x, y, button, istouch, presses)
+		-- handled events are eaten up
+		if handled == true then
+			return handled
+		end
 	end
+
+end
+
+
+--- Loads the menu options for the state.
+--
+-- @local
+function ooze:loadMenu ()
+
+	local state = self.states[self.index]
+	if state and state.buildMenu then
+		self.menu:set (state:buildMenu())
+	else
+		self.menu:clear ()
+	end
+
+end
+
+function ooze:update (dt)
+
+	self.menu:update (dt)
+
+end
+
+function ooze:wheelmoved (x, y)
+
+	self.menu:wheelmoved (x, y)
 
 end
 
@@ -1934,6 +1993,14 @@ function ooze.outliner:draw (scale)
 
 end
 
+function ooze.outliner:buildMenu ()
+
+	return {
+
+	}
+
+end
+
 
 --                       _        _
 --   ___   ___ _______  | |_ _ __(_) __ _  __ _  ___ _ __
@@ -1968,13 +2035,273 @@ end
 function ooze.trigger:mousepressed (x, y, button, istouch, presses)
 
 	-- check distance to the trigger zone.
-	-- return true when the event should be handled.
-	local dx = x - self.triggerX
-	local dy = y - self.triggerY
-	local dist = math.sqrt (dx * dx + dy * dy)
+	local dist = tools:distance (x, y, self.triggerX, self.triggerY)
 	return dist < self.triggerSize
 
 end
+
+
+--                                      _ _               _
+--   ___   ___ _______   ___ _ __  _ __(_) |_ ___  __   _(_) _____      __
+--  / _ \ / _ \_  / _ \ / __| '_ \| '__| | __/ _ \ \ \ / / |/ _ \ \ /\ / /
+-- | (_) | (_) / /  __/ \__ \ |_) | |  | | ||  __/  \ V /| |  __/\ V  V /
+--  \___/ \___/___\___| |___/ .__/|_|  |_|\__\___|   \_/ |_|\___| \_/\_/
+--                          |_|
+
+function ooze.spriteview:init ()
+
+end
+
+function ooze.spriteview:draw (scale)
+	love.graphics.rectangle("fill", 0, 0, 100, 100)
+end
+
+function ooze.spriteview:mousepressed (x, y, button, istouch, presses)
+	return true
+end
+
+
+
+
+--   ___   ___ _______   _ __ ___   ___ _ __  _   _
+--  / _ \ / _ \_  / _ \ | '_ ` _ \ / _ \ '_ \| | | |
+-- | (_) | (_) / /  __/ | | | | | |  __/ | | | |_| |
+--  \___/ \___/___\___| |_| |_| |_|\___|_| |_|\__,_|
+
+--- Initialize the ooze menu.
+function ooze.menu:init (options)
+
+    -- the radius of the wheel
+    self.r = 100
+
+    -- seconds to wait before fading out
+    self.displayFor = 2
+
+    -- angle facing north
+    self.north = 270
+
+	self.screenWidth, self.screenHeight = love.graphics.getDimensions ()
+
+    -- start invisible
+    self.opacity = { dt = self.displayFor, amount = 0 }
+
+end
+
+--- Clear the ooze menu.
+function ooze.menu:clear ()
+
+	self.modes = nil
+
+end
+
+--- Set the ooze menu options.
+-- @tparam table option
+function ooze.menu:set (options)
+
+    -- the menu options
+    self.modes = {
+        "add",
+        "alter",
+        "delete",
+        "name",
+        "copy",
+        "paste",
+        "grid"
+    }
+
+    -- angle step size divided evenly between all modes
+    self.step = math.floor (360 / #self.modes)
+
+    -- set the first mode
+    self.mode = self.modes[1]
+
+    -- precalculate starting positions
+    self.points = { }
+    for n, mode in ipairs (self.modes) do
+        -- mind we store point angles in degrees!
+        local factor = n - 1
+        local itemAngle = self.north + (factor * self.step)
+        self.points[mode] = {
+            goal = itemAngle,
+            actual = itemAngle,
+            dt = 1,
+            scale = 1
+        }
+    end
+
+    -- set invisible
+    self.opacity = { dt = self.displayFor, amount = 0 }
+    self.x, self.y = love.mouse.getPosition ()
+
+end
+
+function ooze.menu.update (self, dt)
+
+	if not self.modes then
+		return
+	end
+
+    -- update actual angles to match goal angles
+    for key, point in pairs (self.points) do
+
+        point.dt = math.min (1, point.dt + dt)
+        point.actual = tools:lerp (point.actual, point.goal, point.dt)
+
+        -- adjust scale
+        if key == self.mode then
+            point.scale = math.min (1, point.scale + dt)
+        else
+            point.scale = math.max (0.5, point.scale - dt)
+        end
+
+    end
+
+    -- update opacity
+    self.opacity.dt = self.opacity.dt + dt
+    if self.opacity.dt > self.displayFor then
+        -- decrease
+        self.opacity.amount = math.max (0, self.opacity.amount - dt * 2)
+    elseif self.opacity.amount < 1 then
+        -- increase
+        self.opacity.amount = math.min (1, self.opacity.amount + dt * 2)
+    end
+
+end
+
+function ooze.menu:draw ()
+
+	if not self.modes then
+		return
+	end
+
+    --~ -- show the current mode as an icon always on-screen
+    --~ local icon = self.icons[self.mode]
+    --~ if icon then
+        --~ love.graphics.setColor (1, 1, 1, 0.4)
+        --~ love.graphics.draw (icon, 0, 0, 0, 0.5, 0.5)
+    --~ end
+
+    -- skip drawing further, since we are now invisible
+    if self.opacity.amount == 0 then
+        return
+    end
+
+    -- fill background
+    love.graphics.setColor ({0, 0, 0, math.min (self.opacity.amount, 0.5) })
+    love.graphics.circle ("fill", self.x, self.y, self.r * 1.2)
+
+    -- draw circumference
+    --love.graphics.setColor (1, 1, 1, self.opacity.amount * 0.1)
+    --love.graphics.circle ("line", self.x, self.y, self.r)
+
+    -- draw each mode at the actual angle
+    for key, point in pairs (self.points) do
+
+        -- convert the angle to radians before plotting
+        local angle = math.rad (point.actual)
+        local nx, ny = self:pointOnCircle (self.x, self.y, self.r, angle)
+
+        --~ -- fade the icon color into existence
+        --~ local keycolor = self.colors[key] or colors.white
+        --~ local r, g, b = unpack (keycolor)
+        --~ love.graphics.setColor (r, g, b, self.opacity.amount)
+
+        --~ -- draw the icon
+        --~ if self.icons[key] then
+            --~ love.graphics.draw (self.icons[key], nx, ny, 0, point.scale, point.scale, 32, 32)
+        --~ end
+
+		love.graphics.setColor ({1, 1, 1})
+        love.graphics.printf (key, nx, ny, self.r * 1, "left")
+
+    end
+
+    -- print the menu mode as centered text
+    --love.graphics.setFont (fonts.medium)
+    love.graphics.setColor ({1, 1, 1, self.opacity.amount })
+    love.graphics.printf (self.mode, self.x - self.r, self.y - 40, self.r * 2, "center")
+
+end
+
+function ooze.menu.mousemoved (self, x, y, dx, dy, istouch)
+    -- clamp the menu to the screen
+    self.x = tools:clamp (x, self.r, self.screenWidth - self.r)
+    self.y = tools:clamp (y, self.r, self.screenHeight - self.r)
+end
+
+function ooze.menu.mousepressed (self, x, y, button, istouch, presses)
+    if self.mode == "copy" then
+        local dump = require ("dump")
+        local ser = dump.tostring (frames.db)
+        love.system.setClipboardText (ser)
+        print (ser)
+    elseif self.mode == "paste" then
+        local contents = "return " .. love.system.getClipboardText ()
+		local loaded = loadstring(contents)
+		if type(loaded) == "function" then
+			frames.db = loaded()
+		else
+			print ("Content is not lua string")
+		end
+    end
+end
+
+function ooze.menu.wheelmoved (self, x, y)
+
+    -- prevent cycling on show
+    if self.opacity.amount == 0 then
+        self.opacity.dt = 1
+        return
+    end
+
+    if y then
+        for key, point in pairs (self.points) do
+            -- move the goal angle
+            point.goal = (point.goal + self.step * y)
+            -- reset the angle movement
+            point.dt = 0
+            -- the distance between the goal and the north point
+            -- determines the current mode, it can also vary up to
+            -- 12 degrees (depending how many modes you have, ala step size)
+            local diff = math.abs((point.goal % 360) - self.north)
+            if diff < 13 then
+                -- store the north facing mode
+                self.mode = key
+                -- store the point of reference
+                --self.point = point
+            end
+        end
+
+        -- keep opacity steady while scrolling the wheel
+        self.opacity.dt = 0
+    end
+end
+
+--- Returns a point on a circle.
+-- https://wesleywerner.github.io/harness/doc/modules/trig.html#module:pointOnCircle
+--
+-- @tparam number cx
+-- The origin of the circle
+--
+-- @tparam number cy
+-- The origin of the circle
+--
+-- @tparam number r
+-- The circle radius
+--
+-- @tparam number a
+-- The angle of the point to the origin.
+--
+-- @treturn number
+-- x, y
+function ooze.menu.pointOnCircle (self, cx, cy, r, a)
+
+    x = cx + r * math.cos(a)
+    y = cy + r * math.sin(a)
+    return x, y
+
+end
+
 
 
 
@@ -2058,42 +2385,6 @@ function path:saveCached (start, goal, path)
 
 end
 
---- Distance between two points.
--- This method doesn't bother getting the square root of s, it is faster
--- and it still works for our use.
---
--- @tparam int x1
--- @tparam int y1
--- @tparam int x2
--- @tparam int y2
---
--- @local
-function path:distance (x1, y1, x2, y2)
-
-	local dx = x1 - x2
-	local dy = y1 - y2
-	local s = dx * dx + dy * dy
-	return s
-
-end
-
---- Clamp a value to a range.
---
--- @tparam int x
--- The value to test.
---
--- @tparam int min
--- Minimum value.
---
--- @tparam int max
--- Maximum value.
---
--- @local
-function path:clamp (x, min, max)
-
-	return x < min and min or (x > max and max or x)
-
-end
 
 --- Get movement cost.
 --
@@ -2113,7 +2404,7 @@ end
 function path:calculateScore (previous, node, goal)
 
     local G = previous.score + 1
-    local H = self:distance (node.x, node.y, goal.x, goal.y)
+    local H = tools:distance (node.x, node.y, goal.x, goal.y)
     return G + H, G, H
 
 end
@@ -2187,8 +2478,8 @@ function path:getAdjacent (width, height, point, openTest)
     }
 
     for _, position in ipairs(positions) do
-        local px = self:clamp (point.x + position.x, 1, width)
-        local py = self:clamp (point.y + position.y, 1, height)
+        local px = tools:clamp (point.x + position.x, 1, width)
+        local py = tools:clamp (point.y + position.y, 1, height)
         local value = openTest (floors, px, py)
         if value then
             table.insert( result, { x = px, y = py  } )
@@ -2239,7 +2530,7 @@ function path:find (width, height, start, goal, openTest, useCache)
 
     start.score = 0
     start.G = 0
-    start.H = self:distance (start.x, start.y, goal.x, goal.y)
+    start.H = tools:distance (start.x, start.y, goal.x, goal.y)
     start.parent = { x = 0, y = 0 }
     table.insert(open, start)
 
@@ -2574,11 +2865,6 @@ function slime:draw (scale)
 
 end
 
-function slime:mousemoved (x, y, dx, dy, istouch)
-
-	cursor:mousemoved (x, y, dx, dy, istouch)
-
-end
 
 --- Get objects at a point.
 -- Includes actors, hotspots.
@@ -2691,6 +2977,54 @@ function settings:clear ()
 
 end
 
+
+--  _              _
+-- | |_ ___   ___ | |___
+-- | __/ _ \ / _ \| / __|
+-- | || (_) | (_) | \__ \
+--  \__\___/ \___/|_|___/
+--
+
+--- Linear interpolation.
+function tools:lerp (a, b, amount)
+    return a + (b - a) * self:clamp (amount, 0, 1)
+end
+
+--- Distance between two points.
+-- This method doesn't bother getting the square root of s, it is faster
+-- and it still works for our use.
+--
+-- @tparam int x1
+-- @tparam int y1
+-- @tparam int x2
+-- @tparam int y2
+--
+-- @local
+function tools:distance (x1, y1, x2, y2)
+
+	local dx = x1 - x2
+	local dy = y1 - y2
+	return math.sqrt (dx * dx + dy * dy)
+
+end
+
+--- Clamp a value to a range.
+--
+-- @tparam int x
+-- The value to test.
+--
+-- @tparam int min
+-- Minimum value.
+--
+-- @tparam int max
+-- Maximum value.
+--
+-- @local
+function tools:clamp (x, min, max)
+
+	return x < min and min or (x > max and max or x)
+
+end
 
 -- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 --~        _               _      _
