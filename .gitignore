@@ -1,5 +1,5 @@
 *.orig
 release/
-refresh-sprites.sh
-tutorial/slime
+examples/slime.lua
 doc/
+tutorial/slime
