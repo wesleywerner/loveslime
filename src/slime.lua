@@ -7,7 +7,7 @@
 -- of feature that you need, don't hestiate to open a ticket at
 -- https://github.com/wesleywerner/loveslime
 --
--- @module init
+-- @module slime
 local slime = {
   _VERSION     = 'slime v0.1',
   _DESCRIPTION = 'A point-and-click adventure game library for LÖVE',
@@ -138,6 +138,11 @@ end
 --
 -- @tparam actor actor
 function actors:add (actor)
+
+	-- get the size if a still image is set
+	if actor.image then
+		actor.width, actor.height = actor.image:getDimensions ()
+	end
 
 	assert (actor, "Actor definition must be given.")
 	assert (actor.x, "Actor x position must be given.")
@@ -291,6 +296,10 @@ function actors:updatePath (actor, dt)
 
         -- Check if the actor's speed is set to delay movement.
         -- If no speed is set, we move on every update.
+
+        -- TODO rename movedelay to speed.
+        -- 		(can we specify this as pixels per second?)
+        --		(one step on the path will be ~ 1 pixel)
         if (actor.movedelay) then
 
             -- start a new move delay counter
@@ -481,6 +490,9 @@ function actors:draw ()
 
 			if quad and tileset then
 				love.graphics.draw (tileset, quad, x, y, r, sx, sy, ox, oy)
+			elseif tileset then
+				-- drawable without a quad
+				love.graphics.draw (tileset, x, y, r, sx, sy, ox, oy)
 			end
 
         elseif actor.islayer then
@@ -505,6 +517,8 @@ end
 --
 -- @see floors:set
 function actors:move (name, x, y)
+
+	x, y = slime:scalePoint (x, y)
 
 	-- intercept chaining
 	if chains.capturing then
@@ -542,7 +556,15 @@ function actors:move (name, x, y)
 
 	local useCache = false
 	local width, height = floors:size ()
-	local route = path:find (width, height, start, goal, floors.isWalkable, useCache)
+
+	local route
+
+	if floors:hasMap () then
+		route = path:find (width, height, start, goal, floors.isWalkable, useCache)
+	else
+		-- no floor is loaded, so move in a straight line
+		route = floors:bresenham (start, goal)
+	end
 
 	-- we have a path
 	if route then
@@ -639,6 +661,21 @@ end
 -- @local
 function animations:getDrawParameters (entity)
 
+	-- if this actor has a still image
+	if entity.image then
+		if entity.x and entity.feet then
+			local x, y = entity.drawX, entity.drawY
+			local sx, sy = 1, 1
+			local r, ox, oy = 0, 0, 0
+			-- flip when going east
+			if entity.direction == "east" then
+				sx = -1
+				x = x + entity.width
+			end
+			return entity.image, x, y, r, sx, sy, ox, oy
+		end
+	end
+
 	local sprites = entity.sprites
 	local frames = sprites.animations[entity.key]
 
@@ -696,6 +733,20 @@ function animations:update (entity, dt)
 	-- entity.x, entity.y: position on screen
 
 	local sprites = entity.sprites
+
+	-- if there are no sprites, only a still image
+	if not sprites and entity.image then
+		if entity.x and entity.feet then
+			entity.drawX = entity.x - entity.feet.x
+			entity.drawY = entity.y - entity.feet.y
+		end
+		return
+	end
+
+	if not sprites then
+		return
+	end
+
 	local frames = sprites.animations[entity.key]
 
 	if not frames then
@@ -1352,9 +1403,7 @@ end
 -- @tparam int y
 function cursor:update (x, y)
 
-	-- adjust to scale
-	x = math.floor (x / slime.scale)
-	y = math.floor (y / slime.scale)
+	x, y = slime:scalePoint (x, y)
 
 	-- adjust draw position to center around the hotspot
 	if self.cursor then
@@ -1673,6 +1722,10 @@ end
 -- The Y-position on the mask that defines the behind/in-front point.
 function layers:add (background, mask, baseline)
 
+	assert (background ~= nil, "Missing parameter to layers:add")
+	assert (mask ~= nil, "Missing parameter to layers:add")
+	assert (baseline ~= nil, "Missing parameter to layers:add")
+
     local newLayer = {
         ["image"] = self:convertMask (background, mask),
         ["baseline"] = baseline,
@@ -1763,11 +1816,11 @@ function ooze:clear ()
 	self.trigger:init ()
 	self.logger:init ()
 	self.outliner:init ()
-	self.spriteview:init ()
+	self.spriteview:init ()		-- incomplete and not listed in available states
 	self.menu:init ()
 
 	-- list available ooze states
-	self.states = { nil, self.logger, self.outliner, self.spriteview }
+	self.states = { nil, self.logger, self.outliner }
 	self.index = 1
 
 	self:loadMenu ()
@@ -2836,6 +2889,10 @@ function slime:draw (scale)
     -- reset draw color
     love.graphics.setColor (1, 1, 1)
 
+	-- draw to scale
+    love.graphics.push()
+    love.graphics.scale(scale)
+
     backgrounds:draw ()
 	actors:draw ()
 
@@ -2859,6 +2916,8 @@ function slime:draw (scale)
 
 	speech:draw ()
 	cursor:draw ()
+
+    love.graphics.pop()
 
 end
 
@@ -2940,6 +2999,15 @@ function slime:interact (x, y)
 
 end
 
+
+function slime:scalePoint (x, y)
+
+	-- adjust to scale
+	x = math.floor (x / self.scale)
+	y = math.floor (y / self.scale)
+	return x, y
+
+end
 
 -- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 --           _   _   _
