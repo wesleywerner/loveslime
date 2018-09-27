@@ -123,6 +123,9 @@ local tools = { }
 --
 -- @tfield[opt="bottom"] string feet
 -- Position of the actor's feet relative to the sprite.
+--
+-- @tfield love.Image image
+-- A still image drawn for this actor.
 
 --- Clear actors.
 -- This gets called by @{slime:clear}
@@ -670,7 +673,7 @@ function animations:getDrawParameters (entity)
 			-- flip when going east
 			if entity.direction == "east" then
 				sx = -1
-				x = x + entity.width
+				ox = entity.width
 			end
 			return entity.image, x, y, r, sx, sy, ox, oy
 		end
@@ -702,9 +705,7 @@ function animations:getDrawParameters (entity)
 		-- invert scale to flip
 		if frame.flip == true then
 			sx = -1
-			-- adjust draw position, the flip aligns to the
-			-- left edge of the image
-			x = x + entity.width
+			ox = entity.width
 		end
 
 		local tileset = cache(entity.sprites.filename)
@@ -2802,7 +2803,7 @@ function speech:draw ()
             local r, g, b, a = love.graphics.getColor()
 
             local y = settings["speech position"]
-            local w = love.graphics.getWidth() / scale
+            local w = love.graphics.getWidth() / slime.scale
 
             love.graphics.setFont(settings["speech font"])
 
@@ -2933,6 +2934,8 @@ end
 --
 -- @return table of objects.
 function slime:getObjects (x, y)
+
+	x, y = self:scalePoint (x, y)
 
     local objects = { }
 
@@ -3513,6 +3516,7 @@ slime.backgrounds = backgrounds
 slime.bags = bags
 slime.chain = chains
 slime.cursor = cursor
+slime.hotspots = hotspots
 slime.ooze = ooze
 slime.events = events
 slime.floors = floors
