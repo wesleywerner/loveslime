@@ -145,6 +145,8 @@ function actors:add (actor)
 	-- get the size if a still image is set
 	if actor.image then
 		actor.width, actor.height = actor.image:getDimensions ()
+	else
+		actor.width, actor.height = actor.width or 10, actor.height or 10
 	end
 
 	assert (actor, "Actor definition must be given.")
@@ -157,7 +159,7 @@ function actors:add (actor)
     actor["direction recalc delay"] = 0
     actor.feet = actor.feet or "bottom"
     actor.direction = "south"
-    actor.speechcolor = {1, 1, 1}
+    actor.speechcolor = actor.speechcolor or {1, 1, 1}
     actor.action = "idle"
 
     -- map the feet position from string to a table
@@ -680,6 +682,11 @@ function animations:getDrawParameters (entity)
 	end
 
 	local sprites = entity.sprites
+
+	if not sprites then
+		return
+	end
+
 	local frames = sprites.animations[entity.key]
 
 	if frames then
@@ -2807,9 +2814,9 @@ function speech:draw ()
 
             love.graphics.setFont(settings["speech font"])
 
-            -- Black outline
-            love.graphics.setColor({0, 0, 0, 255})
-            love.graphics.printf(spc.text, 1, y+1, w, "center")
+            -- Black shadow
+            love.graphics.setColor({0, 0, 0, 1})
+            love.graphics.printf(spc.text, 1, y + 1, w, "center")
 
             love.graphics.setColor(spc.actor.speechcolor)
             love.graphics.printf(spc.text, 0, y, w, "center")
