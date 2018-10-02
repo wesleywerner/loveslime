@@ -1,14 +1,17 @@
+-- This example shows how to watch for interaction events, and how
+-- to respond by displaying speech.
+
 local slime = require ("slime")
 
-local width, height = 640, 400
+local width, height = 680, 384
 
--- assets are 320x200, scale them up x2 to match our window size.
-local scale = 2
+-- assets are 170x96, scale them up to match our window size.
+local scale = 4
 
--- the name of the thing under the mouse cursor
+-- stores the displayed status text
 local statusText = nil
 
--- print status with this font
+-- font used to print the status text
 local statusFont
 
 function love.load ()
@@ -17,6 +20,7 @@ function love.load ()
     love.window.setMode (width, height)
     love.graphics.setDefaultFilter("nearest", "nearest", 1)
 
+	-- load the status text font
     statusFont = love.graphics.newFont (10)
 
     -- reset slime for a new game
@@ -25,66 +29,54 @@ function love.load ()
 
     -- add a background image to the stage
     -- see @{backgrounds:add}
-    slime.backgrounds:add ("media/fantasy-forest.png")
+    slime.backgrounds:add ("media/lab-background.png")
 
     -- set the walkable floor
     -- see @{floors:set}
-    slime.floors:set ("media/fantasy-forest-floor.png")
+    slime.floors:set ("media/lab-floor.png")
 
     -- add a walk-behind layer
     -- see @{layers:add}
-    slime.layers:add ("media/fantasy-forest.png", "media/fantasy-forest-layer.png", 200)
+    slime.layers:add ("media/lab-background.png", "media/lab-layer-bench.png", 200)
+    slime.layers:add ("media/lab-background.png", "media/lab-layer-desks.png", 51)
 
 	-- add a couple of hotspots to interact with
-    slime.hotspots:add ("spiderweb", 140, 0, 70, 40)
+    slime.hotspots:add ("Cameras", 9, 2, 40, 20)
 
-    -- to make the scary tree talk, it has to be an actor on stage.
+    -- add the player actor
     -- see @{actors:add}
     slime.actors:add ({
 
         -- name of the actor
-        name = "Tree",
+        name = "Player",
 
-        -- use a still image for the Fairy.
-        image = love.graphics.newImage ("media/tree-face.png"),
+        -- use a still image for now, we will add animated sprites later.
+        -- this allows quick game development without animations.
+        image = love.graphics.newImage ("media/scientist-still.png"),
 
-        -- set the position of the tree's "feet" to top-left
-        -- relative to the image
-        feet = { x = 0, y = 0},
-
-        -- starting position
-        x = 56,
-        y = 30,
-
-		-- draw the tree's face on top of the walk-behind layer
-        onTop = true,
-
-        speechcolor = {1, 1, 0}
-
-    })
-
-
-
-    -- see @{actors:add}
-    slime.actors:add ({
-
-        -- name of the actor
-        name = "Fairy",
-
-        -- use a still image for the Fairy.
-        image = love.graphics.newImage ("media/fairy-still.png"),
-
-        -- set the position of the actor's feet
+        -- set the position of the actor's feet (by default this is "bottom")
         feet = "bottom",
 
         -- starting position
-        x = 160,
-        y = 185,
+        x = 80,
+        y = 40,
 
-        -- walking speed
-        movedelay = 0.01
+        -- walking speed in pixels per second
+		speed = 16,
+
+		-- set the player speech color
+		speechcolor = {0, 1, 0}
 
     })
+
+    -- add an intercom actor, whom we can converse with
+    slime.actors:add ({
+		name = "Intercom",
+		image = love.graphics.newImage ("media/lab-intercom.png"),
+		x = 18,
+		y = 50,
+		speechcolor = {1, 1, 0}
+	})
 
 end
 
@@ -112,22 +104,20 @@ function love.draw ()
 	-- we intentionally draw a small font scaled up
 	-- so the style matches our pixelated game.
     if statusText then
-		local x, y = slime:scalePoint (love.mouse.getPosition ())
-		x = x + 10
 		love.graphics.push ()
 		love.graphics.scale (scale)
 		love.graphics.setFont (statusFont)
         love.graphics.setColor ({1, 1, 1})
-        --love.graphics.printf (statusText, 0, 160, 200, "center")
-        love.graphics.print (statusText, x, y)
+        love.graphics.printf (statusText, 0, 84, 170, "center")
         love.graphics.pop ()
     end
 
 end
 
+
 function love.mousepressed (x, y, button, istouch, presses)
 
-	-- skip any speech currently on screen
+	-- skip any speech currently on screen, and ignore further clicks.
 	if slime.speech:isTalking () then
 		slime.speech:skip ()
 		return
@@ -139,14 +129,14 @@ function love.mousepressed (x, y, button, istouch, presses)
 	else
 		-- otherwise, walk there
 		-- see @{actors:move}
-		slime.actors:move ("Fairy", x, y)
+		slime.actors:move ("Player", x, y)
 	end
 
 end
 
 function love.mousemoved (x, y, dx, dy, istouch)
 
-    -- get all things under the mouse position
+    -- get all things under the mouse cursor
     -- see @{slime:getObjects}
     local things = slime:getObjects (x, y)
 
@@ -159,32 +149,36 @@ function love.mousemoved (x, y, dx, dy, istouch)
 
 end
 
--- a simple linear dialog with a magical being
+-- a simple linear dialog with an intercom
 local dialog = {
 	{
-		{"Fairy", "What a scary looking tree..."},
-		{"Tree", "What an ugly looking Fairy!"},
+		{"Player", "Hello, anybody there?"},
+		{"Intercom", "*pop* *crackle*"},
+		{"Intercom", "Security, what is the problem?"},
 	},
 	{
-		{"Fairy", "Hey! Are you magic?"},
-		{"Tree", "Yes, magically busy ..."},
-		{"Tree", "Now leave me alone."},
+		{"Player", "Just checking in..."},
+		{"Player", "How is the weather up there?"},
+		{"Intercom", "*pop* *crackle*"},
+		{"Intercom", "This channel is for security related emergencies only."},
+		{"Intercom", "Now leave me alone."},
 	},
 	{
-		{"Fairy", "I better leave the scary tree alone."},
+		{"Player", "I better leave the grumpy intercom alone."},
 	}
 }
 
 local dialogPosition = 1
 
---- Hook into the interact event, called on clicking a game actor or hotspot.
+-- Hook into the interact event.
+-- This is called when @{slime:interact} happens when the cursor is over
+-- an actor or hotspot.
+-- The "event" parameter will be "interact" by default, or the name of the
+-- cursor if you set one, but we won't check it's value in this example.
 function slime.events.interact (self, event, actor)
 
-	-- event will be "interact", but we won't check it's value in this example.
-
-	-- make the Fairy say something
 	-- see @{speech:say}
-	if actor.name == "Tree" then
+	if actor.name == "Intercom" then
 
 		-- say the current dialog.
 		-- notice how we call say multiple times, this queues the speeches
@@ -196,9 +190,10 @@ function slime.events.interact (self, event, actor)
 		-- advance the dialog position
 		dialogPosition = math.min (#dialog, dialogPosition + 1)
 
-	elseif actor.name == "spiderweb" then
+	elseif actor.name == "Cameras" then
 
-		slime.speech:say ("Fairy", "There is a giant spiderweb in the trees above.")
+		slime.speech:say ("Player", "Our lab is monitored.")
+		slime.speech:say ("Player", "This is top-secret work.")
 
 	end
 

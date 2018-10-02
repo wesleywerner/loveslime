@@ -1,14 +1,17 @@
+-- This example shows how to set a stage background image, set a walkable floor,
+-- add an actor that moves where you click, and walk-behind layers.
+
 local slime = require ("slime")
 
-local width, height = 640, 400
+local width, height = 680, 384
 
--- assets are 320x200, scale them up x2 to match our window size.
-local scale = 2
+-- assets are 170x96, scale them up to match our window size.
+local scale = 4
 
--- the name of the thing under the mouse cursor
+-- stores the displayed status text
 local statusText = nil
 
--- print status with this font
+-- font used to print the status text
 local statusFont
 
 function love.load ()
@@ -17,6 +20,7 @@ function love.load ()
     love.window.setMode (width, height)
     love.graphics.setDefaultFilter("nearest", "nearest", 1)
 
+	-- load the status text font
     statusFont = love.graphics.newFont (10)
 
     -- reset slime for a new game
@@ -25,39 +29,37 @@ function love.load ()
 
     -- add a background image to the stage
     -- see @{backgrounds:add}
-    slime.backgrounds:add ("media/fantasy-forest.png")
+    slime.backgrounds:add ("media/lab-background.png")
 
     -- set the walkable floor
     -- see @{floors:set}
-    slime.floors:set ("media/fantasy-forest-floor.png")
+    slime.floors:set ("media/lab-floor.png")
 
     -- add a walk-behind layer
     -- see @{layers:add}
-    slime.layers:add ("media/fantasy-forest.png", "media/fantasy-forest-layer.png", 200)
+    slime.layers:add ("media/lab-background.png", "media/lab-layer-bench.png", 200)
+    slime.layers:add ("media/lab-background.png", "media/lab-layer-desks.png", 51)
 
-	-- add a couple of hotspots to interact with
-    slime.hotspots:add ("scary tree", 50, 30, 70, 170)
-    slime.hotspots:add ("spiderweb", 140, 0, 70, 40)
-
-    -- add the actor
+    -- add the player actor
     -- see @{actors:add}
     slime.actors:add ({
 
         -- name of the actor
-        name = "Fairy",
+        name = "Player",
 
-        -- use a still image for the Fairy.
-        image = love.graphics.newImage ("media/fairy-still.png"),
+        -- use a still image for now, we will add animated sprites later.
+        -- this allows quick game development without animations.
+        image = love.graphics.newImage ("media/scientist-still.png"),
 
-        -- set the position of the actor's feet
+        -- set the position of the actor's feet (by default this is "bottom")
         feet = "bottom",
 
         -- starting position
-        x = 160,
-        y = 185,
+        x = 80,
+        y = 40,
 
-        -- walking speed
-        movedelay = 0.01
+        -- walking speed in pixels per second
+		speed = 16
 
     })
 
@@ -87,14 +89,11 @@ function love.draw ()
 	-- we intentionally draw a small font scaled up
 	-- so the style matches our pixelated game.
     if statusText then
-		local x, y = slime:scalePoint (love.mouse.getPosition ())
-		x = x + 10
 		love.graphics.push ()
 		love.graphics.scale (scale)
 		love.graphics.setFont (statusFont)
         love.graphics.setColor ({1, 1, 1})
-        --love.graphics.printf (statusText, 0, 160, 200, "center")
-        love.graphics.print (statusText, x, y)
+        love.graphics.printf (statusText, 0, 84, 170, "center")
         love.graphics.pop ()
     end
 
@@ -103,7 +102,7 @@ end
 function love.mousepressed (x, y, button, istouch, presses)
 
 	-- see @{actors:move}
-	slime.actors:move ("Fairy", x, y)
+	slime.actors:move ("Player", x, y)
 
 end
 

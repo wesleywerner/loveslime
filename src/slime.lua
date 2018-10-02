@@ -142,6 +142,8 @@ end
 -- @tparam actor actor
 function actors:add (actor)
 
+	assert (actor, "Actor definition must be given.")
+
 	-- get the size if a still image is set
 	if actor.image then
 		actor.width, actor.height = actor.image:getDimensions ()
@@ -149,7 +151,6 @@ function actors:add (actor)
 		actor.width, actor.height = actor.width or 10, actor.height or 10
 	end
 
-	assert (actor, "Actor definition must be given.")
 	assert (actor.x, "Actor x position must be given.")
 	assert (actor.y, "Actor y position must be given.")
 	assert (actor.width, "Actor width must be given.")
@@ -176,6 +177,13 @@ function actors:add (actor)
 	assert (type(actor.feet) == "table", "Actor feet property must be string or a table")
     assert (actor.feet.x, "Actor feet must have x position")
     assert (actor.feet.y, "Actor feet must have y position")
+
+    -- set the movement speed.
+    -- speed is assumed to be the pixels per second to move.
+    -- we convert this to time to wait before updating the path.
+    if type (actor.speed) == "number" then
+		actor.movedelay = 1 / actor.speed
+    end
 
     table.insert(self.list, actor)
     self:sort ()
@@ -302,7 +310,7 @@ function actors:updatePath (actor, dt)
         -- Check if the actor's speed is set to delay movement.
         -- If no speed is set, we move on every update.
 
-        -- TODO rename movedelay to speed.
+        -- TODO change actor movedelay to pixel "speed".
         -- 		(can we specify this as pixels per second?)
         --		(one step on the path will be ~ 1 pixel)
         if (actor.movedelay) then
@@ -1733,6 +1741,9 @@ function layers:add (background, mask, baseline)
 	assert (background ~= nil, "Missing parameter to layers:add")
 	assert (mask ~= nil, "Missing parameter to layers:add")
 	assert (baseline ~= nil, "Missing parameter to layers:add")
+
+	-- TODO: allow empty baseline, which is then calculated as the
+	-- 		largest Y point in the mask.
 
     local newLayer = {
         ["image"] = self:convertMask (background, mask),
