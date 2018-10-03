@@ -126,6 +126,11 @@ local tools = { }
 --
 -- @tfield love.Image image
 -- A still image drawn for this actor.
+--
+-- @tfield int speed
+-- Movement speed of actor measured in pixels per second.
+
+
 
 --- Clear actors.
 -- This gets called by @{slime:clear}
@@ -362,7 +367,7 @@ function actors:updatePath (actor, dt)
             actor.action = "idle"
 
 			-- notify the moved callback
-            events.moved (self, actor)
+            events.moved (actor, actor.clickedX, actor.clickedY)
 
             -- OBSOLETE: replaced by events.move callback
             slime.callback ("moved", actor)
@@ -800,7 +805,7 @@ function animations:update (entity, dt)
 				-- reload the correct frame
 				frame = frames[sprites.index]
 				-- notify event
-				events.animation (slime, actor, entity.key)
+				events.animation (actor, entity.key)
 			end
 
 			-- set the timer for this frame
@@ -976,7 +981,7 @@ function bags:add (name, object)
     table.insert(self.contents[name], object)
 
     -- notify the callback
-    events.bag (self, name)
+    events.bag (name)
 
     -- OBSOLETE: replaced by events.bag
     slime.inventoryChanged (name)
@@ -1261,9 +1266,6 @@ end
 
 --- Actor animation looped callback.
 --
--- @param self
--- The slime instance
---
 -- @tparam actor actor
 -- The actor being interacted with
 --
@@ -1272,60 +1274,67 @@ end
 --
 -- @tparam int counter
 -- The number of times the animation has looped
-function events.animation (self, actor, key, counter)
+function events.animation (actor, key, counter)
 
 end
 
 --- Bag contents changed callback.
 --
--- @param self
--- The slime instance
---
 -- @tparam string bag
 -- The name of the bag that changed
-function events.bag (self, bag)
+function events.bag (bag)
+
+end
+
+--- Drawing speech callback.
+--
+--
+-- @tparam actor actor
+-- The actor who is talking.
+--
+-- @tparam string words
+-- The words to print on screen.
+function events.drawSpeech (actor, words)
 
 end
 
 --- Callback when a mouse interaction occurs.
---
--- @param self
--- The slime instance
 --
 -- @tparam string event
 -- The name of the cursor
 --
 -- @tparam actor actor
 -- The actor being interacted with
-function events.interact (self, event, actor)
+function events.interact (event, actor)
 
 end
 
 --- Actor finished moving callback.
 --
--- @param self
--- The slime instance
---
 -- @tparam actor actor
 -- The actor that moved
-function events.moved (self, actor)
+--
+-- @tparam int clickedX
+-- The point given to the original @{actors:move} method.
+-- This may be different than the actor's location, if for example
+-- the floor does not allow standing on the point, the actor moves
+-- as close as possible to the point.
+-- This can be used to call @{interact} after an actor has moved.
+--
+-- @tparam int clickedY
+--
+function events.moved (actor, clickedX, clickedY)
 
 end
 
 --- Actor speaking callback.
 --
--- @param self
--- The slime instance
---
 -- @tparam actor actor
 -- The talking actor
 --
--- @tparam bool started
--- true if the actor has started talking
---
--- @tparam bool ended
--- true if the actor has stopped talking
-function events.speech (self, actor, started, ended)
+-- @tparam bool isTalking
+-- true if the actor has started talking, false if they finished talking.
+function events.speech (actor, isTalking)
 
 end
 
@@ -2768,7 +2777,7 @@ function speech:skip ()
         self.currentLine = nil
 
         -- notify speech ended event
-        events.speech (slime, speech.actor, false, true)
+        events.speech (speech.actor, false)
 
     end
 
@@ -2791,7 +2800,7 @@ function speech:update (dt)
         -- notify speech started event
         if self.currentLine ~= speech.text then
 			self.currentLine = speech.text
-			events.speech (slime, speech.actor, true)
+			events.speech (speech.actor, true)
 		end
 
         if (speech.time < 0) then
@@ -2836,6 +2845,9 @@ function speech:draw ()
             love.graphics.setColor(r, g, b, a)
 
         else
+			events.drawSpeech (spc.actor, spc.text)
+
+			-- OBSOLETE:
             self:onDrawSpeechCallback(spc.actor.x, spc.actor.y,
                 spc.actor.speechcolor, spc.text)
         end
@@ -3010,7 +3022,7 @@ function slime:interact (x, y)
 		ooze:append (cursorname .. " on " .. object.name)
 
 		-- notify the interact callback
-		events.interact (self, cursorname, object)
+		events.interact (cursorname, object)
 
 		-- OBSOLETE: slime.callback replaced by events
         slime.callback (cursorname, object)
@@ -3514,7 +3526,7 @@ function slime.internalAnimationLoop (frames, counter)
     end
 
 	-- notify the animation callback
-    events.animation (slime, pack.anim.actor.name, pack.key, pack.loopcounter)
+    events.animation (pack.anim.actor.name, pack.key, pack.loopcounter)
 
     -- OBSOLETE: replaced by events.animation
     slime.animationLooped (pack.anim.actor.name, pack.key, pack.loopcounter)
