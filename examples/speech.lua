@@ -1,5 +1,5 @@
--- This example shows how to watch for interaction events, and how
--- to respond by displaying speech.
+-- This example shows how to display speech and
+-- includes a basic linear conversation.
 
 local slime = require ("slime")
 
@@ -72,11 +72,14 @@ function love.load ()
     -- add an intercom actor, whom we can converse with
     slime.actors:add ({
 		name = "Intercom",
-		image = love.graphics.newImage ("media/lab-intercom.png"),
+		image = love.graphics.newImage ("media/intercom-still.png"),
 		x = 18,
 		y = 50,
 		speechcolor = {1, 1, 0}
 	})
+
+    -- say a greeting
+    slime.speech:say ("Player", "Hey, that intercom on the wall is new", 6)
 
 end
 
@@ -175,7 +178,7 @@ local dialogPosition = 1
 -- an actor or hotspot.
 -- The "event" parameter will be "interact" by default, or the name of the
 -- cursor if you set one, but we won't check it's value in this example.
-function slime.events.interact (self, event, actor)
+function slime.events.interact (event, actor)
 
 	-- see @{speech:say}
 	if actor.name == "Intercom" then
