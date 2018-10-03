@@ -1264,6 +1264,12 @@ end
 --  \___| \_/ \___|_| |_|\__|___/
 --
 
+-- TODO create namespaces in events.
+-- events.draw.background
+--			  .speech
+--            .sprite
+events.draw = { }
+
 --- Actor animation looped callback.
 --
 -- @tparam actor actor
@@ -1286,7 +1292,7 @@ function events.bag (bag)
 
 end
 
---- Drawing speech callback.
+--- Draw speech callback.
 --
 --
 -- @tparam actor actor
@@ -1294,7 +1300,36 @@ end
 --
 -- @tparam string words
 -- The words to print on screen.
-function events.drawSpeech (actor, words)
+function events.draw.speech (actor, words)
+
+	local y = 0
+	local w = love.graphics.getWidth() / slime.scale
+
+	love.graphics.setFont(settings["speech font"])
+
+	-- Black shadow
+	love.graphics.setColor({0, 0, 0, 1})
+	love.graphics.printf(words, 1, y + 1, w, "center")
+
+	love.graphics.setColor(actor.speechcolor)
+	love.graphics.printf(words, 0, y, w, "center")
+
+end
+
+--- Draw cursor callback.
+--
+-- @tparam cursor cursor
+-- The @{cursor} data.
+--
+-- @tparam int x
+-- @tparam int y
+function events.draw.cursor (cursor, x, y)
+
+	if cursor.quad then
+		love.graphics.draw (cursor.image, cursor.quad, x, y)
+	else
+		love.graphics.draw (cursor.image, x, y)
+	end
 
 end
 
@@ -1382,11 +1417,7 @@ end
 function cursor:draw ()
 
 	if self.cursor and self.x then
-		if self.cursor.quad then
-			love.graphics.draw (self.cursor.image, self.cursor.quad, self.x, self.y)
-		else
-			love.graphics.draw (self.cursor.image, self.x, self.y)
-		end
+		events.draw.cursor (self.cursor, self.x, self.y)
 	end
 
 end
@@ -2173,7 +2204,7 @@ function ooze.menu:clear ()
 end
 
 --- Set the ooze menu options.
--- @tparam table option
+-- @tparam table options
 function ooze.menu:set (options)
 
     -- the menu options
@@ -2357,6 +2388,8 @@ end
 
 --- Returns a point on a circle.
 -- https://wesleywerner.github.io/harness/doc/modules/trig.html#module:pointOnCircle
+--
+-- @tparam table self
 --
 -- @tparam number cx
 -- The origin of the circle
@@ -2817,41 +2850,18 @@ function speech:update (dt)
 end
 
 
---- Draw speech.
+--- Draw speech on screen.
+-- If there is speech data in the queue, of course.
+-- This calls the @{events.draw.speech} callback.
 --
 -- @local
 function speech:draw ()
 
-    if (#self.queue > 0) then
-        local spc = self.queue[1]
-        if settings["builtin text"] then
+	local words = self.queue[1]
 
-            -- Store the original color
-            local r, g, b, a = love.graphics.getColor()
-
-            local y = settings["speech position"]
-            local w = love.graphics.getWidth() / slime.scale
-
-            love.graphics.setFont(settings["speech font"])
-
-            -- Black shadow
-            love.graphics.setColor({0, 0, 0, 1})
-            love.graphics.printf(spc.text, 1, y + 1, w, "center")
-
-            love.graphics.setColor(spc.actor.speechcolor)
-            love.graphics.printf(spc.text, 0, y, w, "center")
-
-            -- Restore original color
-            love.graphics.setColor(r, g, b, a)
-
-        else
-			events.drawSpeech (spc.actor, spc.text)
-
-			-- OBSOLETE:
-            self:onDrawSpeechCallback(spc.actor.x, spc.actor.y,
-                spc.actor.speechcolor, spc.text)
-        end
-    end
+	if words then
+		events.draw.speech (words.actor, words.text)
+	end
 
 end
 
@@ -2915,16 +2925,15 @@ end
 -- Draw at the given scale.
 function slime:draw (scale)
 
-    self.scale = scale or 1
-
-    -- reset draw color
-    love.graphics.setColor (1, 1, 1)
-
 	-- draw to scale
+    self.scale = scale or 1
     love.graphics.push()
     love.graphics.scale(scale)
 
+	love.graphics.setColor (1, 1, 1)
     backgrounds:draw ()
+
+    love.graphics.setColor (1, 1, 1)
 	actors:draw ()
 
     -- Bag Buttons
@@ -2945,7 +2954,10 @@ function slime:draw (scale)
         love.graphics.printf(self.statusText, 0, y, w, "center")
     end
 
+	love.graphics.setColor (1, 1, 1)
 	speech:draw ()
+
+	love.graphics.setColor (1, 1, 1)
 	cursor:draw ()
 
     love.graphics.pop()
