@@ -196,6 +196,38 @@ function actors:add (actor)
 
 end
 
+--- Measure distance.
+-- Measure the distance in pixels to another actor or point.
+--
+-- @param from
+-- The object to measure, this can be an @{actor}, a @{point}, or
+-- the name of an actor.
+--
+-- @param to
+-- The object to measure, this can be an @{actor}, a @{point}, or
+-- the name of an actor.
+--
+-- @return Distance in pixels
+function actors:measure (from, to)
+
+    -- resolve actors by name
+    if type (from) == "string" then
+        from = self:get (from)
+    end
+    if type (to) == "string" then
+        to = self:get (to)
+    end
+
+    assert (type (from) == "table", "measure from parameter must be a table")
+    assert (type (to) == "table", "measure from parameter must be a table")
+    assert (type (from.x) == "number", "measure from.x property must be a number")
+    assert (type (from.y) == "number", "measure from.y property must be a number")
+    assert (type (to.x) == "number", "measure to.x property must be a number")
+    assert (type (to.y) == "number", "measure to.y property must be a number")
+
+    return tools:distance (from.x, from.y, to.x, to.y)
+
+end
 
 --- Update actors
 --

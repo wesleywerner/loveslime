@@ -183,6 +183,14 @@ function slime.events.interact (event, actor)
 	-- see @{speech:say}
 	if actor.name == "Intercom" then
 
+        -- ensure we are close enough to speak into the Intercom
+        local distance = slime.actors:measure ("Player", actor)
+
+        if distance > 20 then
+            slime.speech:say ("Player", "I am not close enough")
+            return
+        end
+
 		-- say the current dialog.
 		-- notice how we call say multiple times, this queues the speeches
 		-- one after the other.

@@ -242,8 +242,18 @@ function slime.events.interact (event, actor)
 
 	if event == "talk" then
 		if actor.name == "Intercom" then
+
+            -- ensure we are close enough to speak into the Intercom
+            local distance = slime.actors:measure ("Player", actor)
+
+            if distance > 20 then
+                slime.speech:say ("Player", "I am not close enough")
+                return
+            end
+
 			slime.speech:say ("Player", "Hello, anybody there?")
 			slime.speech:say ("Intercom", "*pop* *crackle*")
+
 		elseif actor.name == "Cameras" then
 			slime.speech:say ("Player", "I can use the Intercom to talk to security")
 		end
