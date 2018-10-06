@@ -51,8 +51,6 @@ local slime = {
 -- Functionality is separated into logical tables (components) that
 -- isolate their behaviour from each other.
 
--- Handles animated sprites and calling the events.animation event.
-local animations = { }
 
 -- Manages actors on stage.
 local actors = { }
@@ -129,7 +127,13 @@ local tools = { }
 --
 -- @tfield int speed
 -- Movement speed of actor measured in pixels per second.
-
+--
+-- @tfield string action
+-- The actor's current action. One of "idle", "walk" or "talk".
+--
+-- @tfield string direction
+-- The direction the actor is facing, one of "north", "south", "east", "west".
+--
 
 
 --- Clear actors.
@@ -196,8 +200,7 @@ function actors:add (actor)
 
 end
 
---- Measure distance.
--- Measure the distance in pixels to another actor or point.
+--- Measure distance between two actors.
 --
 -- @param from
 -- The object to measure, this can be an @{actor}, a @{point}, or
@@ -208,6 +211,7 @@ end
 -- the name of an actor.
 --
 -- @return Distance in pixels
+-- @see tools:distance
 function actors:measure (from, to)
 
     -- resolve actors by name
@@ -250,6 +254,13 @@ function actors:update (dt)
 				actorsMoved = true
             end
 
+            -- calculate the sprite draw position
+            -- relative to the actor's feet
+            if actor.x and actor.feet then
+                actor.drawX = actor.x - actor.feet.x
+                actor.drawY = actor.y - actor.feet.y
+            end
+
 			-- set the animation key.
 			-- walking or talking includes the facing direction.
 			if actor.action == "talk"
@@ -260,16 +271,8 @@ function actors:update (dt)
 				actor.key = actor.action
 			end
 
-			animations:update (actor, dt)
-
-            --~ local anim = actor:getAnim()
-            --~ if anim then
-                --~ anim._frames:update(dt)
-                --~ local framesound = anim._sounds[anim._frames.position]
-                --~ if framesound then
-                    --~ love.audio.play(framesound)
-                --~ end
-            --~ end
+            -- request the next sprite frame
+            actor.sprite = events.request.sprite (dt, actor)
 
         end
     end
@@ -534,15 +537,35 @@ end
 function actors:draw ()
 
     for _, actor in ipairs(self.list) do
-        if actor.isactor then
+        if actor.sprite then
 
-			local tileset, quad, x, y, r, sx, sy, ox, oy = animations:getDrawParameters (actor)
+			if actor.sprite.quad and actor.sprite.image then
 
-			if quad and tileset then
-				love.graphics.draw (tileset, quad, x, y, r, sx, sy, ox, oy)
-			elseif tileset then
-				-- drawable without a quad
-				love.graphics.draw (tileset, x, y, r, sx, sy, ox, oy)
+                -- drawable with a quad
+                love.graphics.draw (
+                    actor.sprite.image,
+                    actor.sprite.quad,
+                    actor.drawX + actor.sprite.x,
+                    actor.drawY + actor.sprite.y,
+                    actor.sprite.r,
+                    actor.sprite.sx,
+                    actor.sprite.sy,
+                    actor.sprite.ox,
+                    actor.sprite.oy)
+
+			elseif actor.sprite.image then
+
+                -- drawable without a quad
+                love.graphics.draw (
+                    actor.sprite.image,
+                    actor.drawX + actor.sprite.x,
+                    actor.drawY + actor.sprite.y,
+                    actor.sprite.r,
+                    actor.sprite.sx,
+                    actor.sprite.sy,
+                    actor.sprite.ox,
+                    actor.sprite.oy)
+
 			end
 
         elseif actor.islayer then
@@ -694,172 +717,6 @@ function actors:stop (name)
     end
 
 end
-
--- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
---              _                 _   _
---   __ _ _ __ (_)_ __ ___   __ _| |_(_) ___  _ __  ___
---  / _` | '_ \| | '_ ` _ \ / _` | __| |/ _ \| '_ \/ __|
--- | (_| | | | | | | | | | | (_| | |_| | (_) | | | \__ \
---  \__,_|_| |_|_|_| |_| |_|\__,_|\__|_|\___/|_| |_|___/
---
-
---- Draw an actor's animation frame.
---
--- @tparam actor entity
--- The actor to draw.
---
--- @local
-function animations:getDrawParameters (entity)
-
-	-- if this actor has a still image
-	if entity.image then
-		if entity.x and entity.feet then
-			local x, y = entity.drawX, entity.drawY
-			local sx, sy = 1, 1
-			local r, ox, oy = 0, 0, 0
-			-- flip when going east
-			if entity.direction == "east" then
-				sx = -1
-				ox = entity.width
-			end
-			return entity.image, x, y, r, sx, sy, ox, oy
-		end
-	end
-
-	local sprites = entity.sprites
-
-	if not sprites then
-		return
-	end
-
-	local frames = sprites.animations[entity.key]
-
-	if frames then
-
-		local frame = frames[sprites.index]
-
-		if not frame.quad then
-			frame.quad = love.graphics.newQuad (
-				frame.x, frame.y,
-				frame.width, frame.height,
-				sprites.size.width, sprites.size.height)
-		end
-
-		-- position
-		local x, y = entity.drawX, entity.drawY
-		-- rotation
-		local r = 0
-		-- scale
-		local sx, sy = 1, 1
-		-- origin
-		local ox, oy = 0, 0
-
-		-- invert scale to flip
-		if frame.flip == true then
-			sx = -1
-			ox = entity.width
-		end
-
-		local tileset = cache(entity.sprites.filename)
-
-		return tileset, frame.quad, x, y, r, sx, sy, ox, oy
-
-	end
-
-end
-
-
---- Update animation.
---
--- @tparam actor entity
--- The entity to update.
---
--- @tparam int dt
--- Delta time since last update.
---
--- @local
-function animations:update (entity, dt)
-
-	-- entity.sprites: sprite animation definition
-	-- entity.name: fed back to the event.animation callback on loop
-	-- entity.key: animation key to update
-	-- entity.x, entity.y: position on screen
-
-	local sprites = entity.sprites
-
-	-- if there are no sprites, only a still image
-	if not sprites and entity.image then
-		if entity.x and entity.feet then
-			entity.drawX = entity.x - entity.feet.x
-			entity.drawY = entity.y - entity.feet.y
-		end
-		return
-	end
-
-	if not sprites then
-		return
-	end
-
-	local frames = sprites.animations[entity.key]
-
-	if not frames then
-		return
-	end
-
-	-- initialize and clamp the index.
-	-- when switching between animation keys, the index
-	-- is not reset.
-	sprites.index = sprites.index or 1
-	sprites.index = math.min (sprites.index, #frames)
-
-	if frames then
-
-		local frame = frames[sprites.index]
-
-		if not frame then
-			print (sprites.index, #frames, entity.key, sprites.lastkey)
-			error ("frame is empty")
-		end
-		sprites.lastkey = entity.key
-
-		-- reduce the frame timer
-		sprites.timer = (sprites.timer or 1) - dt
-
-		if sprites.timer <= 0 then
-
-			-- move to the next frame
-			sprites.index = sprites.index + 1
-
-			-- wrap the animation
-			if sprites.index > #frames then
-				-- animation loop ended
-				sprites.index = 1
-				-- reload the correct frame
-				frame = frames[sprites.index]
-				-- notify event
-				events.animation (actor, entity.key)
-			end
-
-			-- set the timer for this frame
-			sprites.timer = frame.delay or 0.2
-
-		end
-
-		if not frame then
-			print (sprites.index, entity.key, #frames)
-			error ("frame is empty")
-		end
-
-		-- update the draw offset for actor sprites
-		if entity.x and entity.feet then
-			entity.drawX = entity.x - entity.feet.x + frame.xoffset
-			entity.drawY = entity.y - entity.feet.y + frame.yoffset
-		end
-
-	end
-
-end
-
 
 -- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 --  _                _                                   _
@@ -1301,8 +1158,46 @@ end
 --			  .speech
 --            .sprite
 events.draw = { }
+events.request = { }
 
---- Actor animation looped callback.
+
+--- Sprite info.
+-- Contains data to draw a sprite.
+--
+-- @table spriteInfo
+--
+-- @tfield Image image
+-- The sprite image, or the spritesheet that contains the sprite.
+--
+-- @tfield Quad quad
+-- The quad of the sprite within the spritesheet. Can be given as nil if
+-- the image is not a spritesheet.
+--
+-- @tfield number x
+-- The x offset of the sprite relative to the actor's position.
+--
+-- @tfield number y
+-- The y offset of the sprite relative to the actor's position.
+--
+-- @tfield number r
+-- Draw orientation in radians.
+--
+-- @tfield number sx
+-- Scale factor on the x-axiz.
+--
+-- @tfield number sy
+-- Scale factor on the y-axiz.
+--
+-- @tfield number ox
+-- Origin offset on the x-axiz.
+--
+-- @tfield number oy
+-- Origin offset on the y-axiz.
+
+
+
+--- Actor animation looped event.
+-- TODO REVIEW IF NEEDED
 --
 -- @tparam actor actor
 -- The actor being interacted with
@@ -1316,7 +1211,8 @@ function events.animation (actor, key, counter)
 
 end
 
---- Bag contents changed callback.
+--- Bag contents changed event.
+-- This is fired when something is added or removed from a bag.
 --
 -- @tparam string bag
 -- The name of the bag that changed
@@ -1324,8 +1220,8 @@ function events.bag (bag)
 
 end
 
---- Draw speech callback.
---
+--- Draw speech override.
+-- Override this function to handle drawing spoken text.
 --
 -- @tparam actor actor
 -- The actor who is talking.
@@ -1348,7 +1244,8 @@ function events.draw.speech (actor, words)
 
 end
 
---- Draw cursor callback.
+--- Draw cursor override.
+-- Override this function to handle drawing the cursor.
 --
 -- @tparam cursor cursor
 -- The @{cursor} data.
@@ -1362,6 +1259,55 @@ function events.draw.cursor (cursor, x, y)
 	else
 		love.graphics.draw (cursor.image, x, y)
 	end
+
+end
+
+--- Request sprite drawable event.
+-- Fired when requesting the drawable for an animated sprite.
+--
+-- @tparam int dt
+-- Delta time since the last update.
+-- This should be used to forward animations.
+--
+-- @tparam actor actor
+-- The actor whom the sprite request is for. The actor.action, actor.direction
+-- properties can be accessed to determine the sprite to return.
+--
+-- @return @{spriteInfo}
+function events.request.sprite (dt, actor)
+
+    -- This is a basic sprite request implementation that does not
+    -- animate, it only returns the actor's still image.
+
+    -- sprite draw offset
+    local x, y = 0, 0
+
+    -- sprite orientation
+    local r = 0
+
+    -- sprite scaling
+    local sx, sy = 1, 1
+
+    -- sprite draw origin
+    local ox, oy = 0, 0
+
+    -- flip when going east
+    if actor.direction == "east" then
+        sx = -1
+        ox = actor.width
+    end
+
+    return {
+        ["image"] = actor.image,
+        ["quad"] = nil,
+        ["x"] = x,
+        ["y"] = y,
+        ["r"] = r,
+        ["sx"] = sx,
+        ["sy"] = sy,
+        ["ox"] = ox,
+        ["oy"] = oy
+    }
 
 end
 
@@ -3128,13 +3074,22 @@ end
 --
 
 --- Linear interpolation.
+--
+-- @tparam number a
+-- The starting value.
+--
+-- @tparam number b
+-- The ending value.
+--
+-- @tparam number amount
+-- Amount of interpolation to apply, between 0 and 1.
+--
+-- @local
 function tools:lerp (a, b, amount)
     return a + (b - a) * self:clamp (amount, 0, 1)
 end
 
---- Distance between two points.
--- This method doesn't bother getting the square root of s, it is faster
--- and it still works for our use.
+--- Measure the distance between two points.
 --
 -- @tparam int x1
 -- @tparam int y1
