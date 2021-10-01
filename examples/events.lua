@@ -18,25 +18,25 @@ local portraits = { }
 -- define our custom cursors.
 -- see the @{cursor} table structure here.
 local cursors = {
-	current = 1,
-	name = "walk",
-	list = {
-		{
-			name = "walk",
-			image = nil,	-- get set on load
-			quad = love.graphics.newQuad (80, 64, 16, 16, 128, 96)
-		},
-		{
-			name = "look",
-			image = nil,	-- get set on load
-			quad = love.graphics.newQuad (16, 0, 16, 16, 128, 96)
-		},
-		{
-			name = "talk",
-			image = nil,	-- get set on load
-			quad = love.graphics.newQuad (112, 0, 16, 16, 128, 96)
-		}
-	}
+    current = 1,
+    name = "walk",
+    list = {
+        {
+            name = "walk",
+            image = nil,    -- get set on load
+            quad = love.graphics.newQuad (80, 64, 16, 16, 128, 96)
+        },
+        {
+            name = "look",
+            image = nil,    -- get set on load
+            quad = love.graphics.newQuad (16, 0, 16, 16, 128, 96)
+        },
+        {
+            name = "talk",
+            image = nil,    -- get set on load
+            quad = love.graphics.newQuad (112, 0, 16, 16, 128, 96)
+        }
+    }
 }
 
 function love.load ()
@@ -45,16 +45,16 @@ function love.load ()
     love.window.setMode (width, height)
     love.graphics.setDefaultFilter("nearest", "nearest", 1)
 
-	-- load the cursor image.
-	-- we do this here, after calling setDefaultFilter, because
-	-- setDefaultFilter does not apply retroactively to loaded images.
+    -- load the cursor image.
+    -- we do this here, after calling setDefaultFilter, because
+    -- setDefaultFilter does not apply retroactively to loaded images.
     local cursorImage = love.graphics.newImage ("media/point and click cursor.png")
     for _, cursor in ipairs (cursors.list) do
-		cursor.image = cursorImage
-	end
+        cursor.image = cursorImage
+    end
 
-	-- load a small font
-	love.graphics.setFont (love.graphics.newFont (10))
+    -- load a small font
+    love.graphics.setFont (love.graphics.newFont (10))
 
     -- load actor portraits
     portraits["Intercom"] = love.graphics.newImage ("media/intercom-portrait.png")
@@ -77,7 +77,7 @@ function love.load ()
     slime.layers:add ("media/lab-background.png", "media/lab-layer-bench.png", 200)
     slime.layers:add ("media/lab-background.png", "media/lab-layer-desks.png", 51)
 
-	-- add a couple of hotspots to interact with
+    -- add a couple of hotspots to interact with
     slime.hotspots:add ("Cameras", 9, 2, 40, 20)
 
     -- add the player actor
@@ -99,21 +99,21 @@ function love.load ()
         y = 40,
 
         -- walking speed in pixels per second
-		speed = 16,
+        speed = 16,
 
-		-- set the player speech color
-		speechcolor = {0, 1, 0}
+        -- set the player speech color
+        speechcolor = {0, 1, 0}
 
     })
 
     -- add an intercom actor, whom we can converse with
     slime.actors:add ({
-		name = "Intercom",
-		image = love.graphics.newImage ("media/intercom-still.png"),
-		x = 18,
-		y = 50,
-		speechcolor = {1, 1, 0}
-	})
+        name = "Intercom",
+        image = love.graphics.newImage ("media/intercom-still.png"),
+        x = 18,
+        y = 50,
+        speechcolor = {1, 1, 0}
+    })
 
     -- say a greeting
     slime.speech:say ("Player", "Hey, that intercom on the wall is new", 6)
@@ -144,51 +144,51 @@ function love.draw ()
     -- see @{slime:draw}
     slime:draw (scale)
 
-	-- we intentionally draw a small font scaled up
-	-- so the style matches our pixelated game.
-	love.graphics.push ()
-	love.graphics.scale (scale)
+    -- we intentionally draw a small font scaled up
+    -- so the style matches our pixelated game.
+    love.graphics.push ()
+    love.graphics.scale (scale)
 
-	-- print the text of the thing under the mouse cursor.
+    -- print the text of the thing under the mouse cursor.
     if statusText then
         love.graphics.setColor ({1, 1, 1})
         love.graphics.printf (statusText, 0, 84, 170, "center")
     end
 
-	love.graphics.pop ()
+    love.graphics.pop ()
 
 end
 
 
 function love.mousepressed (x, y, button, istouch, presses)
 
-	-- skip any speech currently on screen, and ignore further clicks.
-	if slime.speech:isTalking () then
-		slime.speech:skip ()
-		return
-	end
+    -- skip any speech currently on screen, and ignore further clicks.
+    if slime.speech:isTalking () then
+        slime.speech:skip ()
+        return
+    end
 
-	-- right click cycles the cursors
-	if button == 2 then
-		cursors.current = math.max (1, (cursors.current + 1) % (#cursors.list + 1))
-		slime.cursor:set (cursors.list[cursors.current])
-		-- store the name for quick access during mouse clicks below
-		cursors.name = cursors.list[cursors.current].name
-		return
-	end
+    -- right click cycles the cursors
+    if button == 2 then
+        cursors.current = math.max (1, (cursors.current + 1) % (#cursors.list + 1))
+        slime.cursor:set (cursors.list[cursors.current])
+        -- store the name for quick access during mouse clicks below
+        cursors.name = cursors.list[cursors.current].name
+        return
+    end
 
-	if cursors.name == "walk" then
-		slime.actors:move ("Player", x, y)
-	else
-		slime:interact (x, y)
-	end
+    if cursors.name == "walk" then
+        slime.actors:move ("Player", x, y)
+    else
+        slime:interact (x, y)
+    end
 
 end
 
 function love.mousemoved (x, y, dx, dy, istouch)
 
-	-- to enable the custom cursor, we must update it's position.
-	slime.cursor:update (x, y)
+    -- to enable the custom cursor, we must update it's position.
+    slime.cursor:update (x, y)
 
     -- get all things under the mouse cursor
     -- see @{slime:getObjects}
@@ -230,18 +230,18 @@ end
 
 function slime.events.interact (event, actor)
 
-	if event == "look" then
-		if actor.name == "Cameras" then
-			slime.speech:say ("Player", "Security is watching the lab")
-		elseif actor.name == "Intercom" then
-			slime.speech:say ("Player", "It is a direct line to security")
-		elseif actor.name == "Player" then
-			slime.speech:say ("Player", "That is me")
-		end
-	end
+    if event == "look" then
+        if actor.name == "Cameras" then
+            slime.speech:say ("Player", "Security is watching the lab")
+        elseif actor.name == "Intercom" then
+            slime.speech:say ("Player", "It is a direct line to security")
+        elseif actor.name == "Player" then
+            slime.speech:say ("Player", "That is me")
+        end
+    end
 
-	if event == "talk" then
-		if actor.name == "Intercom" then
+    if event == "talk" then
+        if actor.name == "Intercom" then
 
             -- ensure we are close enough to speak into the Intercom
             local distance = slime.actors:measure ("Player", actor)
@@ -251,13 +251,13 @@ function slime.events.interact (event, actor)
                 return
             end
 
-			slime.speech:say ("Player", "Hello, anybody there?")
-			slime.speech:say ("Intercom", "*pop* *crackle*")
+            slime.speech:say ("Player", "Hello, anybody there?")
+            slime.speech:say ("Intercom", "*pop* *crackle*")
 
-		elseif actor.name == "Cameras" then
-			slime.speech:say ("Player", "I can use the Intercom to talk to security")
-		end
-	end
+        elseif actor.name == "Cameras" then
+            slime.speech:say ("Player", "I can use the Intercom to talk to security")
+        end
+    end
 
 end
 
@@ -270,13 +270,13 @@ end
 -- who started talking.
 function slime.events.speech (actor, isTalking)
 
-	if isTalking then
-		-- show a portrait of the talking actor
-		talkingPortrait = portraits[actor.name]
-	else
-		-- hide the talking portrait
-		talkingPortrait = nil
-	end
+    if isTalking then
+        -- show a portrait of the talking actor
+        talkingPortrait = portraits[actor.name]
+    else
+        -- hide the talking portrait
+        talkingPortrait = nil
+    end
 
 end
 
@@ -284,30 +284,30 @@ end
 -- the words around our actor portraits.
 function slime.events.draw.speech (actor, words)
 
-	local x, y = 0, 0
+    local x, y = 0, 0
 
-	-- the width of text, before it starts wrapping
-	-- (adjusted to scale, which turns out to be our asset size)
-	local w = 170	-- = width / scale
+    -- the width of text, before it starts wrapping
+    -- (adjusted to scale, which turns out to be our asset size)
+    local w = 170   -- = width / scale
 
-	-- measure the size of the portrait to fit the speech
-	if talkingPortrait then
-		x = talkingPortrait:getWidth ()
-		w = w - x
-	end
+    -- measure the size of the portrait to fit the speech
+    if talkingPortrait then
+        x = talkingPortrait:getWidth ()
+        w = w - x
+    end
 
-	-- shadowed background
-	love.graphics.setColor({0, 0, 0, 0.5})
-	love.graphics.rectangle ("fill", 0, 0, 170, 96)
+    -- shadowed background
+    love.graphics.setColor({0, 0, 0, 0.5})
+    love.graphics.rectangle ("fill", 0, 0, 170, 96)
 
-	-- print words
-	love.graphics.setColor(actor.speechcolor)
-	love.graphics.printf(words, x, y, w, "center")
+    -- print words
+    love.graphics.setColor(actor.speechcolor)
+    love.graphics.printf(words, x, y, w, "center")
 
     -- draw the talking portrait
     if talkingPortrait then
-		love.graphics.setColor({1, 1, 1})
-		love.graphics.draw (talkingPortrait)
+        love.graphics.setColor({1, 1, 1})
+        love.graphics.draw (talkingPortrait)
     end
 
 end
@@ -316,16 +316,16 @@ end
 -- that are hoevered over things.
 function slime.events.draw.cursor (cursor, x, y)
 
-	if statusText then
-		love.graphics.setColor (0, 1, 1)
-	else
-		love.graphics.setColor (1, 1, 1)
-	end
+    if statusText then
+        love.graphics.setColor (0, 1, 1)
+    else
+        love.graphics.setColor (1, 1, 1)
+    end
 
-	if cursor.quad then
-		love.graphics.draw (cursor.image, cursor.quad, x, y)
-	else
-		love.graphics.draw (cursor.image, x, y)
-	end
+    if cursor.quad then
+        love.graphics.draw (cursor.image, cursor.quad, x, y)
+    else
+        love.graphics.draw (cursor.image, x, y)
+    end
 
 end

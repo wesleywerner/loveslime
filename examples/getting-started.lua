@@ -20,7 +20,7 @@ function love.load ()
     love.window.setMode (width, height)
     love.graphics.setDefaultFilter("nearest", "nearest", 1)
 
-	-- load the status text font
+    -- load the status text font
     statusFont = love.graphics.newFont (10)
 
     -- reset slime for a new game
@@ -59,7 +59,7 @@ function love.load ()
         y = 40,
 
         -- walking speed in pixels per second
-		speed = 16
+        speed = 16
 
     })
 
@@ -85,13 +85,13 @@ function love.draw ()
     -- see @{slime:draw}
     slime:draw (scale)
 
-	-- print the text of the thing under the mouse cursor.
-	-- we intentionally draw a small font scaled up
-	-- so the style matches our pixelated game.
+    -- print the text of the thing under the mouse cursor.
+    -- we intentionally draw a small font scaled up
+    -- so the style matches our pixelated game.
     if statusText then
-		love.graphics.push ()
-		love.graphics.scale (scale)
-		love.graphics.setFont (statusFont)
+        love.graphics.push ()
+        love.graphics.scale (scale)
+        love.graphics.setFont (statusFont)
         love.graphics.setColor ({1, 1, 1})
         love.graphics.printf (statusText, 0, 84, 170, "center")
         love.graphics.pop ()
@@ -101,8 +101,8 @@ end
 
 function love.mousepressed (x, y, button, istouch, presses)
 
-	-- see @{actors:move}
-	slime.actors:move ("Player", x, y)
+    -- see @{actors:move}
+    slime.actors:move ("Player", x, y)
 
 end
 
