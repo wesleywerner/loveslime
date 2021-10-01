@@ -24,25 +24,25 @@ function love.load ()
     statusFont = love.graphics.newFont (10)
 
     -- reset slime for a new game
-    -- see @{slime:reset}
-    slime:reset ()
+    -- see @{slime.reset}
+    slime.reset ()
 
     -- add a background image to the stage
-    -- see @{backgrounds:add}
-    slime.backgrounds:add ("media/lab-background.png")
+    -- see @{backgrounds.add}
+    slime.backgrounds.add ("media/lab-background.png")
 
     -- set the walkable floor
-    -- see @{floors:set}
-    slime.floors:set ("media/lab-floor.png")
+    -- see @{floors.set}
+    slime.floors.set ("media/lab-floor.png")
 
     -- add a walk-behind layer
-    -- see @{layers:add}
-    slime.layers:add ("media/lab-background.png", "media/lab-layer-bench.png", 200)
-    slime.layers:add ("media/lab-background.png", "media/lab-layer-desks.png", 51)
+    -- see @{layers.add}
+    slime.layers.add ("media/lab-background.png", "media/lab-layer-bench.png", 200)
+    slime.layers.add ("media/lab-background.png", "media/lab-layer-desks.png", 51)
 
     -- add the player actor
-    -- see @{actors:add}
-    slime.actors:add ({
+    -- see @{actors.add}
+    slime.actors.add ({
 
         -- name of the actor
         name = "Player",
@@ -67,8 +67,8 @@ end
 
 function love.update (dt)
 
-    -- see @{slime:update}
-    slime:update (dt)
+    -- see @{slime.update}
+    slime.update (dt)
 
 end
 
@@ -82,8 +82,8 @@ end
 
 function love.draw ()
 
-    -- see @{slime:draw}
-    slime:draw (scale)
+    -- see @{slime.draw}
+    slime.draw (scale)
 
     -- print the text of the thing under the mouse cursor.
     -- we intentionally draw a small font scaled up
@@ -101,16 +101,16 @@ end
 
 function love.mousepressed (x, y, button, istouch, presses)
 
-    -- see @{actors:move}
-    slime.actors:move ("Player", x, y)
+    -- see @{actors.move}
+    slime.actors.move ("Player", x, y)
 
 end
 
 function love.mousemoved (x, y, dx, dy, istouch)
 
     -- get all things under the mouse position
-    -- see @{slime:getObjects}
-    local things = slime:getObjects (x, y)
+    -- see @{slime.getObjects}
+    local things = slime.getObjects (x, y)
 
     -- set our status text to the first thing found
     if things then

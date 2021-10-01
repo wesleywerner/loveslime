@@ -61,28 +61,28 @@ function love.load ()
     portraits["Player"] = love.graphics.newImage ("media/scientist-portrait.png")
 
     -- reset slime for a new game
-    -- see @{slime:reset}
-    slime:reset ()
+    -- see @{slime.reset}
+    slime.reset ()
 
     -- add a background image to the stage
-    -- see @{backgrounds:add}
-    slime.backgrounds:add ("media/lab-background.png")
+    -- see @{backgrounds.add}
+    slime.backgrounds.add ("media/lab-background.png")
 
     -- set the walkable floor
-    -- see @{floors:set}
-    slime.floors:set ("media/lab-floor.png")
+    -- see @{floors.set}
+    slime.floors.set ("media/lab-floor.png")
 
     -- add a walk-behind layer
-    -- see @{layers:add}
-    slime.layers:add ("media/lab-background.png", "media/lab-layer-bench.png", 200)
-    slime.layers:add ("media/lab-background.png", "media/lab-layer-desks.png", 51)
+    -- see @{layers.add}
+    slime.layers.add ("media/lab-background.png", "media/lab-layer-bench.png", 200)
+    slime.layers.add ("media/lab-background.png", "media/lab-layer-desks.png", 51)
 
     -- add a couple of hotspots to interact with
-    slime.hotspots:add ("Cameras", 9, 2, 40, 20)
+    slime.hotspots.add ("Cameras", 9, 2, 40, 20)
 
     -- add the player actor
-    -- see @{actors:add}
-    slime.actors:add ({
+    -- see @{actors.add}
+    slime.actors.add ({
 
         -- name of the actor
         name = "Player",
@@ -107,7 +107,7 @@ function love.load ()
     })
 
     -- add an intercom actor, whom we can converse with
-    slime.actors:add ({
+    slime.actors.add ({
         name = "Intercom",
         image = love.graphics.newImage ("media/intercom-still.png"),
         x = 18,
@@ -116,18 +116,18 @@ function love.load ()
     })
 
     -- say a greeting
-    slime.speech:say ("Player", "Hey, that intercom on the wall is new", 6)
+    slime.speech.say ("Player", "Hey, that intercom on the wall is new", 6)
 
     -- set the first cursor
-    slime.cursor:set (cursors.list[cursors.current])
+    slime.cursor.set (cursors.list[cursors.current])
     love.mouse.setVisible (false)
 
 end
 
 function love.update (dt)
 
-    -- see @{slime:update}
-    slime:update (dt)
+    -- see @{slime.update}
+    slime.update (dt)
 
 end
 
@@ -141,8 +141,8 @@ end
 
 function love.draw ()
 
-    -- see @{slime:draw}
-    slime:draw (scale)
+    -- see @{slime.draw}
+    slime.draw (scale)
 
     -- we intentionally draw a small font scaled up
     -- so the style matches our pixelated game.
@@ -163,24 +163,24 @@ end
 function love.mousepressed (x, y, button, istouch, presses)
 
     -- skip any speech currently on screen, and ignore further clicks.
-    if slime.speech:isTalking () then
-        slime.speech:skip ()
+    if slime.speech.isTalking () then
+        slime.speech.skip ()
         return
     end
 
     -- right click cycles the cursors
     if button == 2 then
         cursors.current = math.max (1, (cursors.current + 1) % (#cursors.list + 1))
-        slime.cursor:set (cursors.list[cursors.current])
+        slime.cursor.set (cursors.list[cursors.current])
         -- store the name for quick access during mouse clicks below
         cursors.name = cursors.list[cursors.current].name
         return
     end
 
     if cursors.name == "walk" then
-        slime.actors:move ("Player", x, y)
+        slime.actors.move ("Player", x, y)
     else
-        slime:interact (x, y)
+        slime.interact (x, y)
     end
 
 end
@@ -188,11 +188,11 @@ end
 function love.mousemoved (x, y, dx, dy, istouch)
 
     -- to enable the custom cursor, we must update it's position.
-    slime.cursor:update (x, y)
+    slime.cursor.update (x, y)
 
     -- get all things under the mouse cursor
-    -- see @{slime:getObjects}
-    local things = slime:getObjects (x, y)
+    -- see @{slime.getObjects}
+    local things = slime.getObjects (x, y)
 
     -- set our status text to the first thing found
     if things then
@@ -232,11 +232,11 @@ function slime.events.interact (event, actor)
 
     if event == "look" then
         if actor.name == "Cameras" then
-            slime.speech:say ("Player", "Security is watching the lab")
+            slime.speech.say ("Player", "Security is watching the lab")
         elseif actor.name == "Intercom" then
-            slime.speech:say ("Player", "It is a direct line to security")
+            slime.speech.say ("Player", "It is a direct line to security")
         elseif actor.name == "Player" then
-            slime.speech:say ("Player", "That is me")
+            slime.speech.say ("Player", "That is me")
         end
     end
 
@@ -244,18 +244,18 @@ function slime.events.interact (event, actor)
         if actor.name == "Intercom" then
 
             -- ensure we are close enough to speak into the Intercom
-            local distance = slime.actors:measure ("Player", actor)
+            local distance = slime.actors.measure ("Player", actor)
 
             if distance > 20 then
-                slime.speech:say ("Player", "I am not close enough")
+                slime.speech.say ("Player", "I am not close enough")
                 return
             end
 
-            slime.speech:say ("Player", "Hello, anybody there?")
-            slime.speech:say ("Intercom", "*pop* *crackle*")
+            slime.speech.say ("Player", "Hello, anybody there?")
+            slime.speech.say ("Intercom", "*pop* *crackle*")
 
         elseif actor.name == "Cameras" then
-            slime.speech:say ("Player", "I can use the Intercom to talk to security")
+            slime.speech.say ("Player", "I can use the Intercom to talk to security")
         end
     end
 
