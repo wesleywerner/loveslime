@@ -151,7 +151,7 @@ end
 -- @tparam actor actor
 function actors:add (actor)
 
-    assert (actor, "Actor definition must be given.")
+    assert(actor, "Actor definition must be given.")
 
     -- get the size if a still image is set
     if actor.image then
@@ -160,10 +160,10 @@ function actors:add (actor)
         actor.width, actor.height = actor.width or 10, actor.height or 10
     end
 
-    assert (actor.x, "Actor x position must be given.")
-    assert (actor.y, "Actor y position must be given.")
-    assert (actor.width, "Actor width must be given.")
-    assert (actor.height, "Actor height must be given.")
+    assert(actor.x, "Actor x position must be given.")
+    assert(actor.y, "Actor y position must be given.")
+    assert(actor.width, "Actor width must be given.")
+    assert(actor.height, "Actor height must be given.")
 
     actor.isactor = true
     actor["direction recalc delay"] = 0
@@ -183,19 +183,19 @@ function actors:add (actor)
         actor.feet = { x = actor.width, y = actor.height / 2}
     end
 
-    assert (type(actor.feet) == "table", "Actor feet property must be string or a table")
-    assert (actor.feet.x, "Actor feet must have x position")
-    assert (actor.feet.y, "Actor feet must have y position")
+    assert(type(actor.feet) == "table", "Actor feet property must be string or a table")
+    assert(actor.feet.x, "Actor feet must have x position")
+    assert(actor.feet.y, "Actor feet must have y position")
 
     -- set the movement speed.
     -- speed is assumed to be the pixels per second to move.
     -- we convert this to time to wait before updating the path.
-    if type (actor.speed) == "number" then
+    if type(actor.speed) == "number" then
         actor.movedelay = 1 / actor.speed
     end
 
     table.insert(self.list, actor)
-    self:sort ()
+    self:sort()
     return actor
 
 end
@@ -215,21 +215,21 @@ end
 function actors:measure (from, to)
 
     -- resolve actors by name
-    if type (from) == "string" then
-        from = self:get (from)
+    if type(from) == "string" then
+        from = self:get(from)
     end
-    if type (to) == "string" then
-        to = self:get (to)
+    if type(to) == "string" then
+        to = self:get(to)
     end
 
-    assert (type (from) == "table", "measure from parameter must be a table")
-    assert (type (to) == "table", "measure from parameter must be a table")
-    assert (type (from.x) == "number", "measure from.x property must be a number")
-    assert (type (from.y) == "number", "measure from.y property must be a number")
-    assert (type (to.x) == "number", "measure to.x property must be a number")
-    assert (type (to.y) == "number", "measure to.y property must be a number")
+    assert(type(from) == "table", "measure from parameter must be a table")
+    assert(type(to) == "table", "measure from parameter must be a table")
+    assert(type(from.x) == "number", "measure from.x property must be a number")
+    assert(type(from.y) == "number", "measure from.y property must be a number")
+    assert(type(to.x) == "number", "measure to.x property must be a number")
+    assert(type(to.y) == "number", "measure to.y property must be a number")
 
-    return tools:distance (from.x, from.y, to.x, to.y)
+    return tools:distance(from.x, from.y, to.x, to.y)
 
 end
 
@@ -250,7 +250,7 @@ function actors:update (dt)
         if actor.isactor then
 
             -- update the movement path
-            if self:updatePath (actor, dt) then
+            if self:updatePath(actor, dt) then
                 actorsMoved = true
             end
 
@@ -272,14 +272,14 @@ function actors:update (dt)
             end
 
             -- request the next sprite frame
-            actor.sprite = events.request.sprite (dt, actor)
+            actor.sprite = events.request.sprite(dt, actor)
 
         end
     end
 
     -- sort the draw order of actor if any moved
     if actorsMoved then
-        self:sort ()
+        self:sort()
     end
 
 end
@@ -373,7 +373,7 @@ function actors:updatePath (actor, dt)
         end
 
         -- load the next point in the path
-        local point = table.remove (actor.path, 1)
+        local point = table.remove(actor.path, 1)
 
         if (point) then
 
@@ -386,7 +386,7 @@ function actors:updatePath (actor, dt)
             -- TODO: delete this direction delay. works better without it.
             do --(actor["direction recalc delay"] <= 0) then
                 actor["direction recalc delay"] = 5
-                actor.direction = self:directionOf (actor.previousX, actor.previousY, actor.x, actor.y)
+                actor.direction = self:directionOf(actor.previousX, actor.previousY, actor.x, actor.y)
                 -- store previous position, to calculate the
                 -- facing direction on the next iteration.
                 actor.previousX, actor.previousY = actor.x, actor.y
@@ -397,15 +397,15 @@ function actors:updatePath (actor, dt)
         -- the goal is reached
         if (#actor.path == 0) then
 
-            ooze:append (actor.name .. " moved complete")
+            ooze:append(actor.name .. " moved complete")
             actor.path = nil
             actor.action = "idle"
 
             -- notify the moved callback
-            events.moved (actor, actor.clickedX, actor.clickedY)
+            events.moved(actor, actor.clickedX, actor.clickedY)
 
             -- OBSOLETE: replaced by events.move callback
-            slime.callback ("moved", actor)
+            slime.callback("moved", actor)
 
         end
 
@@ -542,7 +542,7 @@ function actors:draw ()
             if actor.sprite.quad and actor.sprite.image then
 
                 -- drawable with a quad
-                love.graphics.draw (
+                love.graphics.draw(
                     actor.sprite.image,
                     actor.sprite.quad,
                     actor.drawX + actor.sprite.x,
@@ -556,7 +556,7 @@ function actors:draw ()
             elseif actor.sprite.image then
 
                 -- drawable without a quad
-                love.graphics.draw (
+                love.graphics.draw(
                     actor.sprite.image,
                     actor.drawX + actor.sprite.x,
                     actor.drawY + actor.sprite.y,
@@ -591,16 +591,16 @@ end
 -- @see floors:set
 function actors:move (name, x, y)
 
-    x, y = slime:scalePoint (x, y)
+    x, y = slime:scalePoint(x, y)
 
     -- intercept chaining
     if chains.capturing then
-        ooze:append (string.format("chaining %s move", name))
-        chains:add (actors.move,
+        ooze:append(string.format("chaining %s move", name))
+        chains:add(actors.move,
             {self, name, x, y},
             -- expires when actor path is empty
             function (parameters)
-                local actor = actors:get (parameters[2])
+                local actor = actors:get(parameters[2])
                 if not actor or not actor.path then
                     return true
                 end
@@ -613,7 +613,7 @@ function actors:move (name, x, y)
     local actor = self:get (name)
 
     if (actor == nil) then
-        ooze:append ("No actor named " .. name)
+        ooze:append("No actor named " .. name)
         return
     end
 
@@ -621,22 +621,22 @@ function actors:move (name, x, y)
     local goal = { x = x, y = y }
 
     -- If the goal is on a solid block find the nearest open point
-    if floors:hasMap () then
-        if not floors:isWalkable (goal.x, goal.y) then
-            goal = floors:findNearestOpenPoint (goal)
+    if floors:hasMap() then
+        if not floors:isWalkable(goal.x, goal.y) then
+            goal = floors:findNearestOpenPoint(goal)
         end
     end
 
     local useCache = false
-    local width, height = floors:size ()
+    local width, height = floors:size()
 
     local route
 
-    if floors:hasMap () then
-        route = path:find (width, height, start, goal, floors.isWalkable, useCache)
+    if floors:hasMap() then
+        route = path:find(width, height, start, goal, floors.isWalkable, useCache)
     else
         -- no floor is loaded, so move in a straight line
-        route = floors:bresenham (start, goal)
+        route = floors:bresenham(start, goal)
     end
 
     -- we have a path
@@ -648,11 +648,11 @@ function actors:move (name, x, y)
         actor.action = "walk"
         -- Calculate actor direction immediately
         actor.previousX, actor.previousY = actor.x, actor.y
-        actor.direction = actors:directionOf (actor.x, actor.y, x, y)
+        actor.direction = actors:directionOf(actor.x, actor.y, x, y)
         -- Output debug
-        ooze:append ("move " .. name .. " to " .. x .. " : " .. y)
+        ooze:append("move " .. name .. " to " .. x .. " : " .. y)
     else
-        ooze:append ("no actor path found")
+        ooze:append("no actor path found")
     end
 
 end
@@ -669,12 +669,12 @@ function actors:turn (name, direction)
 
     -- intercept chaining
     if chains.capturing then
-        ooze:append (string.format("chaining %s turn %s", name, direction))
-        chains:add (actors.turn, {self, name, direction})
+        ooze:append(string.format("chaining %s turn %s", name, direction))
+        chains:add(actors.turn, {self, name, direction})
         return
     end
 
-    local actor = self:get (name)
+    local actor = self:get(name)
 
     if (actor) then
         actor.direction = direction
@@ -693,12 +693,12 @@ end
 -- Name of the actor to move towards.
 function actors:moveTowards (name, target)
 
-    local targetActor = self:get (target)
+    local targetActor = self:get(target)
 
     if (targetActor) then
-        self:move (name, targetActor.x, targetActor.y)
+        self:move(name, targetActor.x, targetActor.y)
     else
-        ooze:append ("no actor named " .. target)
+        ooze:append("no actor named " .. target)
     end
 
 end
@@ -710,7 +710,7 @@ end
 -- Name of the actor.
 function actors:stop (name)
 
-    local actor = self:get (name)
+    local actor = self:get(name)
 
     if actor then
         actor.path = nil
@@ -741,8 +741,8 @@ end
 -- Seconds to display before cycling the background.
 function backgrounds:add (path, seconds)
 
-    local image = love.graphics.newImage (path)
-    local width, height = image:getDimensions ()
+    local image = love.graphics.newImage(path)
+    local width, height = image:getDimensions()
 
     -- set the background size
     if not self.width or not self.height then
@@ -750,8 +750,8 @@ function backgrounds:add (path, seconds)
     end
 
     -- ensure consistent background sizes
-    assert (width == self.width, "backgrounds must have the same size")
-    assert (height == self.height, "backgrounds must have the same size")
+    assert(width == self.width, "backgrounds must have the same size")
+    assert(height == self.height, "backgrounds must have the same size")
 
     table.insert(self.list, {
         image = image,
@@ -870,12 +870,12 @@ function bags:add (name, object)
     table.insert(self.contents[name], object)
 
     -- notify the callback
-    events.bag (name)
+    events.bag(name)
 
     -- OBSOLETE: replaced by events.bag
-    slime.inventoryChanged (name)
+    slime.inventoryChanged(name)
 
-    ooze:append (string.format("Added %s to bag", object.name))
+    ooze:append(string.format("Added %s to bag", object.name))
 
 end
 
@@ -893,8 +893,8 @@ function bags:remove (name, thingName)
     for i, item in pairs(inv) do
         if (item.name == thingName) then
             table.remove(inv, i)
-            ooze:append (string.format("Removed %s", thingName))
-            slime.inventoryChanged (name)
+            ooze:append(string.format("Removed %s", thingName))
+            slime.inventoryChanged(name)
         end
     end
 
@@ -935,9 +935,9 @@ end
 function cache:init ()
 
     -- Calling a table like a function
-    setmetatable (self, {
+    setmetatable(self, {
         __call = function (self, ...)
-            return self:interface (...)
+            return self:interface(...)
         end
     })
 
@@ -984,9 +984,9 @@ function chains:clear ()
 
     -- Allow calling this table like it was a function.
     -- We do this for brevity sake.
-    setmetatable (chains, {
+    setmetatable(chains, {
         __call = function (self, ...)
-            return self:capture (...)
+            return self:capture(...)
         end
     })
 
@@ -1016,8 +1016,8 @@ end
 function chains:capture (name, userFunction)
 
     -- catch obsolete usage
-    if type (name) == "table" then
-        assert (false, "slime:chain is obsolete. use slime.chain()... notation")
+    if type(name) == "table" then
+        assert(false, "slime:chain is obsolete. use slime.chain()... notation")
     end
 
     -- use a default chain name if none is provided
@@ -1030,13 +1030,13 @@ function chains:capture (name, userFunction)
     if not self.capturing then
         self.capturing = { name = name, actions = { } }
         self.list[name] = self.capturing
-        ooze:append (string.format ("created chain %q", name))
+        ooze:append(string.format("created chain %q", name))
     end
 
     -- queue custom function
-    if type (userFunction) == "function" then
-        self:add (userFunction, { })
-        ooze:append (string.format("user function chained"))
+    if type(userFunction) == "function" then
+        self:add(userFunction, { })
+        ooze:append(string.format("user function chained"))
     end
 
     -- return the slime instance to allow further action chaining
@@ -1072,7 +1072,7 @@ function chains:add (func, parameters, expired)
     }
 
     -- queue this command in the capturing chain
-    table.insert (self.capturing.actions, command)
+    table.insert(self.capturing.actions, command)
 
     -- release this capture
     self.capturing = nil
@@ -1099,16 +1099,16 @@ function chains:update (dt)
             if not command.ran then
                 --ooze:append (string.format("running chain command"))
                 command.ran = true
-                command.func (unpack (command.parameters))
+                command.func(unpack(command.parameters))
             end
 
             -- test if the action expired
-            local skipTest = type (command.expired) ~= "function"
+            local skipTest = type(command.expired) ~= "function"
 
             -- remove expired actions from this chain
-            if skipTest or command.expired (command.parameters, dt) then
+            if skipTest or command.expired(command.parameters, dt) then
                 --ooze:append (string.format("chain action expired"))
-                table.remove (chain.actions, 1)
+                table.remove(chain.actions, 1)
             end
 
         end
@@ -1127,7 +1127,7 @@ function chains:wait (seconds)
 
         --ooze:append (string.format("waiting %ds", seconds))
 
-        chains:add (chains.wait,
+        chains:add(chains.wait,
 
                     -- pack parameter twice, the second being
                     -- our countdown
@@ -1255,9 +1255,9 @@ end
 function events.draw.cursor (cursor, x, y)
 
     if cursor.quad then
-        love.graphics.draw (cursor.image, cursor.quad, x, y)
+        love.graphics.draw(cursor.image, cursor.quad, x, y)
     else
-        love.graphics.draw (cursor.image, x, y)
+        love.graphics.draw(cursor.image, x, y)
     end
 
 end
@@ -1395,7 +1395,7 @@ end
 function cursor:draw ()
 
     if self.cursor and self.x then
-        events.draw.cursor (self.cursor, self.x, self.y)
+        events.draw.cursor(self.cursor, self.x, self.y)
     end
 
 end
@@ -1419,15 +1419,15 @@ end
 -- The cursor data.
 function cursor:set (cursor)
 
-    assert (cursor.name, "cursor needs a name")
-    assert (cursor.image, "cursor needs an image")
+    assert(cursor.name, "cursor needs a name")
+    assert(cursor.image, "cursor needs an image")
 
     -- default hotspot to top-left corner
     cursor.hotspot = cursor.hotspot or {x = 0, y = 0}
 
     self.cursor = cursor
 
-    ooze:append (string.format("set cursor %q", cursor.name))
+    ooze:append(string.format("set cursor %q", cursor.name))
 
 end
 
@@ -1437,7 +1437,7 @@ end
 -- @tparam int y
 function cursor:update (x, y)
 
-    x, y = slime:scalePoint (x, y)
+    x, y = slime:scalePoint(x, y)
 
     -- adjust draw position to center around the hotspot
     if self.cursor then
@@ -1487,11 +1487,11 @@ function floors:set (filename)
 
     -- intercept chaining
     if chains.capturing then
-        chains:add (floors.set, {self, filename})
+        chains:add(floors.set, {self, filename})
         return
     end
 
-    self:convert (filename)
+    self:convert(filename)
 
 end
 
@@ -1524,7 +1524,7 @@ function floors:convert (filename)
     for ih = 1, h - 1 do
         row = { }
         for iw = 1, w - 1 do
-            r, g, b, a = mask:getPixel (iw, ih)
+            r, g, b, a = mask:getPixel(iw, ih)
             if (r + g + b == 0) then
                 -- not walkable
                 table.insert(row, false)
@@ -1552,10 +1552,10 @@ end
 -- @local
 function floors:isWalkable (x, y)
 
-    if self:hasMap () then
+    if self:hasMap() then
         -- clamp to floor boundary
-        x = tools:clamp (x, 1, self.width - 1)
-        y = tools:clamp (y, 1, self.height - 1)
+        x = tools:clamp(x, 1, self.width - 1)
+        y = tools:clamp(y, 1, self.height - 1)
         return self.walkableMap[y][x]
     else
         -- no floor is always walkable
@@ -1650,7 +1650,7 @@ end
 function floors:findNearestOpenPoint (point)
 
     -- Get the dimensions of the walkable floor map.
-    local width, height = floors:size ()
+    local width, height = floors:size()
 
     -- Define the cardinal direction to test against relative to the point.
     local directions = {
@@ -1665,18 +1665,18 @@ function floors:findNearestOpenPoint (point)
 
     for idirection, direction in pairs(directions) do
         local goal = point
-        local walkTheLine = self:bresenham (direction, goal)
+        local walkTheLine = self:bresenham(direction, goal)
         local continueSearch = true
         while (continueSearch) do
             if (#walkTheLine == 0) then
                 continueSearch = false
             else
                 goal = table.remove(walkTheLine)
-                continueSearch = not self:isWalkable (goal.x, goal.y)
+                continueSearch = not self:isWalkable(goal.x, goal.y)
             end
         end
         -- math.sqrt( (x2 - x1)^2 + (y2 - y1)^2 )
-        local distance = math.sqrt( (goal.x - point.x)^2 + (goal.y - point.y)^2 )
+        local distance = math.sqrt((goal.x - point.x)^2 + (goal.y - point.y)^2 )
         table.insert(foundPoints, { ["goal"] = goal, ["distance"] = distance })
     end
 
@@ -1756,15 +1756,15 @@ end
 -- The Y-position on the mask that defines the behind/in-front point.
 function layers:add (background, mask, baseline)
 
-    assert (background ~= nil, "Missing parameter to layers:add")
-    assert (mask ~= nil, "Missing parameter to layers:add")
-    assert (baseline ~= nil, "Missing parameter to layers:add")
+    assert(background ~= nil, "Missing parameter to layers:add")
+    assert(mask ~= nil, "Missing parameter to layers:add")
+    assert(baseline ~= nil, "Missing parameter to layers:add")
 
     -- TODO: allow empty baseline, which is then calculated as the
     --      largest Y point in the mask.
 
     local newLayer = {
-        ["image"] = self:convertMask (background, mask),
+        ["image"] = self:convertMask(background, mask),
         ["baseline"] = baseline,
         islayer = true
         }
@@ -1850,17 +1850,17 @@ ooze.menu = { }
 --- Clear and reset debug variables.
 function ooze:clear ()
 
-    self.trigger:init ()
-    self.logger:init ()
-    self.outliner:init ()
-    self.spriteview:init ()     -- incomplete and not listed in available states
-    self.menu:init ()
+    self.trigger:init()
+    self.logger:init()
+    self.outliner:init()
+    self.spriteview:init()     -- incomplete and not listed in available states
+    self.menu:init()
 
     -- list available ooze states
     self.states = { nil, self.logger, self.outliner }
     self.index = 1
 
-    self:loadMenu ()
+    self:loadMenu()
 
 end
 
@@ -1870,7 +1870,7 @@ end
 -- @local
 function ooze:append (text)
 
-    self.logger:append (text)
+    self.logger:append(text)
 
 end
 
@@ -1881,11 +1881,11 @@ function ooze:draw (scale)
     -- drawing enabled ooze updates
     self.enabled = true
 
-    self.trigger:draw (scale)
-    self.menu:draw ()
+    self.trigger:draw(scale)
+    self.menu:draw()
 
     if self.states[self.index] then
-        self.states[self.index]:draw (scale)
+        self.states[self.index]:draw(scale)
     end
 
 end
@@ -1893,14 +1893,14 @@ end
 
 function ooze:mousemoved (x, y, dx, dy, istouch)
 
-    self.menu:mousemoved (x, y, dx, dy, istouch)
+    self.menu:mousemoved(x, y, dx, dy, istouch)
 
 end
 
 function ooze:mousepressed (x, y, button, istouch, presses)
 
     -- test if the trigger zone was clicked
-    if self.trigger:mousepressed (x, y) then
+    if self.trigger:mousepressed(x, y) then
 
         -- move to the next state
         self.index = self.index + 1
@@ -1911,7 +1911,7 @@ function ooze:mousepressed (x, y, button, istouch, presses)
         end
 
         -- load new menu options
-        self:loadMenu ()
+        self:loadMenu()
 
         return true
     end
@@ -1919,7 +1919,7 @@ function ooze:mousepressed (x, y, button, istouch, presses)
     -- pass this event through to the current state
     local state = self.states[self.index]
     if state and state.mousepressed then
-        local handled = state:mousepressed (x, y, button, istouch, presses)
+        local handled = state:mousepressed(x, y, button, istouch, presses)
         -- handled events are eaten up
         if handled == true then
             return handled
@@ -1936,22 +1936,22 @@ function ooze:loadMenu ()
 
     local state = self.states[self.index]
     if state and state.buildMenu then
-        self.menu:set (state:buildMenu())
+        self.menu:set(state:buildMenu())
     else
-        self.menu:clear ()
+        self.menu:clear()
     end
 
 end
 
 function ooze:update (dt)
 
-    self.menu:update (dt)
+    self.menu:update(dt)
 
 end
 
 function ooze:wheelmoved (x, y)
 
-    self.menu:wheelmoved (x, y)
+    self.menu:wheelmoved(x, y)
 
 end
 
@@ -1970,12 +1970,12 @@ function ooze.logger:init ()
 
     -- debug border
     self.padding = 10
-    self.width, self.height = love.graphics.getDimensions ()
+    self.width, self.height = love.graphics.getDimensions()
     self.width = self.width - (self.padding * 2)
     self.height = self.height - (self.padding * 2)
 
     -- the font for printing debug texts
-    self.font = love.graphics.newFont (12)
+    self.font = love.graphics.newFont(12)
     self.color = {0, 1, 0}
 
 end
@@ -1993,17 +1993,17 @@ end
 
 function ooze.logger:draw (scale)
 
-    love.graphics.setColor (self.color)
-    love.graphics.setFont (self.font)
+    love.graphics.setColor(self.color)
+    love.graphics.setFont(self.font)
 
     -- print fps
-    love.graphics.printf (
+    love.graphics.printf(
         string.format("%d fps", love.timer.getFPS()),
         self.padding, self.padding, self.width, "center")
 
     -- print background info
     if (backgrounds.index and backgrounds.timer) then
-        love.graphics.printf (
+        love.graphics.printf(
             string.format("background #%d showing for %.1f",
             backgrounds.index, backgrounds.timer),
             self.padding, self.padding, self.width, "right")
@@ -2011,10 +2011,10 @@ function ooze.logger:draw (scale)
 
     -- print log
     for i, n in ipairs(self.log) do
-        love.graphics.setColor ({0, 0, 0})
-        love.graphics.print (n, self.padding + 1, self.padding + 1 + (16 * i))
-        love.graphics.setColor (self.color)
-        love.graphics.print (n, self.padding, self.padding + (16 * i))
+        love.graphics.setColor({0, 0, 0})
+        love.graphics.print(n, self.padding + 1, self.padding + 1 + (16 * i))
+        love.graphics.setColor(self.color)
+        love.graphics.print(n, self.padding, self.padding + (16 * i))
     end
 
 end
@@ -2029,7 +2029,7 @@ end
 
 function ooze.outliner:init ()
 
-    self.width, self.height = love.graphics.getDimensions ()
+    self.width, self.height = love.graphics.getDimensions()
 
     self.hotspotColor = {1, 1, 0, 0.8}  -- yellow
     self.actorColor = {0, 0, 1, 0.8}    -- blue
@@ -2047,13 +2047,13 @@ end
 function ooze.outliner:draw (scale)
 
     -- draw object outlines to scale
-    love.graphics.push ()
-    love.graphics.scale (scale)
+    love.graphics.push()
+    love.graphics.scale(scale)
 
     -- outline hotspots
-    love.graphics.setColor (self.hotspotColor)
+    love.graphics.setColor(self.hotspotColor)
     for ihotspot, hotspot in pairs(hotspots.list) do
-        love.graphics.rectangle ("line", hotspot.x, hotspot.y, hotspot.w, hotspot.h)
+        love.graphics.rectangle("line", hotspot.x, hotspot.y, hotspot.w, hotspot.h)
     end
 
     -- track layer counter
@@ -2062,21 +2062,21 @@ function ooze.outliner:draw (scale)
     -- outline actors
     for _, actor in ipairs(actors.list) do
         if actor.isactor then
-            love.graphics.setColor (self.actorColor)
+            love.graphics.setColor(self.actorColor)
             -- TODO calculate draw position in actor:update
             love.graphics.rectangle("line", actor.drawX, actor.drawY, actor.width, actor.height)
             love.graphics.circle("line", actor.x, actor.y, 1, 6)
         elseif actor.islayer then
             -- draw baselines for layers
-            local layerColorIndex = math.max (1, layerCounter % (#self.layerColors + 1))
-            love.graphics.setColor (self.layerColors[layerColorIndex])
-            love.graphics.draw (actor.image)
+            local layerColorIndex = math.max(1, layerCounter % (#self.layerColors + 1))
+            love.graphics.setColor(self.layerColors[layerColorIndex])
+            love.graphics.draw(actor.image)
             love.graphics.line(0, actor.baseline, self.width, actor.baseline)
             layerCounter = layerCounter + 1
         end
     end
 
-    love.graphics.pop ()
+    love.graphics.pop()
 
 end
 
@@ -2098,7 +2098,7 @@ end
 
 function ooze.trigger:init ()
 
-    self.width, self.height = love.graphics.getDimensions ()
+    self.width, self.height = love.graphics.getDimensions()
     self.borderColor = {0, 1, 0}
     self.triggerColor = {0, 1, 0, 0.42}
 
@@ -2112,17 +2112,17 @@ end
 
 function ooze.trigger:draw (scale)
 
-    love.graphics.setColor (self.borderColor)
-    love.graphics.rectangle ("line", 0, 0, self.width, self.height)
-    love.graphics.setColor (self.triggerColor)
-    love.graphics.circle ("fill", self.triggerX, self.triggerY, self.triggerSize)
+    love.graphics.setColor(self.borderColor)
+    love.graphics.rectangle("line", 0, 0, self.width, self.height)
+    love.graphics.setColor(self.triggerColor)
+    love.graphics.circle("fill", self.triggerX, self.triggerY, self.triggerSize)
 
 end
 
 function ooze.trigger:mousepressed (x, y, button, istouch, presses)
 
     -- check distance to the trigger zone.
-    local dist = tools:distance (x, y, self.triggerX, self.triggerY)
+    local dist = tools:distance(x, y, self.triggerX, self.triggerY)
     return dist < self.triggerSize
 
 end
@@ -2143,7 +2143,7 @@ function ooze.spriteview:draw (scale)
     love.graphics.rectangle("fill", 0, 0, 100, 100)
 end
 
-function ooze.spriteview:mousepressed (x, y, button, istouch, presses)
+function ooze.spriteview:mousepressed(x, y, button, istouch, presses)
     return true
 end
 
@@ -2167,7 +2167,7 @@ function ooze.menu:init (options)
     -- angle facing north
     self.north = 270
 
-    self.screenWidth, self.screenHeight = love.graphics.getDimensions ()
+    self.screenWidth, self.screenHeight = love.graphics.getDimensions()
 
     -- start invisible
     self.opacity = { dt = self.displayFor, amount = 0 }
@@ -2197,14 +2197,14 @@ function ooze.menu:set (options)
     }
 
     -- angle step size divided evenly between all modes
-    self.step = math.floor (360 / #self.modes)
+    self.step = math.floor(360 / #self.modes)
 
     -- set the first mode
     self.mode = self.modes[1]
 
     -- precalculate starting positions
     self.points = { }
-    for n, mode in ipairs (self.modes) do
+    for n, mode in ipairs(self.modes) do
         -- mind we store point angles in degrees!
         local factor = n - 1
         local itemAngle = self.north + (factor * self.step)
@@ -2218,7 +2218,7 @@ function ooze.menu:set (options)
 
     -- set invisible
     self.opacity = { dt = self.displayFor, amount = 0 }
-    self.x, self.y = love.mouse.getPosition ()
+    self.x, self.y = love.mouse.getPosition()
 
 end
 
@@ -2229,16 +2229,16 @@ function ooze.menu.update (self, dt)
     end
 
     -- update actual angles to match goal angles
-    for key, point in pairs (self.points) do
+    for key, point in pairs(self.points) do
 
-        point.dt = math.min (1, point.dt + dt)
-        point.actual = tools:lerp (point.actual, point.goal, point.dt)
+        point.dt = math.min(1, point.dt + dt)
+        point.actual = tools:lerp(point.actual, point.goal, point.dt)
 
         -- adjust scale
         if key == self.mode then
-            point.scale = math.min (1, point.scale + dt)
+            point.scale = math.min(1, point.scale + dt)
         else
-            point.scale = math.max (0.5, point.scale - dt)
+            point.scale = math.max(0.5, point.scale - dt)
         end
 
     end
@@ -2247,10 +2247,10 @@ function ooze.menu.update (self, dt)
     self.opacity.dt = self.opacity.dt + dt
     if self.opacity.dt > self.displayFor then
         -- decrease
-        self.opacity.amount = math.max (0, self.opacity.amount - dt * 2)
+        self.opacity.amount = math.max(0, self.opacity.amount - dt * 2)
     elseif self.opacity.amount < 1 then
         -- increase
-        self.opacity.amount = math.min (1, self.opacity.amount + dt * 2)
+        self.opacity.amount = math.min(1, self.opacity.amount + dt * 2)
     end
 
 end
@@ -2274,19 +2274,19 @@ function ooze.menu:draw ()
     end
 
     -- fill background
-    love.graphics.setColor ({0, 0, 0, math.min (self.opacity.amount, 0.5) })
-    love.graphics.circle ("fill", self.x, self.y, self.r * 1.2)
+    love.graphics.setColor({0, 0, 0, math.min(self.opacity.amount, 0.5) })
+    love.graphics.circle("fill", self.x, self.y, self.r * 1.2)
 
     -- draw circumference
     --love.graphics.setColor (1, 1, 1, self.opacity.amount * 0.1)
     --love.graphics.circle ("line", self.x, self.y, self.r)
 
     -- draw each mode at the actual angle
-    for key, point in pairs (self.points) do
+    for key, point in pairs(self.points) do
 
         -- convert the angle to radians before plotting
-        local angle = math.rad (point.actual)
-        local nx, ny = self:pointOnCircle (self.x, self.y, self.r, angle)
+        local angle = math.rad(point.actual)
+        local nx, ny = self:pointOnCircle(self.x, self.y, self.r, angle)
 
         --~ -- fade the icon color into existence
         --~ local keycolor = self.colors[key] or colors.white
@@ -2298,37 +2298,37 @@ function ooze.menu:draw ()
             --~ love.graphics.draw (self.icons[key], nx, ny, 0, point.scale, point.scale, 32, 32)
         --~ end
 
-        love.graphics.setColor ({1, 1, 1})
-        love.graphics.printf (key, nx, ny, self.r * 1, "left")
+        love.graphics.setColor({1, 1, 1})
+        love.graphics.printf(key, nx, ny, self.r * 1, "left")
 
     end
 
     -- print the menu mode as centered text
     --love.graphics.setFont (fonts.medium)
-    love.graphics.setColor ({1, 1, 1, self.opacity.amount })
-    love.graphics.printf (self.mode, self.x - self.r, self.y - 40, self.r * 2, "center")
+    love.graphics.setColor({1, 1, 1, self.opacity.amount })
+    love.graphics.printf(self.mode, self.x - self.r, self.y - 40, self.r * 2, "center")
 
 end
 
 function ooze.menu.mousemoved (self, x, y, dx, dy, istouch)
     -- clamp the menu to the screen
-    self.x = tools:clamp (x, self.r, self.screenWidth - self.r)
-    self.y = tools:clamp (y, self.r, self.screenHeight - self.r)
+    self.x = tools:clamp(x, self.r, self.screenWidth - self.r)
+    self.y = tools:clamp(y, self.r, self.screenHeight - self.r)
 end
 
 function ooze.menu.mousepressed (self, x, y, button, istouch, presses)
     if self.mode == "copy" then
-        local dump = require ("dump")
-        local ser = dump.tostring (frames.db)
-        love.system.setClipboardText (ser)
-        print (ser)
+        local dump = require("dump")
+        local ser = dump.tostring(frames.db)
+        love.system.setClipboardText(ser)
+        print(ser)
     elseif self.mode == "paste" then
-        local contents = "return " .. love.system.getClipboardText ()
+        local contents = "return " .. love.system.getClipboardText()
         local loaded = loadstring(contents)
         if type(loaded) == "function" then
             frames.db = loaded()
         else
-            print ("Content is not lua string")
+            print("Content is not lua string")
         end
     end
 end
@@ -2342,7 +2342,7 @@ function ooze.menu.wheelmoved (self, x, y)
     end
 
     if y then
-        for key, point in pairs (self.points) do
+        for key, point in pairs(self.points) do
             -- move the goal angle
             point.goal = (point.goal + self.step * y)
             -- reset the angle movement
@@ -2448,7 +2448,7 @@ end
 function path:getCached (start, goal)
 
     if self.cache then
-        local key = self:keyOf (start, goal)
+        local key = self:keyOf(start, goal)
         return self.cache[key]
     end
 
@@ -2469,7 +2469,7 @@ end
 function path:saveCached (start, goal, path)
 
     self.cache = self.cache or { }
-    local key = self:keyOf (start, goal)
+    local key = self:keyOf(start, goal)
     self.cache[key] = path
 
 end
@@ -2493,7 +2493,7 @@ end
 function path:calculateScore (previous, node, goal)
 
     local G = previous.score + 1
-    local H = tools:distance (node.x, node.y, goal.x, goal.y)
+    local H = tools:distance(node.x, node.y, goal.x, goal.y)
     return G + H, G, H
 
 end
@@ -2567,9 +2567,9 @@ function path:getAdjacent (width, height, point, openTest)
     }
 
     for _, position in ipairs(positions) do
-        local px = tools:clamp (point.x + position.x, 1, width)
-        local py = tools:clamp (point.y + position.y, 1, height)
-        local value = openTest (floors, px, py)
+        local px = tools:clamp(point.x + position.x, 1, width)
+        local py = tools:clamp(point.y + position.y, 1, height)
+        local value = openTest(floors, px, py)
         if value then
             table.insert( result, { x = px, y = py  } )
         end
@@ -2607,7 +2607,7 @@ end
 function path:find (width, height, start, goal, openTest, useCache)
 
     if useCache then
-        local cachedPath = self:getCached (start, goal)
+        local cachedPath = self:getCached(start, goal)
         if cachedPath then
             return cachedPath
         end
@@ -2619,7 +2619,7 @@ function path:find (width, height, start, goal, openTest, useCache)
 
     start.score = 0
     start.G = 0
-    start.H = tools:distance (start.x, start.y, goal.x, goal.y)
+    start.H = tools:distance(start.x, start.y, goal.x, goal.y)
     start.parent = { x = 0, y = 0 }
     table.insert(open, start)
 
@@ -2632,19 +2632,19 @@ function path:find (width, height, start, goal, openTest, useCache)
 
         table.insert(closed, current)
 
-        success = self:listContains (closed, goal)
+        success = self:listContains(closed, goal)
 
         if not success then
 
-            local adjacentList = self:getAdjacent (width, height, current, openTest)
+            local adjacentList = self:getAdjacent(width, height, current, openTest)
 
             for _, adjacent in ipairs(adjacentList) do
 
-                if not self:listContains (closed, adjacent) then
+                if not self:listContains(closed, adjacent) then
 
-                    if not self:listContains (open, adjacent) then
+                    if not self:listContains(open, adjacent) then
 
-                        adjacent.score = self:calculateScore (current, adjacent, goal)
+                        adjacent.score = self:calculateScore(current, adjacent, goal)
                         adjacent.parent = current
                         table.insert(open, adjacent)
 
@@ -2663,17 +2663,17 @@ function path:find (width, height, start, goal, openTest, useCache)
     end
 
     -- traverse the parents from the last point to get the path
-    local node = self:listItem (closed, closed[#closed])
+    local node = self:listItem(closed, closed[#closed])
     local path = { }
 
     while node do
 
         table.insert(path, 1, { x = node.x, y = node.y } )
-        node = self:listItem (closed, node.parent)
+        node = self:listItem(closed, node.parent)
 
     end
 
-    self:saveCached (start, goal, path)
+    self:saveCached(start, goal, path)
 
     -- reverse the closed list to get the solution
     return path
@@ -2719,25 +2719,25 @@ function speech:say (name, text, seconds)
 
     -- intercept chaining
     if chains.capturing then
-        ooze:append (string.format("chaining %s say", name))
-        chains:add (speech.say,
+        ooze:append(string.format("chaining %s say", name))
+        chains:add(speech.say,
                     {self, name, text, seconds},
                     -- expires when actor is not talking
                     function (parameters)
-                        return not speech:isTalking (parameters[2])
+                        return not speech:isTalking(parameters[2])
                     end
                     )
         return
     end
 
     local newSpeech = {
-        ["actor"] = actors:get (name),
+        ["actor"] = actors:get(name),
         ["text"] = text,
         ["time"] = seconds
         }
 
     if (not newSpeech.actor) then
-        ooze:append ("Speech failed: No actor named " .. name)
+        ooze:append("Speech failed: No actor named " .. name)
         return
     end
 
@@ -2755,8 +2755,8 @@ end
 -- @return true if any actor, or the specified actor is talking.
 function speech:isTalking (actor)
 
-    if type (actor) == "string" then
-        actor = actors:get (actor)
+    if type(actor) == "string" then
+        actor = actors:get(actor)
     end
 
     if actor then
@@ -2788,7 +2788,7 @@ function speech:skip ()
         self.currentLine = nil
 
         -- notify speech ended event
-        events.speech (speech.actor, false)
+        events.speech(speech.actor, false)
 
     end
 
@@ -2811,11 +2811,11 @@ function speech:update (dt)
         -- notify speech started event
         if self.currentLine ~= speech.text then
             self.currentLine = speech.text
-            events.speech (speech.actor, true)
+            events.speech(speech.actor, true)
         end
 
         if (speech.time < 0) then
-            self:skip ()
+            self:skip()
         else
             speech.actor.action = "talk"
             if not settings["walk and talk"] then
@@ -2838,7 +2838,7 @@ function speech:draw ()
     local words = self.queue[1]
 
     if words then
-        events.draw.speech (words.actor, words.text)
+        events.draw.speech(words.actor, words.text)
     end
 
 end
@@ -2860,13 +2860,13 @@ end
 function slime:clear ()
 
     self.scale = 1
-    actors:clear ()
-    backgrounds:clear ()
-    chains:clear ()
-    cursor:clear ()
-    floors:clear ()
-    hotspots:clear ()
-    speech:clear ()
+    actors:clear()
+    backgrounds:clear()
+    chains:clear()
+    cursor:clear()
+    floors:clear()
+    hotspots:clear()
+    speech:clear()
     self.statusText = nil
 
 end
@@ -2876,11 +2876,11 @@ end
 -- Call this when starting a new game.
 function slime:reset ()
 
-    self:clear ()
-    bags:clear ()
-    settings:clear ()
-    cache:init ()
-    ooze:clear ()
+    self:clear()
+    bags:clear()
+    settings:clear()
+    cache:init()
+    ooze:clear()
 
 end
 
@@ -2890,10 +2890,10 @@ end
 -- Delta time since the last update.
 function slime:update (dt)
 
-    chains:update (dt)
-    backgrounds:update (dt)
-    actors:update (dt)
-    speech:update (dt)
+    chains:update(dt)
+    backgrounds:update(dt)
+    actors:update(dt)
+    speech:update(dt)
 
 end
 
@@ -2908,16 +2908,16 @@ function slime:draw (scale)
     love.graphics.push()
     love.graphics.scale(scale)
 
-    love.graphics.setColor (1, 1, 1)
-    backgrounds:draw ()
+    love.graphics.setColor(1, 1, 1)
+    backgrounds:draw()
 
-    love.graphics.setColor (1, 1, 1)
-    actors:draw ()
+    love.graphics.setColor(1, 1, 1)
+    actors:draw()
 
     -- Bag Buttons
     -- OBSOLETE IN FUTURE
     for counter, button in pairs(self.bagButtons) do
-        love.graphics.draw (button.image, button.x, button.y)
+        love.graphics.draw(button.image, button.x, button.y)
     end
 
     -- status text
@@ -2932,11 +2932,11 @@ function slime:draw (scale)
         love.graphics.printf(self.statusText, 0, y, w, "center")
     end
 
-    love.graphics.setColor (1, 1, 1)
-    speech:draw ()
+    love.graphics.setColor(1, 1, 1)
+    speech:draw()
 
-    love.graphics.setColor (1, 1, 1)
-    cursor:draw ()
+    love.graphics.setColor(1, 1, 1)
+    cursor:draw()
 
     love.graphics.pop()
 
@@ -2955,7 +2955,7 @@ end
 -- @return table of objects.
 function slime:getObjects (x, y)
 
-    x, y = self:scalePoint (x, y)
+    x, y = self:scalePoint(x, y)
 
     local objects = { }
 
@@ -3006,16 +3006,16 @@ function slime:interact (x, y)
     local objects = self:getObjects(x, y)
     if (not objects) then return end
 
-    local cursorname = cursor:getName ()
+    local cursorname = cursor:getName()
 
     for i, object in pairs(objects) do
-        ooze:append (cursorname .. " on " .. object.name)
+        ooze:append(cursorname .. " on " .. object.name)
 
         -- notify the interact callback
-        events.interact (cursorname, object)
+        events.interact(cursorname, object)
 
         -- OBSOLETE: slime.callback replaced by events
-        slime.callback (cursorname, object)
+        slime.callback(cursorname, object)
     end
 
     return true
@@ -3026,8 +3026,8 @@ end
 function slime:scalePoint (x, y)
 
     -- adjust to scale
-    x = math.floor (x / self.scale)
-    y = math.floor (y / self.scale)
+    x = math.floor(x / self.scale)
+    y = math.floor(y / self.scale)
     return x, y
 
 end
@@ -3086,7 +3086,7 @@ end
 --
 -- @local
 function tools:lerp (a, b, amount)
-    return a + (b - a) * self:clamp (amount, 0, 1)
+    return a + (b - a) * self:clamp(amount, 0, 1)
 end
 
 --- Measure the distance between two points.
@@ -3101,7 +3101,7 @@ function tools:distance (x1, y1, x2, y2)
 
     local dx = x1 - x2
     local dy = y1 - y2
-    return math.sqrt (dx * dx + dy * dy)
+    return math.sqrt(dx * dx + dy * dy)
 
 end
 
