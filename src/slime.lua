@@ -38,6 +38,15 @@ local slime = {
     ]]
 }
 
+-- [ LOCAL VARIABLES ]
+--
+-- The draw scale is used to calculate the correct point on the screen
+-- when the game is drawn at a enlarged scale.
+-- Set in the slime.draw function.
+local draw_scale = 1
+
+-- Stores the delta time from the most recent update.
+local last_dt = 0
 
 -- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 --                                                   _
@@ -1222,7 +1231,7 @@ end
 function event.draw_speech (actor, words)
 
     local y = 0
-    local w = love.graphics.getWidth() / slime.scale
+    local w = love.graphics.getWidth() / draw_scale
 
     love.graphics.setFont(setting["speech font"])
 
@@ -2855,7 +2864,7 @@ end
 -- walkable floors, walk-behind layers, hotspots, speeches.
 function slime.clear ()
 
-    slime.scale = 1
+    draw_scale = 1
     actor.clear()
     background.clear()
     chain.clear()
@@ -2863,7 +2872,6 @@ function slime.clear ()
     floor.clear()
     hotspot.clear()
     speech.clear()
-    slime.statusText = nil
 
 end
 
@@ -2886,6 +2894,7 @@ end
 -- Delta time since the last update.
 function slime.update (dt)
 
+    last_dt = dt
     chain.update(dt)
     background.update(dt)
     actor.update(dt)
@@ -2900,7 +2909,7 @@ end
 function slime.draw (scale)
 
     -- draw to scale
-    slime.scale = scale or 1
+    draw_scale = scale or 1
     love.graphics.push()
     love.graphics.scale(scale)
 
@@ -2914,18 +2923,6 @@ function slime.draw (scale)
     -- OBSOLETE IN FUTURE
     for counter, button in pairs(slime.bagButtons) do
         love.graphics.draw(button.image, button.x, button.y)
-    end
-
-    -- status text
-    if (slime.statusText) then
-        local y = setting["status position"]
-        local w = love.graphics.getWidth() / slime.scale
-        love.graphics.setFont(setting["status font"])
-        -- Outline
-        love.graphics.setColor({0, 0, 0, 255})
-        love.graphics.printf(slime.statusText, 1, y+1, w, "center")
-        love.graphics.setColor({255, 255, 255, 255})
-        love.graphics.printf(slime.statusText, 0, y, w, "center")
     end
 
     love.graphics.setColor(1, 1, 1)
@@ -3022,8 +3019,8 @@ end
 function slime.scale_point (x, y)
 
     -- adjust to scale
-    x = math.floor(x / slime.scale)
-    y = math.floor(y / slime.scale)
+    x = math.floor(x / draw_scale)
+    y = math.floor(y / draw_scale)
     return x, y
 
 end
