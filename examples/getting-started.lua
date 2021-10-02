@@ -109,8 +109,8 @@ end
 function love.mousemoved (x, y, dx, dy, istouch)
 
     -- get all things under the mouse position
-    -- see @{slime.getObjects}
-    local things = slime.getObjects (x, y)
+    -- see @{slime.get_objects}
+    local things = slime.get_objects (x, y)
 
     -- set our status text to the first thing found
     if things then

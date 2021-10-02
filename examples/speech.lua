@@ -121,7 +121,7 @@ end
 function love.mousepressed (x, y, button, istouch, presses)
 
     -- skip any speech currently on screen, and ignore further clicks.
-    if slime.speech.isTalking () then
+    if slime.speech.is_talking () then
         slime.speech.skip ()
         return
     end
@@ -140,8 +140,8 @@ end
 function love.mousemoved (x, y, dx, dy, istouch)
 
     -- get all things under the mouse cursor
-    -- see @{slime.getObjects}
-    local things = slime.getObjects (x, y)
+    -- see @{slime.get_objects}
+    local things = slime.get_objects (x, y)
 
     -- set our status text to the first thing found
     if things then

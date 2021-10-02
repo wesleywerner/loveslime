@@ -163,7 +163,7 @@ end
 function love.mousepressed (x, y, button, istouch, presses)
 
     -- skip any speech currently on screen, and ignore further clicks.
-    if slime.speech.isTalking () then
+    if slime.speech.is_talking () then
         slime.speech.skip ()
         return
     end
@@ -191,8 +191,8 @@ function love.mousemoved (x, y, dx, dy, istouch)
     slime.cursor.update (x, y)
 
     -- get all things under the mouse cursor
-    -- see @{slime.getObjects}
-    local things = slime.getObjects (x, y)
+    -- see @{slime.get_objects}
+    local things = slime.get_objects (x, y)
 
     -- set our status text to the first thing found
     if things then
@@ -268,9 +268,9 @@ end
 
 -- Override the speech event to show a portrait of the actor
 -- who started talking.
-function slime.event.speech (actor, isTalking)
+function slime.event.speech (actor, started_talking)
 
-    if isTalking then
+    if started_talking then
         -- show a portrait of the talking actor
         talkingPortrait = portraits[actor.name]
     else

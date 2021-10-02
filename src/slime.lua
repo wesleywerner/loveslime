@@ -250,7 +250,7 @@ function actor.update (dt)
         if whom.isactor then
 
             -- update the movement path
-            if actor.updatePath(whom, dt) then
+            if actor.update_movement(whom, dt) then
                 actorsMoved = true
             end
 
@@ -343,7 +343,7 @@ end
 -- The delta time since last update.
 --
 -- @local
-function actor.updatePath (whom, dt)
+function actor.update_movement (whom, dt)
 
     if (whom.path and #whom.path > 0) then
 
@@ -386,7 +386,7 @@ function actor.updatePath (whom, dt)
             -- TODO: delete this direction delay. works better without it.
             do --(actor["direction recalc delay"] <= 0) then
                 whom["direction recalc delay"] = 5
-                whom.direction = actor.directionOf(whom.previousX, whom.previousY, whom.x, whom.y)
+                whom.direction = actor.calculate_direction(whom.previousX, whom.previousY, whom.x, whom.y)
                 -- store previous position, to calculate the
                 -- facing direction on the next iteration.
                 whom.previousX, whom.previousY = whom.x, whom.y
@@ -434,7 +434,7 @@ end
 -- north south east or west.
 --
 -- @local
-function actor.directionOf (x1, y1, x2, y2)
+function actor.calculate_direction (x1, y1, x2, y2)
 
     -- function angle(x1, y1, x2, y2)
     --     local ang = math.atan2(y2 - y1, x2 - x1) * 180 / math.pi
@@ -591,7 +591,7 @@ end
 -- @see floor.set
 function actor.move (name, x, y)
 
-    x, y = slime.scalePoint(x, y)
+    x, y = slime.scale_point(x, y)
 
     -- intercept chaining
     if chain.capturing then
@@ -623,7 +623,7 @@ function actor.move (name, x, y)
     -- If the goal is on a solid block find the nearest open point
     if floor.hasMap() then
         if not floor.isWalkable(goal.x, goal.y) then
-            goal = floor.findNearestOpenPoint(goal)
+            goal = floor.nearest_walkable_point(goal)
         end
     end
 
@@ -648,7 +648,7 @@ function actor.move (name, x, y)
         whom.action = "walk"
         -- Calculate actor direction immediately
         whom.previousX, whom.previousY = whom.x, whom.y
-        whom.direction = actor.directionOf(whom.x, whom.y, x, y)
+        whom.direction = actor.calculate_direction(whom.x, whom.y, x, y)
         -- Output debug
         ooze.append("move " .. name .. " to " .. x .. " : " .. y)
     else
@@ -691,7 +691,7 @@ end
 --
 -- @tparam string target
 -- Name of the actor to move towards.
-function actor.moveTowards (name, target)
+function actor.move_to (name, target)
 
     local whom = actor.get(target)
 
@@ -1344,9 +1344,9 @@ end
 -- @tparam actor actor
 -- The talking actor
 --
--- @tparam bool isTalking
--- true if the actor has started talking, false if they finished talking.
-function event.speech (actor, isTalking)
+-- @tparam bool started_talking
+-- true if the actor has started talking, false if they finished.
+function event.speech (actor, started_talking)
 
 end
 
@@ -1402,7 +1402,7 @@ end
 --- Get the current cursor name.
 --
 -- @local
-function cursor.getName ()
+function cursor.name ()
 
     if cursor.current then
         return cursor.current.name
@@ -1436,7 +1436,7 @@ end
 -- @tparam int y
 function cursor.update (x, y)
 
-    x, y = slime.scalePoint(x, y)
+    x, y = slime.scale_point(x, y)
 
     -- adjust draw position to center around the hotspot
     if cursor.current then
@@ -1646,7 +1646,7 @@ end
 -- {x, y} of the point to reach.
 --
 -- @local
-function floor.findNearestOpenPoint (point)
+function floor.nearest_walkable_point (point)
 
     -- Get the dimensions of the walkable floor map.
     local width, height = floor.size()
@@ -1763,7 +1763,7 @@ function layer.add (background, mask, baseline)
     --      largest Y point in the mask.
 
     local newLayer = {
-        ["image"] = layer.convertMask(background, mask),
+        ["image"] = layer.image_from_mask(background, mask),
         ["baseline"] = baseline,
         islayer = true
         }
@@ -1790,7 +1790,7 @@ end
 -- @return the cut out image.
 --
 -- @local
-function layer.convertMask (source, mask)
+function layer.image_from_mask (source, mask)
 
     -- Returns a copy of the source image with transparent pixels where
     -- the positional pixels in the mask are black.
@@ -1859,7 +1859,7 @@ function ooze.clear ()
     ooze.states = { nil, ooze.logger, ooze.outliner }
     ooze.index = 1
 
-    ooze.loadMenu()
+    ooze.load_menu()
 
 end
 
@@ -1910,7 +1910,7 @@ function ooze.mousepressed (x, y, button, istouch, presses)
         end
 
         -- load new menu options
-        ooze.loadMenu()
+        ooze.load_menu()
 
         return true
     end
@@ -1931,11 +1931,11 @@ end
 --- Loads the menu options for the state.
 --
 -- @local
-function ooze.loadMenu ()
+function ooze.load_menu ()
 
     local state = ooze.states[ooze.index]
-    if state and state.buildMenu then
-        ooze.menu.set(state.buildMenu())
+    if state and state.build_menu then
+        ooze.menu.set(state.build_menu())
     else
         ooze.menu.clear()
     end
@@ -2079,7 +2079,7 @@ function ooze.outliner.draw (scale)
 
 end
 
-function ooze.outliner.buildMenu ()
+function ooze.outliner.build_menu ()
 
     return {
 
@@ -2286,7 +2286,7 @@ function ooze.menu.draw ()
 
         -- convert the angle to radians before plotting
         local angle = math.rad(point.actual)
-        local nx, ny = ooze.menu.pointOnCircle(ooze.menu.x, ooze.menu.y, ooze.menu.r, angle)
+        local nx, ny = ooze.menu.point_on_circle(ooze.menu.x, ooze.menu.y, ooze.menu.r, angle)
 
         --~ -- fade the icon color into existence
         --~ local keycolor = ooze.menu.colors[key] or colors.white
@@ -2381,7 +2381,7 @@ end
 --
 -- @treturn number
 -- x, y
-function ooze.menu.pointOnCircle (cx, cy, r, a)
+function ooze.menu.point_on_circle (cx, cy, r, a)
 
     x = cx + r * math.cos(a)
     y = cy + r * math.sin(a)
@@ -2428,7 +2428,7 @@ end
 -- The goal point.
 --
 -- @local
-function path.keyOf (start, goal)
+function path.cache_key (start, goal)
 
     return string.format("%d,%d>%d,%d", start.x, start.y, goal.x, goal.y)
 
@@ -2443,10 +2443,10 @@ end
 -- The goal point.
 --
 -- @local
-function path.getCached (start, goal)
+function path.read_cache (start, goal)
 
     if path.cache then
-        local key = path.keyOf(start, goal)
+        local key = path.cache_key(start, goal)
         return path.cache[key]
     end
 
@@ -2464,10 +2464,10 @@ end
 -- List of points representing a path.
 --
 -- @local
-function path.saveCached (start, goal, points)
+function path.write_cache (start, goal, points)
 
     path.cache = path.cache or { }
-    local key = path.keyOf(start, goal)
+    local key = path.cache_key(start, goal)
     path.cache[key] = points
 
 end
@@ -2488,7 +2488,7 @@ end
 -- H is a heuristic cost, in this case the distance from this node to the goal.
 --
 -- @return F, the sum of G and H.
-function path.calculateScore (previous, node, goal)
+function path.calculate_score (previous, node, goal)
 
     local G = previous.score + 1
     local H = tool.distance(node.x, node.y, goal.x, goal.y)
@@ -2503,7 +2503,7 @@ end
 -- @tparam point item
 --
 -- @local
-function path.listContains (list, item)
+function path.list_contains (list, item)
 
     for _, test in ipairs(list) do
         if test.x == item.x and test.y == item.y then
@@ -2522,7 +2522,7 @@ end
 -- @tparam table item
 --
 -- @local
-function path.listItem (list, item)
+function path.get_list_item (list, item)
 
     for _, test in ipairs(list) do
         if test.x == item.x and test.y == item.y then
@@ -2549,7 +2549,7 @@ end
 -- @return table of points adjacent to the point.
 --
 -- @local
-function path.getAdjacent (width, height, point, openTest)
+function path.adjacent_points (width, height, point, openTest)
 
     local result = { }
 
@@ -2606,7 +2606,7 @@ end
 function path.find (width, height, start, goal, openTest, useCache)
 
     if useCache then
-        local cachedPath = path.getCached(start, goal)
+        local cachedPath = path.read_cache(start, goal)
         if cachedPath then
             return cachedPath
         end
@@ -2631,19 +2631,19 @@ function path.find (width, height, start, goal, openTest, useCache)
 
         table.insert(closed, current)
 
-        success = path.listContains(closed, goal)
+        success = path.list_contains(closed, goal)
 
         if not success then
 
-            local adjacentList = path.getAdjacent(width, height, current, openTest)
+            local adjacentList = path.adjacent_points(width, height, current, openTest)
 
             for _, adjacent in ipairs(adjacentList) do
 
-                if not path.listContains(closed, adjacent) then
+                if not path.list_contains(closed, adjacent) then
 
-                    if not path.listContains(open, adjacent) then
+                    if not path.list_contains(open, adjacent) then
 
-                        adjacent.score = path.calculateScore(current, adjacent, goal)
+                        adjacent.score = path.calculate_score(current, adjacent, goal)
                         adjacent.parent = current
                         table.insert(open, adjacent)
 
@@ -2662,17 +2662,17 @@ function path.find (width, height, start, goal, openTest, useCache)
     end
 
     -- traverse the parents from the last point to get the path
-    local node = path.listItem(closed, closed[#closed])
+    local node = path.get_list_item(closed, closed[#closed])
     local walked_points = { }
 
     while node do
 
         table.insert(walked_points, 1, { x = node.x, y = node.y } )
-        node = path.listItem(closed, node.parent)
+        node = path.get_list_item(closed, node.parent)
 
     end
 
-    path.saveCached(start, goal, walked_points)
+    path.write_cache(start, goal, walked_points)
 
     -- reverse the closed list to get the solution
     return walked_points
@@ -2723,7 +2723,7 @@ function speech.say (name, text, seconds)
                     {name, text, seconds},
                     -- expires when actor is not talking
                     function (parameters)
-                        return not speech.isTalking(parameters[1])
+                        return not speech.is_talking(parameters[1])
                     end
                     )
         return
@@ -2752,7 +2752,7 @@ end
 -- If not given, any talking actor is tested.
 --
 -- @return true if any actor, or the specified actor is talking.
-function speech.isTalking (actor)
+function speech.is_talking (actor)
 
     if type(actor) == "string" then
         actor = actor.get(actor)
@@ -2952,9 +2952,9 @@ end
 -- Y-position to test.
 --
 -- @return table of objects.
-function slime.getObjects (x, y)
+function slime.get_objects (x, y)
 
-    x, y = slime.scalePoint(x, y)
+    x, y = slime.scale_point(x, y)
 
     local objects = { }
 
@@ -3002,10 +3002,10 @@ end
 -- Y-position to interact with.
 function slime.interact (x, y)
 
-    local objects = slime.getObjects(x, y)
+    local objects = slime.get_objects(x, y)
     if (not objects) then return end
 
-    local cursorname = cursor.getName()
+    local cursorname = cursor.name()
 
     for i, object in pairs(objects) do
         ooze.append(cursorname .. " on " .. object.name)
@@ -3022,7 +3022,7 @@ function slime.interact (x, y)
 end
 
 
-function slime.scalePoint (x, y)
+function slime.scale_point (x, y)
 
     -- adjust to scale
     x = math.floor(x / slime.scale)
