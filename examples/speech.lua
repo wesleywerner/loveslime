@@ -28,24 +28,24 @@ function love.load ()
     slime.reset ()
 
     -- add a background image to the stage
-    -- see @{backgrounds.add}
-    slime.backgrounds.add ("media/lab-background.png")
+    -- see @{background.add}
+    slime.background.add ("media/lab-background.png")
 
     -- set the walkable floor
-    -- see @{floors.set}
-    slime.floors.set ("media/lab-floor.png")
+    -- see @{floor.set}
+    slime.floor.set ("media/lab-floor.png")
 
     -- add a walk-behind layer
-    -- see @{layers.add}
-    slime.layers.add ("media/lab-background.png", "media/lab-layer-bench.png", 200)
-    slime.layers.add ("media/lab-background.png", "media/lab-layer-desks.png", 51)
+    -- see @{layer.add}
+    slime.layer.add ("media/lab-background.png", "media/lab-layer-bench.png", 200)
+    slime.layer.add ("media/lab-background.png", "media/lab-layer-desks.png", 51)
 
     -- add a couple of hotspots to interact with
-    slime.hotspots.add ("Cameras", 9, 2, 40, 20)
+    slime.hotspot.add ("Cameras", 9, 2, 40, 20)
 
     -- add the player actor
-    -- see @{actors.add}
-    slime.actors.add ({
+    -- see @{actor.add}
+    slime.actor.add ({
 
         -- name of the actor
         name = "Player",
@@ -70,7 +70,7 @@ function love.load ()
     })
 
     -- add an intercom actor, whom we can converse with
-    slime.actors.add ({
+    slime.actor.add ({
         name = "Intercom",
         image = love.graphics.newImage ("media/intercom-still.png"),
         x = 18,
@@ -131,8 +131,8 @@ function love.mousepressed (x, y, button, istouch, presses)
         slime.interact (x, y)
     else
         -- otherwise, walk there
-        -- see @{actors.move}
-        slime.actors.move ("Player", x, y)
+        -- see @{actor.move}
+        slime.actor.move ("Player", x, y)
     end
 
 end
@@ -178,13 +178,13 @@ local dialogPosition = 1
 -- an actor or hotspot.
 -- The "event" parameter will be "interact" by default, or the name of the
 -- cursor if you set one, but we won't check it's value in this example.
-function slime.events.interact (event, actor)
+function slime.event.interact (event, actor)
 
     -- see @{speech.say}
     if actor.name == "Intercom" then
 
         -- ensure we are close enough to speak into the Intercom
-        local distance = slime.actors.measure ("Player", actor)
+        local distance = slime.actor.measure ("Player", actor)
 
         if distance > 20 then
             slime.speech.say ("Player", "I am not close enough")

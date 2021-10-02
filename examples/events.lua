@@ -65,24 +65,24 @@ function love.load ()
     slime.reset ()
 
     -- add a background image to the stage
-    -- see @{backgrounds.add}
-    slime.backgrounds.add ("media/lab-background.png")
+    -- see @{background.add}
+    slime.background.add ("media/lab-background.png")
 
     -- set the walkable floor
-    -- see @{floors.set}
-    slime.floors.set ("media/lab-floor.png")
+    -- see @{floor.set}
+    slime.floor.set ("media/lab-floor.png")
 
     -- add a walk-behind layer
-    -- see @{layers.add}
-    slime.layers.add ("media/lab-background.png", "media/lab-layer-bench.png", 200)
-    slime.layers.add ("media/lab-background.png", "media/lab-layer-desks.png", 51)
+    -- see @{layer.add}
+    slime.layer.add ("media/lab-background.png", "media/lab-layer-bench.png", 200)
+    slime.layer.add ("media/lab-background.png", "media/lab-layer-desks.png", 51)
 
     -- add a couple of hotspots to interact with
-    slime.hotspots.add ("Cameras", 9, 2, 40, 20)
+    slime.hotspot.add ("Cameras", 9, 2, 40, 20)
 
     -- add the player actor
-    -- see @{actors.add}
-    slime.actors.add ({
+    -- see @{actor.add}
+    slime.actor.add ({
 
         -- name of the actor
         name = "Player",
@@ -107,7 +107,7 @@ function love.load ()
     })
 
     -- add an intercom actor, whom we can converse with
-    slime.actors.add ({
+    slime.actor.add ({
         name = "Intercom",
         image = love.graphics.newImage ("media/intercom-still.png"),
         x = 18,
@@ -178,7 +178,7 @@ function love.mousepressed (x, y, button, istouch, presses)
     end
 
     if cursors.name == "walk" then
-        slime.actors.move ("Player", x, y)
+        slime.actor.move ("Player", x, y)
     else
         slime.interact (x, y)
     end
@@ -212,23 +212,23 @@ end
 
 -- Here we show how to hook into the various SLIME events.
 
--- @{events.animation}
+-- @{event.animation}
 -- When an animation loops.
 --
--- @{events.bag}
+-- @{event.bag}
 -- When the contents of a bag changes.
 --
--- @{events.interact}
+-- @{event.interact}
 -- When a call to @{interact} happens over a hotspot or actor.
 --
--- @{events.moved}
+-- @{event.moved}
 -- When an actor reached their destination.
 --
--- @{events.speech}
+-- @{event.speech}
 -- When an actor starts or stops talking.
 --
 
-function slime.events.interact (event, actor)
+function slime.event.interact (event, actor)
 
     if event == "look" then
         if actor.name == "Cameras" then
@@ -244,7 +244,7 @@ function slime.events.interact (event, actor)
         if actor.name == "Intercom" then
 
             -- ensure we are close enough to speak into the Intercom
-            local distance = slime.actors.measure ("Player", actor)
+            local distance = slime.actor.measure ("Player", actor)
 
             if distance > 20 then
                 slime.speech.say ("Player", "I am not close enough")
@@ -261,14 +261,14 @@ function slime.events.interact (event, actor)
 
 end
 
-function slime.events.moved (actor, clickedX, clickedY)
+function slime.event.moved (actor, clickedX, clickedY)
 
 
 end
 
 -- Override the speech event to show a portrait of the actor
 -- who started talking.
-function slime.events.speech (actor, isTalking)
+function slime.event.speech (actor, isTalking)
 
     if isTalking then
         -- show a portrait of the talking actor
@@ -282,7 +282,7 @@ end
 
 -- Override the speech drawing event to wrap
 -- the words around our actor portraits.
-function slime.events.draw.speech (actor, words)
+function slime.event.draw.speech (actor, words)
 
     local x, y = 0, 0
 
@@ -314,7 +314,7 @@ end
 
 -- Override the cursor draw event so that we can colorize cursors
 -- that are hoevered over things.
-function slime.events.draw.cursor (cursor, x, y)
+function slime.event.draw.cursor (cursor, x, y)
 
     if statusText then
         love.graphics.setColor (0, 1, 1)

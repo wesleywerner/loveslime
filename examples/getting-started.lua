@@ -28,21 +28,21 @@ function love.load ()
     slime.reset ()
 
     -- add a background image to the stage
-    -- see @{backgrounds.add}
-    slime.backgrounds.add ("media/lab-background.png")
+    -- see @{background.add}
+    slime.background.add ("media/lab-background.png")
 
     -- set the walkable floor
-    -- see @{floors.set}
-    slime.floors.set ("media/lab-floor.png")
+    -- see @{floor.set}
+    slime.floor.set ("media/lab-floor.png")
 
     -- add a walk-behind layer
-    -- see @{layers.add}
-    slime.layers.add ("media/lab-background.png", "media/lab-layer-bench.png", 200)
-    slime.layers.add ("media/lab-background.png", "media/lab-layer-desks.png", 51)
+    -- see @{layer.add}
+    slime.layer.add ("media/lab-background.png", "media/lab-layer-bench.png", 200)
+    slime.layer.add ("media/lab-background.png", "media/lab-layer-desks.png", 51)
 
     -- add the player actor
-    -- see @{actors.add}
-    slime.actors.add ({
+    -- see @{actor.add}
+    slime.actor.add ({
 
         -- name of the actor
         name = "Player",
@@ -101,8 +101,8 @@ end
 
 function love.mousepressed (x, y, button, istouch, presses)
 
-    -- see @{actors.move}
-    slime.actors.move ("Player", x, y)
+    -- see @{actor.move}
+    slime.actor.move ("Player", x, y)
 
 end
 

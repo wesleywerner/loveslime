@@ -53,41 +53,41 @@ local slime = {
 
 
 -- Manages actors on stage.
-local actors = { }
+local actor = { }
 
 -- Manages still and animated backgrounds.
-local backgrounds = { }
+local background = { }
 
 -- Simple inventory storage component.
-local bags = { }
+local bag = { }
 
 -- Cache images for optimized memory usage.
 local cache = { }
 
 -- Provides chaining of actions to create scripted scenes.
-local chains = { }
+local chain = { }
 
 -- Callback events which the calling code can hook into.
-local events = { }
+local event = { }
 
 -- Manages the on-screen cursor.
 local cursor = { }
 
 -- Provides interactive hotspots on the stage, specifically areas
 -- that do draw themselves on screen.
-local hotspots = { }
+local hotspot = { }
 
 -- Manages the walkable areas.
-local floors = { }
+local floor = { }
 
 -- Manages walk-behind layers.
-local layers = { }
+local layer = { }
 
 -- Provides path finding for actor movement.
 local path = { }
 
 -- Collection of settings that changes SLIME behaviour.
-local settings = { }
+local setting = { }
 
 -- Manages talking actors.
 local speech = { }
@@ -96,7 +96,7 @@ local speech = { }
 local ooze = { }
 
 -- Reusable functions
-local tools = { }
+local tool = { }
 
 
 -- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
@@ -140,63 +140,63 @@ local tools = { }
 -- This gets called by @{slime.clear}
 --
 -- @local
-function actors.clear ( )
+function actor.clear ( )
 
-    actors.list = { }
+    actor.list = { }
 
 end
 
 --- Add an actor.
 --
--- @tparam actor actor
-function actors.add (actor)
+-- @tparam actor whom
+function actor.add (whom)
 
-    assert(actor, "Actor definition must be given.")
+    assert(whom, "Actor definition must be given.")
 
     -- get the size if a still image is set
-    if actor.image then
-        actor.width, actor.height = actor.image:getDimensions ()
+    if whom.image then
+        whom.width, whom.height = whom.image:getDimensions ()
     else
-        actor.width, actor.height = actor.width or 10, actor.height or 10
+        whom.width, whom.height = whom.width or 10, whom.height or 10
     end
 
-    assert(actor.x, "Actor x position must be given.")
-    assert(actor.y, "Actor y position must be given.")
-    assert(actor.width, "Actor width must be given.")
-    assert(actor.height, "Actor height must be given.")
+    assert(whom.x, "Actor x position must be given.")
+    assert(whom.y, "Actor y position must be given.")
+    assert(whom.width, "Actor width must be given.")
+    assert(whom.height, "Actor height must be given.")
 
-    actor.isactor = true
-    actor["direction recalc delay"] = 0
-    actor.feet = actor.feet or "bottom"
-    actor.direction = "south"
-    actor.speechcolor = actor.speechcolor or {1, 1, 1}
-    actor.action = "idle"
+    whom.isactor = true
+    whom["direction recalc delay"] = 0
+    whom.feet = whom.feet or "bottom"
+    whom.direction = "south"
+    whom.speechcolor = whom.speechcolor or {1, 1, 1}
+    whom.action = "idle"
 
     -- map the feet position from string to a table
-    if actor.feet == "bottom" then
-        actor.feet = { x = actor.width / 2, y = actor.height}
-    elseif actor.feet == "top" then
-        actor.feet = { x = actor.width / 2, y = 0}
-    elseif actor.feet == "left" then
-        actor.feet = { x = 0, y = actor.height / 2}
-    elseif actor.feet == "right" then
-        actor.feet = { x = actor.width, y = actor.height / 2}
+    if whom.feet == "bottom" then
+        whom.feet = { x = whom.width / 2, y = whom.height}
+    elseif whom.feet == "top" then
+        whom.feet = { x = whom.width / 2, y = 0}
+    elseif whom.feet == "left" then
+        whom.feet = { x = 0, y = whom.height / 2}
+    elseif whom.feet == "right" then
+        whom.feet = { x = whom.width, y = whom.height / 2}
     end
 
-    assert(type(actor.feet) == "table", "Actor feet property must be string or a table")
-    assert(actor.feet.x, "Actor feet must have x position")
-    assert(actor.feet.y, "Actor feet must have y position")
+    assert(type(whom.feet) == "table", "Actor feet property must be string or a table")
+    assert(whom.feet.x, "Actor feet must have x position")
+    assert(whom.feet.y, "Actor feet must have y position")
 
     -- set the movement speed.
     -- speed is assumed to be the pixels per second to move.
     -- we convert this to time to wait before updating the path.
-    if type(actor.speed) == "number" then
-        actor.movedelay = 1 / actor.speed
+    if type(whom.speed) == "number" then
+        whom.movedelay = 1 / whom.speed
     end
 
-    table.insert(actors.list, actor)
-    actors.sort()
-    return actor
+    table.insert(actor.list, whom)
+    actor.sort()
+    return whom
 
 end
 
@@ -211,15 +211,15 @@ end
 -- the name of an actor.
 --
 -- @return Distance in pixels
--- @see tools.distance
-function actors.measure (from, to)
+-- @see tool.distance
+function actor.measure (from, to)
 
     -- resolve actors by name
     if type(from) == "string" then
-        from = actors.get(from)
+        from = actor.get(from)
     end
     if type(to) == "string" then
-        to = actors.get(to)
+        to = actor.get(to)
     end
 
     assert(type(from) == "table", "measure from parameter must be a table")
@@ -229,7 +229,7 @@ function actors.measure (from, to)
     assert(type(to.x) == "number", "measure to.x property must be a number")
     assert(type(to.y) == "number", "measure to.y property must be a number")
 
-    return tools.distance(from.x, from.y, to.x, to.y)
+    return tool.distance(from.x, from.y, to.x, to.y)
 
 end
 
@@ -241,45 +241,45 @@ end
 -- The delta time since the last update.
 --
 -- @local
-function actors.update (dt)
+function actor.update (dt)
 
     -- remember if any actors moved during this update
     local actorsMoved = false
 
-    for _, actor in ipairs(actors.list) do
-        if actor.isactor then
+    for _, whom in ipairs(actor.list) do
+        if whom.isactor then
 
             -- update the movement path
-            if actors.updatePath(actor, dt) then
+            if actor.updatePath(whom, dt) then
                 actorsMoved = true
             end
 
             -- calculate the sprite draw position
             -- relative to the actor's feet
-            if actor.x and actor.feet then
-                actor.drawX = actor.x - actor.feet.x
-                actor.drawY = actor.y - actor.feet.y
+            if whom.x and whom.feet then
+                whom.drawX = whom.x - whom.feet.x
+                whom.drawY = whom.y - whom.feet.y
             end
 
             -- set the animation key.
             -- walking or talking includes the facing direction.
-            if actor.action == "talk"
-            or actor.action == "walk"
-            or actor.action == "idle" then
-                actor.key = string.format("%s %s", actor.action, actor.direction)
+            if whom.action == "talk"
+            or whom.action == "walk"
+            or whom.action == "idle" then
+                whom.key = string.format("%s %s", whom.action, whom.direction)
             else
-                actor.key = actor.action
+                whom.key = whom.action
             end
 
             -- request the next sprite frame
-            actor.sprite = events.request.sprite(dt, actor)
+            whom.sprite = event.request.sprite(dt, whom)
 
         end
     end
 
     -- sort the draw order of actor if any moved
     if actorsMoved then
-        actors.sort()
+        actor.sort()
     end
 
 end
@@ -291,9 +291,9 @@ end
 -- and baselines (for layers).
 --
 -- @local
-function actors.sort ( )
+function actor.sort ( )
 
-    table.sort(actors.list, function (a, b)
+    table.sort(actor.list, function (a, b)
 
             --~ local m = a.isactor and a.y or a.baseline
             --~ local n = b.isactor and b.y or b.baseline
@@ -336,16 +336,16 @@ end
 --- Update actor path.
 -- Moves an actor to the next point in their movement path.
 --
--- @tparam actor actor
+-- @tparam actor whom
 -- The actor to update.
 --
 -- @tparam int dt
 -- The delta time since last update.
 --
 -- @local
-function actors.updatePath (actor, dt)
+function actor.updatePath (whom, dt)
 
-    if (actor.path and #actor.path > 0) then
+    if (whom.path and #whom.path > 0) then
 
         -- Check if the actor's speed is set to delay movement.
         -- If no speed is set, we move on every update.
@@ -353,59 +353,59 @@ function actors.updatePath (actor, dt)
         -- TODO change actor movedelay to pixel "speed".
         --      (can we specify this as pixels per second?)
         --      (one step on the path will be ~ 1 pixel)
-        if (actor.movedelay) then
+        if (whom.movedelay) then
 
             -- start a new move delay counter
-            if (not actor.movedelaydelta) then
-                actor.movedelaydelta = actor.movedelay
+            if (not whom.movedelaydelta) then
+                whom.movedelaydelta = whom.movedelay
             end
 
-            actor.movedelaydelta = actor.movedelaydelta - dt
+            whom.movedelaydelta = whom.movedelaydelta - dt
 
             -- the delay has not yet passed
-            if (actor.movedelaydelta > 0) then
+            if (whom.movedelaydelta > 0) then
                 return
             end
 
             -- the delay has passed. Reset it and continue.
-            actor.movedelaydelta = actor.movedelay
+            whom.movedelaydelta = whom.movedelay
 
         end
 
         -- load the next point in the path
-        local point = table.remove(actor.path, 1)
+        local point = table.remove(whom.path, 1)
 
         if (point) then
 
             -- update actor position
-            actor.x, actor.y = point.x, point.y
+            whom.x, whom.y = point.x, point.y
 
             -- Test if we should calculate actor direction
-            actor["direction recalc delay"] = actor["direction recalc delay"] - 1
+            whom["direction recalc delay"] = whom["direction recalc delay"] - 1
 
             -- TODO: delete this direction delay. works better without it.
             do --(actor["direction recalc delay"] <= 0) then
-                actor["direction recalc delay"] = 5
-                actor.direction = actors.directionOf(actor.previousX, actor.previousY, actor.x, actor.y)
+                whom["direction recalc delay"] = 5
+                whom.direction = actor.directionOf(whom.previousX, whom.previousY, whom.x, whom.y)
                 -- store previous position, to calculate the
                 -- facing direction on the next iteration.
-                actor.previousX, actor.previousY = actor.x, actor.y
+                whom.previousX, whom.previousY = whom.x, whom.y
             end
 
         end
 
         -- the goal is reached
-        if (#actor.path == 0) then
+        if (#whom.path == 0) then
 
-            ooze.append(actor.name .. " moved complete")
-            actor.path = nil
-            actor.action = "idle"
+            ooze.append(whom.name .. " moved complete")
+            whom.path = nil
+            whom.action = "idle"
 
             -- notify the moved callback
-            events.moved(actor, actor.clickedX, actor.clickedY)
+            event.moved(whom, whom.clickedX, whom.clickedY)
 
             -- OBSOLETE: replaced by events.move callback
-            slime.callback("moved", actor)
+            slime.callback("moved", whom)
 
         end
 
@@ -434,7 +434,7 @@ end
 -- north south east or west.
 --
 -- @local
-function actors.directionOf (x1, y1, x2, y2)
+function actor.directionOf (x1, y1, x2, y2)
 
     -- function angle(x1, y1, x2, y2)
     --     local ang = math.atan2(y2 - y1, x2 - x1) * 180 / math.pi
@@ -505,11 +505,11 @@ end
 -- The name of the actor
 --
 -- @return the @{actor} or nil if not found.
-function actors.get (name)
+function actor.get (name)
 
-    for _, actor in ipairs(actors.list) do
-        if actor.name == name then
-            return actor
+    for _, whom in ipairs(actor.list) do
+        if whom.name == name then
+            return whom
         end
     end
 
@@ -520,11 +520,11 @@ end
 --
 -- @tparam string name
 -- The name of the actor to remove.
-function actors.remove (name)
+function actor.remove (name)
 
-    for i, actor in ipairs(actors.list) do
-        if actor.name == name then
-            table.remove(actors.list, i)
+    for i, whom in ipairs(actor.list) do
+        if whom.name == name then
+            table.remove(actor.list, i)
             return true
         end
     end
@@ -534,42 +534,42 @@ end
 --- Draw actors on screen.
 --
 -- @local
-function actors.draw ()
+function actor.draw ()
 
-    for _, actor in ipairs(actors.list) do
-        if actor.sprite then
+    for _, whom in ipairs(actor.list) do
+        if whom.sprite then
 
-            if actor.sprite.quad and actor.sprite.image then
+            if whom.sprite.quad and whom.sprite.image then
 
                 -- drawable with a quad
                 love.graphics.draw(
-                    actor.sprite.image,
-                    actor.sprite.quad,
-                    actor.drawX + actor.sprite.x,
-                    actor.drawY + actor.sprite.y,
-                    actor.sprite.r,
-                    actor.sprite.sx,
-                    actor.sprite.sy,
-                    actor.sprite.ox,
-                    actor.sprite.oy)
+                    whom.sprite.image,
+                    whom.sprite.quad,
+                    whom.drawX + whom.sprite.x,
+                    whom.drawY + whom.sprite.y,
+                    whom.sprite.r,
+                    whom.sprite.sx,
+                    whom.sprite.sy,
+                    whom.sprite.ox,
+                    whom.sprite.oy)
 
-            elseif actor.sprite.image then
+            elseif whom.sprite.image then
 
                 -- drawable without a quad
                 love.graphics.draw(
-                    actor.sprite.image,
-                    actor.drawX + actor.sprite.x,
-                    actor.drawY + actor.sprite.y,
-                    actor.sprite.r,
-                    actor.sprite.sx,
-                    actor.sprite.sy,
-                    actor.sprite.ox,
-                    actor.sprite.oy)
+                    whom.sprite.image,
+                    whom.drawX + whom.sprite.x,
+                    whom.drawY + whom.sprite.y,
+                    whom.sprite.r,
+                    whom.sprite.sx,
+                    whom.sprite.sy,
+                    whom.sprite.ox,
+                    whom.sprite.oy)
 
             end
 
-        elseif actor.islayer then
-            love.graphics.draw(actor.image, 0, 0)
+        elseif whom.islayer then
+            love.graphics.draw(whom.image, 0, 0)
         end
     end
 
@@ -588,20 +588,20 @@ end
 -- @tparam int y
 -- Y-position to move to.
 --
--- @see floors.set
-function actors.move (name, x, y)
+-- @see floor.set
+function actor.move (name, x, y)
 
     x, y = slime.scalePoint(x, y)
 
     -- intercept chaining
-    if chains.capturing then
+    if chain.capturing then
         ooze.append(string.format("chaining %s move", name))
-        chains.add(actors.move,
-            {actors, name, x, y},
+        chain.add(actor.move,
+            {actor, name, x, y},
             -- expires when actor path is empty
             function (parameters)
-                local actor = actors.get(parameters[2])
-                if not actor or not actor.path then
+                local whom = actor.get(parameters[2])
+                if not whom or not whom.path then
                     return true
                 end
             end
@@ -610,45 +610,45 @@ function actors.move (name, x, y)
     end
 
     -- test if the actor is on the stage
-    local actor = actors.get(name)
+    local whom = actor.get(name)
 
-    if (actor == nil) then
+    if (whom == nil) then
         ooze.append("No actor named " .. name)
         return
     end
 
-    local start = { x = actor.x, y = actor.y }
+    local start = { x = whom.x, y = whom.y }
     local goal = { x = x, y = y }
 
     -- If the goal is on a solid block find the nearest open point
-    if floors.hasMap() then
-        if not floors.isWalkable(goal.x, goal.y) then
-            goal = floors.findNearestOpenPoint(goal)
+    if floor.hasMap() then
+        if not floor.isWalkable(goal.x, goal.y) then
+            goal = floor.findNearestOpenPoint(goal)
         end
     end
 
     local useCache = false
-    local width, height = floors.size()
+    local width, height = floor.size()
 
     local route
 
-    if floors.hasMap() then
-        route = path.find(width, height, start, goal, floors.isWalkable, useCache)
+    if floor.hasMap() then
+        route = path.find(width, height, start, goal, floor.isWalkable, useCache)
     else
         -- no floor is loaded, so move in a straight line
-        route = floors.bresenham(start, goal)
+        route = floor.bresenham(start, goal)
     end
 
     -- we have a path
     if route then
-        actor.clickedX = x
-        actor.clickedY = y
-        actor.path = route
+        whom.clickedX = x
+        whom.clickedY = y
+        whom.path = route
         -- Default to walking animation
-        actor.action = "walk"
+        whom.action = "walk"
         -- Calculate actor direction immediately
-        actor.previousX, actor.previousY = actor.x, actor.y
-        actor.direction = actors.directionOf(actor.x, actor.y, x, y)
+        whom.previousX, whom.previousY = whom.x, whom.y
+        whom.direction = actor.directionOf(whom.x, whom.y, x, y)
         -- Output debug
         ooze.append("move " .. name .. " to " .. x .. " : " .. y)
     else
@@ -665,19 +665,19 @@ end
 --
 -- @tparam string direction
 -- A cardinal direction: north, south, east or west.
-function actors.turn (name, direction)
+function actor.turn (name, direction)
 
     -- intercept chaining
-    if chains.capturing then
+    if chain.capturing then
         ooze.append(string.format("chaining %s turn %s", name, direction))
-        chains.add(actors.turn, {actors, name, direction})
+        chain.add(actor.turn, {actor, name, direction})
         return
     end
 
-    local actor = actors.get(name)
+    local whom = actor.get(name)
 
-    if (actor) then
-        actor.direction = direction
+    if (whom) then
+        whom.direction = direction
     end
 
 end
@@ -691,12 +691,12 @@ end
 --
 -- @tparam string target
 -- Name of the actor to move towards.
-function actors.moveTowards (name, target)
+function actor.moveTowards (name, target)
 
-    local targetActor = actors.get(target)
+    local whom = actor.get(target)
 
-    if (targetActor) then
-        actors.move(name, targetActor.x, targetActor.y)
+    if (whom) then
+        actor.move(name, whom.x, whom.y)
     else
         ooze.append("no actor named " .. target)
     end
@@ -708,12 +708,12 @@ end
 --
 -- @tparam string name
 -- Name of the actor.
-function actors.stop (name)
+function actor.stop (name)
 
-    local actor = actors.get(name)
+    local whom = actor.get(name)
 
-    if actor then
-        actor.path = nil
+    if whom then
+        whom.path = nil
     end
 
 end
@@ -739,21 +739,21 @@ end
 --
 -- @tparam[opt] int seconds
 -- Seconds to display before cycling the background.
-function backgrounds.add (path, seconds)
+function background.add (path, seconds)
 
     local image = love.graphics.newImage(path)
     local width, height = image:getDimensions()
 
     -- set the background size
-    if not backgrounds.width or not backgrounds.height then
-        backgrounds.width, backgrounds.height = width, height
+    if not background.width or not background.height then
+        background.width, background.height = width, height
     end
 
     -- ensure consistent background sizes
-    assert(width == backgrounds.width, "backgrounds must have the same size")
-    assert(height == backgrounds.height, "backgrounds must have the same size")
+    assert(width == background.width, "backgrounds must have the same size")
+    assert(height == background.height, "backgrounds must have the same size")
 
-    table.insert(backgrounds.list, {
+    table.insert(background.list, {
         image = image,
         seconds = seconds
     })
@@ -764,28 +764,28 @@ end
 -- This gets called by @{slime.clear}
 --
 -- @local
-function backgrounds.clear ()
+function background.clear ()
 
     -- stores the list of backgrounds
-    backgrounds.list = { }
+    background.list = { }
 
     -- the index of the current background
-    backgrounds.index = 1
+    background.index = 1
 
     -- background size
-    backgrounds.width, backgrounds.height = nil, nil
+    background.width, background.height = nil, nil
 
 end
 
 --- Draw the background.
 --
 -- @local
-function backgrounds.draw ()
+function background.draw ()
 
-    local bg = backgrounds.list[backgrounds.index]
+    local data = background.list[background.index]
 
-    if (bg) then
-        love.graphics.draw(bg.image, 0, 0)
+    if (data) then
+        love.graphics.draw(data.image, 0, 0)
     end
 
 end
@@ -797,35 +797,35 @@ end
 -- Delta time since the last update.
 --
 -- @local
-function backgrounds.update (dt)
+function background.update (dt)
 
     -- skip background rotation if there is no more than one
-    if not backgrounds.list[2] then
+    if not background.list[2] then
         return
     end
 
-    local index = backgrounds.index
-    local background = backgrounds.list[index]
-    local timer = backgrounds.timer
+    local index = background.index
+    local current = background.list[index]
+    local timer = background.timer
 
     if (timer == nil) then
         -- start a new timer
         index = 1
-        timer = background.seconds
+        timer = current.seconds
     else
         timer = timer - dt
         -- this timer has expired
         if (timer < 0) then
             -- move to the next background
-            index = (index == #backgrounds.list) and 1 or index + 1
-            if (backgrounds.list[index]) then
-                timer = backgrounds.list[index].seconds
+            index = (index == #background.list) and 1 or index + 1
+            if (background.list[index]) then
+                timer = background.list[index].seconds
             end
         end
     end
 
-    backgrounds.index = index
-    backgrounds.timer = timer
+    background.index = index
+    background.timer = timer
 
 end
 
@@ -842,9 +842,9 @@ end
 -- This gets called by @{slime.clear}
 --
 -- @local
-function bags.clear ()
+function bag.clear ()
 
-    bags.contents = { }
+    bag.contents = { }
 
 end
 
@@ -856,7 +856,7 @@ end
 -- @tparam table object
 -- TODO: this bag object thing is a bit under-developed.
 -- define it's structure.
-function bags.add (name, object)
+function bag.add (name, object)
 
     -- load the image
     if type(object.image) == "string" then
@@ -864,13 +864,13 @@ function bags.add (name, object)
     end
 
     -- create it
-    bags.contents[name] = bags.contents[name] or { }
+    bag.contents[name] = bag.contents[name] or { }
 
     -- add the object to it
-    table.insert(bags.contents[name], object)
+    table.insert(bag.contents[name], object)
 
     -- notify the callback
-    events.bag(name)
+    event.bag(name)
 
     -- OBSOLETE: replaced by events.bag
     slime.inventoryChanged(name)
@@ -886,9 +886,9 @@ end
 --
 -- @tparam string thingName
 -- Name of the thing to remove.
-function bags.remove (name, thingName)
+function bag.remove (name, thingName)
 
-    local inv = bags.contents[name] or { }
+    local inv = bag.contents[name] or { }
 
     for i, item in pairs(inv) do
         if (item.name == thingName) then
@@ -907,9 +907,9 @@ end
 --
 -- @tparam string thingName
 -- Name of thing to find.
-function bags.contains (name, thingName)
+function bag.contains (name, thingName)
 
-    local inv = bags.contents[name] or { }
+    local inv = bag.contents[name] or { }
 
     for _, v in pairs(inv) do
         if v.name == thingName then
@@ -980,21 +980,21 @@ end
 -- This gets called by @{slime.clear}
 --
 -- @local
-function chains.clear ()
+function chain.clear ()
 
     -- Allow calling this table like it was a function.
     -- We do this for brevity sake.
-    setmetatable(chains, {
-        __call = function (chains, ...)
-            return chains.capture(...)
+    setmetatable(chain, {
+        __call = function (...)
+            return chain.capture(...)
         end
     })
 
-    chains.list = { }
+    chain.list = { }
 
     -- when capturing: certain actor functions will queue themselves
     -- to the chain instead of actioning instantly.
-    chains.capturing = nil
+    chain.capturing = nil
 
 end
 
@@ -1012,8 +1012,7 @@ end
 -- @return The slime instance
 --
 -- @function chain
--- @see chains_example.lua
-function chains.capture (name, userFunction)
+function chain.capture (name, userFunction)
 
     -- catch obsolete usage
     if type(name) == "table" then
@@ -1024,18 +1023,18 @@ function chains.capture (name, userFunction)
     name = name or "default"
 
     -- fetch the chain from storage
-    chains.capturing = chains.list[name]
+    chain.capturing = chain.list[name]
 
     -- create a new chain instead
-    if not chains.capturing then
-        chains.capturing = { name = name, actions = { } }
-        chains.list[name] = chains.capturing
+    if not chain.capturing then
+        chain.capturing = { name = name, actions = { } }
+        chain.list[name] = chain.capturing
         ooze.append(string.format("created chain %q", name))
     end
 
     -- queue custom function
     if type(userFunction) == "function" then
-        chains.add(userFunction, { })
+        chain.add(userFunction, { })
         ooze.append(string.format("user function chained"))
     end
 
@@ -1058,7 +1057,7 @@ end
 -- is not given.
 --
 -- @local
-function chains.add (func, parameters, expired)
+function chain.add (func, parameters, expired)
 
     local command = {
         -- the function to be called
@@ -1072,10 +1071,10 @@ function chains.add (func, parameters, expired)
     }
 
     -- queue this command in the capturing chain
-    table.insert(chains.capturing.actions, command)
+    table.insert(chain.capturing.actions, command)
 
     -- release this capture
-    chains.capturing = nil
+    chain.capturing = nil
 
 end
 
@@ -1085,10 +1084,10 @@ end
 -- Delta time since the last update
 --
 -- @local
-function chains.update (dt)
+function chain.update (dt)
 
     -- for each chain
-    for key, chain in pairs(chains.list) do
+    for key, chain in pairs(chain.list) do
 
         -- the next command in this chain
         local command = chain.actions[1]
@@ -1121,13 +1120,13 @@ end
 --
 -- @tparam int seconds
 -- Seconds to wait before the next action is run.
-function chains.wait (seconds)
+function chain.wait (seconds)
 
-    if chains.capturing then
+    if chain.capturing then
 
         --ooze.append (string.format("waiting %ds", seconds))
 
-        chains.add(chains.wait,
+        chain.add(chain.wait,
 
                     -- pack parameter twice, the second being
                     -- our countdown
@@ -1157,8 +1156,8 @@ end
 -- events.draw.background
 --            .speech
 --            .sprite
-events.draw = { }
-events.request = { }
+event.draw = { }
+event.request = { }
 
 
 --- Sprite info.
@@ -1207,7 +1206,7 @@ events.request = { }
 --
 -- @tparam int counter
 -- The number of times the animation has looped
-function events.animation (actor, key, counter)
+function event.animation (actor, key, counter)
 
 end
 
@@ -1216,7 +1215,7 @@ end
 --
 -- @tparam string bag
 -- The name of the bag that changed
-function events.bag (bag)
+function event.bag (bag)
 
 end
 
@@ -1228,12 +1227,12 @@ end
 --
 -- @tparam string words
 -- The words to print on screen.
-function events.draw.speech (actor, words)
+function event.draw.speech (actor, words)
 
     local y = 0
     local w = love.graphics.getWidth() / slime.scale
 
-    love.graphics.setFont(settings["speech font"])
+    love.graphics.setFont(setting["speech font"])
 
     -- Black shadow
     love.graphics.setColor({0, 0, 0, 1})
@@ -1252,7 +1251,7 @@ end
 --
 -- @tparam int x
 -- @tparam int y
-function events.draw.cursor (cursor, x, y)
+function event.draw.cursor (cursor, x, y)
 
     if cursor.quad then
         love.graphics.draw(cursor.image, cursor.quad, x, y)
@@ -1274,7 +1273,7 @@ end
 -- properties can be accessed to determine the sprite to return.
 --
 -- @return @{spriteInfo}
-function events.request.sprite (dt, actor)
+function event.request.sprite (dt, actor)
 
     -- This is a basic sprite request implementation that does not
     -- animate, it only returns the actor's still image.
@@ -1318,7 +1317,7 @@ end
 --
 -- @tparam actor actor
 -- The actor being interacted with
-function events.interact (event, actor)
+function event.interact (event, actor)
 
 end
 
@@ -1328,7 +1327,7 @@ end
 -- The actor that moved
 --
 -- @tparam int clickedX
--- The point given to the original @{actors.move} method.
+-- The point given to the original @{actor.move} method.
 -- This may be different than the actor's location, if for example
 -- the floor does not allow standing on the point, the actor moves
 -- as close as possible to the point.
@@ -1336,7 +1335,7 @@ end
 --
 -- @tparam int clickedY
 --
-function events.moved (actor, clickedX, clickedY)
+function event.moved (actor, clickedX, clickedY)
 
 end
 
@@ -1347,7 +1346,7 @@ end
 --
 -- @tparam bool isTalking
 -- true if the actor has started talking, false if they finished talking.
-function events.speech (actor, isTalking)
+function event.speech (actor, isTalking)
 
 end
 
@@ -1365,7 +1364,7 @@ end
 --
 -- @tfield string name
 -- Name of the cursor. This gets passed back to the
--- @{events.interact} callback event.
+-- @{event.interact} callback event.
 --
 -- @tfield image image
 -- The cursor image.
@@ -1395,7 +1394,7 @@ end
 function cursor.draw ()
 
     if cursor.current and cursor.x then
-        events.draw.cursor(cursor.current, cursor.x, cursor.y)
+        event.draw.cursor(cursor.current, cursor.x, cursor.y)
     end
 
 end
@@ -1415,7 +1414,7 @@ end
 
 --- Set a custom cursor.
 --
--- @tparam cursor cursor
+-- @tparam cursor data
 -- The cursor data.
 function cursor.set (data)
 
@@ -1462,18 +1461,18 @@ end
 -- This gets called by @{slime.clear}
 --
 -- @local
-function floors.clear ()
+function floor.clear ()
 
-    floors.walkableMap = nil
+    floor.walkableMap = nil
 
 end
 
 --- Test if a walkable map is loaded.
 --
 -- @local
-function floors.hasMap ()
+function floor.hasMap ()
 
-    return floors.walkableMap ~= nil
+    return floor.walkableMap ~= nil
 
 end
 
@@ -1483,15 +1482,15 @@ end
 --
 -- @tparam string filename
 -- The image mask defining walkable areas.
-function floors.set (filename)
+function floor.set (filename)
 
     -- intercept chaining
-    if chains.capturing then
-        chains.add(floors.set, {floors, filename})
+    if chain.capturing then
+        chain.add(floor.set, {filename})
         return
     end
 
-    floors.convert(filename)
+    floor.convert(filename)
 
 end
 
@@ -1502,7 +1501,7 @@ end
 -- The floor map image filename
 --
 -- @local
-function floors.convert (filename)
+function floor.convert (filename)
 
     -- Converts a walkable image mask into map points.
     local mask = love.image.newImageData(filename)
@@ -1510,14 +1509,14 @@ function floors.convert (filename)
     local h = mask:getHeight()
 
     -- store the size
-    floors.width, floors.height = w, h
+    floor.width, floor.height = w, h
 
     local row = nil
     local r = nil
     local g = nil
     local b = nil
     local a = nil
-    floors.walkableMap = { }
+    floor.walkableMap = { }
 
     -- builds a 2D array of the image size, each index references
     -- a pixel in the mask
@@ -1533,7 +1532,7 @@ function floors.convert (filename)
                 table.insert(row, true)
             end
         end
-        table.insert(floors.walkableMap, row)
+        table.insert(floor.walkableMap, row)
     end
 
 end
@@ -1550,13 +1549,13 @@ end
 -- @return true if the position is open to walk
 --
 -- @local
-function floors.isWalkable (x, y)
+function floor.isWalkable (x, y)
 
-    if floors.hasMap() then
+    if floor.hasMap() then
         -- clamp to floor boundary
-        x = tools.clamp(x, 1, floors.width - 1)
-        y = tools.clamp(y, 1, floors.height - 1)
-        return floors.walkableMap[y][x]
+        x = tool.clamp(x, 1, floor.width - 1)
+        y = tool.clamp(y, 1, floor.height - 1)
+        return floor.walkableMap[y][x]
     else
         -- no floor is always walkable
         return true
@@ -1567,13 +1566,13 @@ end
 --- Get the size of the floor.
 --
 -- @local
-function floors.size ()
+function floor.size ()
 
-    if floors.walkableMap then
-        return floors.width, floors.height
+    if floor.walkableMap then
+        return floor.width, floor.height
     else
         -- without a floor map, we return the background size
-        return backgrounds.width, backgrounds.height
+        return background.width, background.height
     end
 
 end
@@ -1590,7 +1589,7 @@ end
 -- @return table of list of points from start to goal.
 --
 -- @local
-function floors.bresenham (start, goal)
+function floor.bresenham (start, goal)
 
   local linepath = { }
   local x1, y1, x2, y2 = start.x, start.y, goal.x, goal.y
@@ -1647,10 +1646,10 @@ end
 -- {x, y} of the point to reach.
 --
 -- @local
-function floors.findNearestOpenPoint (point)
+function floor.findNearestOpenPoint (point)
 
     -- Get the dimensions of the walkable floor map.
-    local width, height = floors.size()
+    local width, height = floor.size()
 
     -- Define the cardinal direction to test against relative to the point.
     local directions = {
@@ -1665,14 +1664,14 @@ function floors.findNearestOpenPoint (point)
 
     for idirection, direction in pairs(directions) do
         local goal = point
-        local walkTheLine = floors.bresenham(direction, goal)
+        local walkTheLine = floor.bresenham(direction, goal)
         local continueSearch = true
         while (continueSearch) do
             if (#walkTheLine == 0) then
                 continueSearch = false
             else
                 goal = table.remove(walkTheLine)
-                continueSearch = not floors.isWalkable(goal.x, goal.y)
+                continueSearch = not floor.isWalkable(goal.x, goal.y)
             end
         end
         -- math.sqrt( (x2 - x1)^2 + (y2 - y1)^2 )
@@ -1701,9 +1700,9 @@ end
 -- This gets called by @{slime.clear}
 --
 -- @local
-function hotspots.clear ()
+function hotspot.clear ()
 
-    hotspots.list = { }
+    hotspot.list = { }
 
 end
 
@@ -1716,9 +1715,9 @@ end
 -- @tparam int y
 -- @tparam int w
 -- @tparam int h
-function hotspots.add (name, x, y, w, h)
+function hotspot.add (name, x, y, w, h)
 
-    local hotspot = {
+    local point = {
         ["name"] = name,
         ["x"] = x,
         ["y"] = y,
@@ -1726,8 +1725,8 @@ function hotspots.add (name, x, y, w, h)
         ["h"] = h
     }
 
-    table.insert(hotspots.list, hotspot)
-    return hotspot
+    table.insert(hotspot.list, point)
+    return point
 
 end
 
@@ -1754,7 +1753,7 @@ end
 --
 -- @tparam int baseline
 -- The Y-position on the mask that defines the behind/in-front point.
-function layers.add (background, mask, baseline)
+function layer.add (background, mask, baseline)
 
     assert(background ~= nil, "Missing parameter background")
     assert(mask ~= nil, "Missing parameter to mask")
@@ -1764,16 +1763,16 @@ function layers.add (background, mask, baseline)
     --      largest Y point in the mask.
 
     local newLayer = {
-        ["image"] = layers.convertMask(background, mask),
+        ["image"] = layer.convertMask(background, mask),
         ["baseline"] = baseline,
         islayer = true
         }
 
     -- layers are merged with actors so that we can perform
     -- efficient sorting, enabling drawing of actors behind layers.
-    table.insert(actors.list, newLayer)
+    table.insert(actor.list, newLayer)
 
-    actors.sort()
+    actor.sort()
 
 end
 
@@ -1791,7 +1790,7 @@ end
 -- @return the cut out image.
 --
 -- @local
-function layers.convertMask (source, mask)
+function layer.convertMask (source, mask)
 
     -- Returns a copy of the source image with transparent pixels where
     -- the positional pixels in the mask are black.
@@ -2002,10 +2001,10 @@ function ooze.logger.draw (scale)
         ooze.logger.padding, ooze.logger.padding, ooze.logger.width, "center")
 
     -- print background info
-    if (backgrounds.index and backgrounds.timer) then
+    if (background.index and background.timer) then
         love.graphics.printf(
             string.format("background #%d showing for %.1f",
-            backgrounds.index, backgrounds.timer),
+            background.index, background.timer),
             ooze.logger.padding, ooze.logger.padding, ooze.logger.width, "right")
     end
 
@@ -2052,7 +2051,7 @@ function ooze.outliner.draw (scale)
 
     -- outline hotspots
     love.graphics.setColor(ooze.outliner.hotspotColor)
-    for ihotspot, hotspot in pairs(hotspots.list) do
+    for ihotspot, hotspot in pairs(hotspot.list) do
         love.graphics.rectangle("line", hotspot.x, hotspot.y, hotspot.w, hotspot.h)
     end
 
@@ -2060,7 +2059,7 @@ function ooze.outliner.draw (scale)
     local layerCounter = 1
 
     -- outline actors
-    for _, actor in ipairs(actors.list) do
+    for _, actor in ipairs(actor.list) do
         if actor.isactor then
             love.graphics.setColor(ooze.outliner.actorColor)
             -- TODO calculate draw position in actor:update
@@ -2123,7 +2122,7 @@ end
 function ooze.trigger.mousepressed (x, y, button, istouch, presses)
 
     -- check distance to the trigger zone.
-    local dist = tools.distance(x, y, ooze.trigger.triggerX, ooze.trigger.triggerY)
+    local dist = tool.distance(x, y, ooze.trigger.triggerX, ooze.trigger.triggerY)
     return dist < ooze.trigger.triggerSize
 
 end
@@ -2233,7 +2232,7 @@ function ooze.menu.update (dt)
     for key, point in pairs(ooze.menu.points) do
 
         point.dt = math.min(1, point.dt + dt)
-        point.actual = tools.lerp(point.actual, point.goal, point.dt)
+        point.actual = tool.lerp(point.actual, point.goal, point.dt)
 
         -- adjust scale
         if key == ooze.menu.mode then
@@ -2313,8 +2312,8 @@ end
 
 function ooze.menu.mousemoved (x, y, dx, dy, istouch)
     -- clamp the menu to the screen
-    ooze.menu.x = tools.clamp(x, ooze.menu.r, ooze.menu.screenWidth - ooze.menu.r)
-    ooze.menu.y = tools.clamp(y, ooze.menu.r, ooze.menu.screenHeight - ooze.menu.r)
+    ooze.menu.x = tool.clamp(x, ooze.menu.r, ooze.menu.screenWidth - ooze.menu.r)
+    ooze.menu.y = tool.clamp(y, ooze.menu.r, ooze.menu.screenHeight - ooze.menu.r)
 end
 
 function ooze.menu.mousepressed (x, y, button, istouch, presses)
@@ -2461,15 +2460,15 @@ end
 -- @tparam point goal
 -- The goal point.
 --
--- @tparam table path
+-- @tparam table points
 -- List of points representing a path.
 --
 -- @local
-function path.saveCached (start, goal, walked_points)
+function path.saveCached (start, goal, points)
 
     path.cache = path.cache or { }
     local key = path.keyOf(start, goal)
-    path.cache[key] = walked_points
+    path.cache[key] = points
 
 end
 
@@ -2492,7 +2491,7 @@ end
 function path.calculateScore (previous, node, goal)
 
     local G = previous.score + 1
-    local H = tools.distance(node.x, node.y, goal.x, goal.y)
+    local H = tool.distance(node.x, node.y, goal.x, goal.y)
     return G + H, G, H
 
 end
@@ -2500,7 +2499,8 @@ end
 --- Test an item is in a list.
 --
 -- @tparam table list
--- @table item
+--
+-- @tparam point item
 --
 -- @local
 function path.listContains (list, item)
@@ -2566,8 +2566,8 @@ function path.getAdjacent (width, height, point, openTest)
     }
 
     for _, position in ipairs(positions) do
-        local px = tools.clamp(point.x + position.x, 1, width)
-        local py = tools.clamp(point.y + position.y, 1, height)
+        local px = tool.clamp(point.x + position.x, 1, width)
+        local py = tool.clamp(point.y + position.y, 1, height)
         local value = openTest(px, py)
         if value then
             table.insert( result, { x = px, y = py  } )
@@ -2618,7 +2618,7 @@ function path.find (width, height, start, goal, openTest, useCache)
 
     start.score = 0
     start.G = 0
-    start.H = tools.distance(start.x, start.y, goal.x, goal.y)
+    start.H = tool.distance(start.x, start.y, goal.x, goal.y)
     start.parent = { x = 0, y = 0 }
     table.insert(open, start)
 
@@ -2717,9 +2717,9 @@ function speech.say (name, text, seconds)
     seconds = seconds or 3
 
     -- intercept chaining
-    if chains.capturing then
+    if chain.capturing then
         ooze.append(string.format("chaining %s say", name))
-        chains.add(speech.say,
+        chain.add(speech.say,
                     {name, text, seconds},
                     -- expires when actor is not talking
                     function (parameters)
@@ -2730,7 +2730,7 @@ function speech.say (name, text, seconds)
     end
 
     local newSpeech = {
-        ["actor"] = actors.get(name),
+        ["actor"] = actor.get(name),
         ["text"] = text,
         ["time"] = seconds
         }
@@ -2755,7 +2755,7 @@ end
 function speech.isTalking (actor)
 
     if type(actor) == "string" then
-        actor = actors.get(actor)
+        actor = actor.get(actor)
     end
 
     if actor then
@@ -2787,7 +2787,7 @@ function speech.skip ()
         speech.currentLine = nil
 
         -- notify speech ended event
-        events.speech(current.actor, false)
+        event.speech(current.actor, false)
 
     end
 
@@ -2810,14 +2810,14 @@ function speech.update (dt)
         -- notify speech started event
         if speech.currentLine ~= current.text then
             speech.currentLine = current.text
-            events.speech(current.actor, true)
+            event.speech(current.actor, true)
         end
 
         if (current.time < 0) then
             speech.skip()
         else
             current.actor.action = "talk"
-            if not settings["walk and talk"] then
+            if not setting["walk and talk"] then
                 current.actor.path = nil
             end
         end
@@ -2829,7 +2829,7 @@ end
 
 --- Draw speech on screen.
 -- If there is speech data in the queue, of course.
--- This calls the @{events.draw.speech} callback.
+-- This calls the @{event.draw.speech} callback.
 --
 -- @local
 function speech.draw ()
@@ -2837,7 +2837,7 @@ function speech.draw ()
     local current = speech.queue[1]
 
     if current then
-        events.draw.speech(current.actor, current.text)
+        event.draw.speech(current.actor, current.text)
     end
 
 end
@@ -2859,12 +2859,12 @@ end
 function slime.clear ()
 
     slime.scale = 1
-    actors.clear()
-    backgrounds.clear()
-    chains.clear()
+    actor.clear()
+    background.clear()
+    chain.clear()
     cursor.clear()
-    floors.clear()
-    hotspots.clear()
+    floor.clear()
+    hotspot.clear()
     speech.clear()
     slime.statusText = nil
 
@@ -2876,8 +2876,8 @@ end
 function slime.reset ()
 
     slime.clear()
-    bags.clear()
-    settings.clear()
+    bag.clear()
+    setting.clear()
     cache.init()
     ooze.clear()
 
@@ -2889,9 +2889,9 @@ end
 -- Delta time since the last update.
 function slime.update (dt)
 
-    chains.update(dt)
-    backgrounds.update(dt)
-    actors.update(dt)
+    chain.update(dt)
+    background.update(dt)
+    actor.update(dt)
     speech.update(dt)
 
 end
@@ -2908,10 +2908,10 @@ function slime.draw (scale)
     love.graphics.scale(scale)
 
     love.graphics.setColor(1, 1, 1)
-    backgrounds.draw()
+    background.draw()
 
     love.graphics.setColor(1, 1, 1)
-    actors.draw()
+    actor.draw()
 
     -- Bag Buttons
     -- OBSOLETE IN FUTURE
@@ -2921,9 +2921,9 @@ function slime.draw (scale)
 
     -- status text
     if (slime.statusText) then
-        local y = settings["status position"]
+        local y = setting["status position"]
         local w = love.graphics.getWidth() / slime.scale
-        love.graphics.setFont(settings["status font"])
+        love.graphics.setFont(setting["status font"])
         -- Outline
         love.graphics.setColor({0, 0, 0, 255})
         love.graphics.printf(slime.statusText, 1, y+1, w, "center")
@@ -2958,7 +2958,7 @@ function slime.getObjects (x, y)
 
     local objects = { }
 
-    for _, actor in pairs(actors.list) do
+    for _, actor in pairs(actor.list) do
         if actor.isactor and
             (x >= actor.x - actor.feet.x
             and x <= actor.x - actor.feet.x + actor.width)
@@ -2969,7 +2969,7 @@ function slime.getObjects (x, y)
     end
 
     -- TODO convert to hotspots:getAt()
-    for ihotspot, hotspot in pairs(hotspots.list) do
+    for ihotspot, hotspot in pairs(hotspot.list) do
         if (x >= hotspot.x and x <= hotspot.x + hotspot.w) and
             (y >= hotspot.y and y <= hotspot.y + hotspot.h) then
             table.insert(objects, hotspot)
@@ -2992,7 +2992,7 @@ function slime.getObjects (x, y)
 end
 
 --- Interact with objects.
--- This triggers the @{events.interact} callback for every
+-- This triggers the @{event.interact} callback for every
 -- object that is interacted with, passing the current cursor name.
 --
 -- @tparam int x
@@ -3011,7 +3011,7 @@ function slime.interact (x, y)
         ooze.append(cursorname .. " on " .. object.name)
 
         -- notify the interact callback
-        events.interact(cursorname, object)
+        event.interact(cursorname, object)
 
         -- OBSOLETE: slime.callback replaced by events
         slime.callback(cursorname, object)
@@ -3043,24 +3043,24 @@ end
 -- This gets called by @{slime.reset}
 --
 -- @local
-function settings.clear ()
+function setting.clear ()
 
     -- Let slime handle displaying of speech text on screen,
     -- if false the onDrawSpeechCallback function is called.
-    settings["builtin text"] = true
+    setting["builtin text"] = true
 
     -- The y-position to display status text
-    settings["status position"] = 70
+    setting["status position"] = 70
 
-    settings["status font"] = love.graphics.newFont(12)
+    setting["status font"] = love.graphics.newFont(12)
 
     -- The y-position to display speech text
-    settings["speech position"] = 0
+    setting["speech position"] = 0
 
-    settings["speech font"] = love.graphics.newFont(10)
+    setting["speech font"] = love.graphics.newFont(10)
 
     -- actors stop walking when they speak
-    settings["walk and talk"] = false
+    setting["walk and talk"] = false
 
 end
 
@@ -3084,8 +3084,8 @@ end
 -- Amount of interpolation to apply, between 0 and 1.
 --
 -- @local
-function tools.lerp (a, b, amount)
-    return a + (b - a) * tools.clamp(amount, 0, 1)
+function tool.lerp (a, b, amount)
+    return a + (b - a) * tool.clamp(amount, 0, 1)
 end
 
 --- Measure the distance between two points.
@@ -3096,7 +3096,7 @@ end
 -- @tparam int y2
 --
 -- @local
-function tools.distance (x1, y1, x2, y2)
+function tool.distance (x1, y1, x2, y2)
 
     local dx = x1 - x2
     local dy = y1 - y2
@@ -3116,7 +3116,7 @@ end
 -- Maximum value.
 --
 -- @local
-function tools.clamp (x, min, max)
+function tool.clamp (x, min, max)
 
     return x < min and min or (x > max and max or x)
 
@@ -3524,9 +3524,9 @@ function slime.internalAnimationLoop (frames, counter)
     end
 
     -- notify the animation callback
-    events.animation (pack.anim.actor.name, pack.key, pack.loopcounter)
+    event.animation (pack.anim.actor.name, pack.key, pack.loopcounter)
 
-    -- OBSOLETE: replaced by events.animation
+    -- OBSOLETE: replaced by event.animation
     slime.animationLooped (pack.anim.actor.name, pack.key, pack.loopcounter)
 end
 
@@ -3539,17 +3539,17 @@ end
 --  \___/_/\_\ .__/ \___/|_|   \__| /_/   \_\_|  |___|
 --           |_|
 
-slime.actors = actors
-slime.backgrounds = backgrounds
-slime.bags = bags
-slime.chain = chains
+slime.actor = actor
+slime.background = background
+slime.bag = bag
+slime.chain = chain
 slime.cursor = cursor
-slime.hotspots = hotspots
+slime.hotspot = hotspot
 slime.ooze = ooze
-slime.events = events
-slime.floors = floors
-slime.layers = layers
-slime.settings = settings
+slime.event = event
+slime.floor = floor
+slime.layer = layer
+slime.setting = setting
 slime.speech = speech
-slime.wait = chains.wait
+slime.wait = chain.wait
 return slime
