@@ -1,0 +1,3 @@
+[submodule "LDoc"]
+	path = LDoc
+	url = https://github.com/lunarmodules/LDoc.git
