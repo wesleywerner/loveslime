@@ -395,7 +395,7 @@ function actor.update_movement (whom, dt)
             -- TODO: delete this direction delay. works better without it.
             do --(actor["direction recalc delay"] <= 0) then
                 whom["direction recalc delay"] = 5
-                whom.direction = actor.calculate_direction(whom.previousX, whom.previousY, whom.x, whom.y)
+                whom.direction = tool.calculate_direction(whom.previousX, whom.previousY, whom.x, whom.y)
                 -- store previous position, to calculate the
                 -- facing direction on the next iteration.
                 whom.previousX, whom.previousY = whom.x, whom.y
@@ -423,88 +423,6 @@ function actor.update_movement (whom, dt)
 
     end
 
-end
-
---- Get direction between two points.
---
--- @tparam int x1
--- Point 1 x
---
--- @tparam int y1
--- Point 1 y
---
--- @tparam int x2
--- Point 2 x
---
--- @tparam int y2
--- Point 2 y
---
--- @return nearest cardinal direction represented by the angle:
--- north south east or west.
---
--- @local
-function actor.calculate_direction (x1, y1, x2, y2)
-
-    -- function angle(x1, y1, x2, y2)
-    --     local ang = math.atan2(y2 - y1, x2 - x1) * 180 / math.pi
-    --     ang = 90 - ang
-    --     if (ang < 0) then ang = ang + 360 end
-    --     return ang
-    -- end
-    --
-    -- print('nw', angle(100, 100, 99, 99))
-    -- print('n', angle(100, 100, 100, 99))
-    -- print('ne', angle(100, 100, 101, 99))
-    -- print('sw', angle(100, 100, 99, 101))
-    -- print('s', angle(100, 100, 100, 101))
-    -- print('se', angle(100, 100, 101, 101))
-    -- print('w', angle(100, 100, 99, 100))
-    -- print('e', angle(100, 100, 101, 100))
-    --
-    -- nw   225.0
-    -- n    180.0
-    -- ne   135.0
-    -- sw   315.0
-    -- s    0.0
-    -- se   45.0
-    -- w    270.0
-    -- e    90.0
-    --
-    --        180
-    --         N
-    --   225   |    135
-    --         |
-    --  270    |      90
-    --  W -----+----- E
-    --         |
-    --         |
-    --   315   |    45
-    --         S
-    --         0
-
-    -- test if a value is between a range (inclusive)
-    local function between(n, a, b)
-        return n >= a and n <= b
-    end
-
-    -- calculate the angle between the two points
-    local ang = math.atan2(y2 - y1, x2 - x1) * 180 / math.pi
-
-    -- map the angle to a 360 degree range
-    ang = 90 - ang
-    if (ang < 0) then ang = ang + 360 end
-
-    if between(ang, 0, 45) or between(ang, 315, 359) then
-        return 'south'
-    elseif between(ang, 45, 135) then
-        return 'east'
-    elseif between(ang, 135, 225) then
-        return 'north'
-    elseif between(ang, 225, 315) then
-        return 'west'
-    end
-
-    --return 'south'
 end
 
 --- Get an actor.
@@ -600,7 +518,7 @@ end
 -- @see floor.set
 function actor.move (name, x, y)
 
-    x, y = slime.scale_point(x, y)
+    x, y = tool.scale_point(x, y)
 
     -- intercept chaining
     if chain.capturing then
@@ -657,7 +575,7 @@ function actor.move (name, x, y)
         whom.action = "walk"
         -- Calculate actor direction immediately
         whom.previousX, whom.previousY = whom.x, whom.y
-        whom.direction = actor.calculate_direction(whom.x, whom.y, x, y)
+        whom.direction = tool.calculate_direction(whom.x, whom.y, x, y)
         -- Output debug
         ooze.append("move " .. name .. " to " .. x .. " : " .. y)
     else
@@ -1442,7 +1360,7 @@ end
 -- @tparam int y
 function cursor.update (x, y)
 
-    x, y = slime.scale_point(x, y)
+    x, y = tool.scale_point(x, y)
 
     -- adjust draw position to center around the hotspot
     if cursor.current then
@@ -2292,7 +2210,7 @@ function ooze.menu.draw ()
 
         -- convert the angle to radians before plotting
         local angle = math.rad(point.actual)
-        local nx, ny = ooze.menu.point_on_circle(ooze.menu.x, ooze.menu.y, ooze.menu.r, angle)
+        local nx, ny = tool.point_on_circle(ooze.menu.x, ooze.menu.y, ooze.menu.r, angle)
 
         --~ -- fade the icon color into existence
         --~ local keycolor = ooze.menu.colors[key] or colors.white
@@ -2369,33 +2287,6 @@ function ooze.menu.wheelmoved (x, y)
         ooze.menu.opacity.dt = 0
     end
 end
-
---- Returns a point on a circle.
--- https://wesleywerner.github.io/harness/doc/modules/trig.html#module:pointOnCircle
---
--- @tparam number cx
--- The origin of the circle
---
--- @tparam number cy
--- The origin of the circle
---
--- @tparam number r
--- The circle radius
---
--- @tparam number a
--- The angle of the point to the origin.
---
--- @treturn number
--- x, y
-function ooze.menu.point_on_circle (cx, cy, r, a)
-
-    x = cx + r * math.cos(a)
-    y = cy + r * math.sin(a)
-    return x, y
-
-end
-
-
 
 
 -- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
@@ -2948,7 +2839,7 @@ end
 -- @return table of objects.
 function slime.get_objects (x, y)
 
-    x, y = slime.scale_point(x, y)
+    x, y = tool.scale_point(x, y)
 
     local objects = { }
 
@@ -3016,15 +2907,6 @@ function slime.interact (x, y)
 end
 
 
-function slime.scale_point (x, y)
-
-    -- adjust to scale
-    x = math.floor(x / draw_scale)
-    y = math.floor(y / draw_scale)
-    return x, y
-
-end
-
 -- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 --           _   _   _
 --  ___  ___| |_| |_(_)_ __   __ _ ___
@@ -3066,35 +2948,59 @@ end
 --  \__\___/ \___/|_|___/
 --
 
---- Linear interpolation.
---
--- @tparam number a
--- The starting value.
---
--- @tparam number b
--- The ending value.
---
--- @tparam number amount
--- Amount of interpolation to apply, between 0 and 1.
---
--- @local
-function tool.lerp (a, b, amount)
-    return a + (b - a) * tool.clamp(amount, 0, 1)
-end
-
---- Measure the distance between two points.
+--- Get direction between two points.
 --
 -- @tparam int x1
+-- Point 1 x
+--
 -- @tparam int y1
+-- Point 1 y
+--
 -- @tparam int x2
+-- Point 2 x
+--
 -- @tparam int y2
+-- Point 2 y
+--
+-- @return nearest cardinal direction represented by the angle:
+-- north south east or west.
 --
 -- @local
-function tool.distance (x1, y1, x2, y2)
+function tool.calculate_direction (x1, y1, x2, y2)
 
-    local dx = x1 - x2
-    local dy = y1 - y2
-    return math.sqrt(dx * dx + dy * dy)
+    --        180
+    --         N
+    --   225   |    135
+    --         |
+    --  270    |      90
+    --  W -----+----- E
+    --         |
+    --         |
+    --   315   |    45
+    --         S
+    --         0
+
+    -- test value between a range
+    local between = function(n, a, b)
+        return n >= a and n <= b
+    end
+
+    -- calculate the angle between the two points
+    local ang = math.atan2(y2 - y1, x2 - x1) * 180 / math.pi
+
+    -- map the angle to a 360 degree range
+    ang = 90 - ang
+    if (ang < 0) then ang = ang + 360 end
+
+    if between(ang, 0, 45) or between(ang, 315, 359) then
+        return 'south'
+    elseif between(ang, 45, 135) then
+        return 'east'
+    elseif between(ang, 135, 225) then
+        return 'north'
+    elseif between(ang, 225, 315) then
+        return 'west'
+    end
 
 end
 
@@ -3113,6 +3019,82 @@ end
 function tool.clamp (x, min, max)
 
     return x < min and min or (x > max and max or x)
+
+end
+
+--- Measure the distance between two points.
+--
+-- @tparam int x1
+-- @tparam int y1
+-- @tparam int x2
+-- @tparam int y2
+--
+-- @local
+function tool.distance (x1, y1, x2, y2)
+
+    local dx = x1 - x2
+    local dy = y1 - y2
+    return math.sqrt(dx * dx + dy * dy)
+
+end
+
+--- Linear interpolation.
+--
+-- @tparam number a
+-- The starting value.
+--
+-- @tparam number b
+-- The ending value.
+--
+-- @tparam number amount
+-- Amount of interpolation to apply, between 0 and 1.
+--
+-- @local
+function tool.lerp (a, b, amount)
+    return a + (b - a) * tool.clamp(amount, 0, 1)
+end
+
+--- Constrain a point to a circle.
+-- Given a radius and angle, get a point on the circumference of a circle.
+-- https://wesleywerner.github.io/harness/doc/modules/trig.html#module:pointOnCircle
+--
+-- @tparam number cx
+-- The x origin of the circle
+--
+-- @tparam number cy
+-- The y origin of the circle
+--
+-- @tparam number r
+-- The circle radius
+--
+-- @tparam number a
+-- The angle of the point to the origin.
+--
+-- @treturn number
+-- x, y
+function tool.point_on_circle (cx, cy, r, a)
+
+    x = cx + r * math.cos(a)
+    y = cy + r * math.sin(a)
+    return x, y
+
+end
+
+--- Scale a point from screen space to game space.
+-- The ratio scaled is that which was supplied to the @{slime.draw} call.
+-- This is used internally so that the end user does not have to bother
+-- to perform coordinate scaling.
+--
+-- @tparam int x
+-- @tparam int y
+--
+-- @return The scaled x, y values.
+function tool.scale_point (x, y)
+
+    -- adjust to scale
+    x = math.floor(x / draw_scale)
+    y = math.floor(y / draw_scale)
+    return x, y
 
 end
 
