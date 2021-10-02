@@ -3,3 +3,4 @@ release/
 examples/slime.lua
 doc/
 tutorial/slime
+.scripts
