@@ -119,7 +119,7 @@ local tool = { }
 -- like people, animals and robots.
 -- They can also be inanimate objects like doors, toasters and computers.
 --
--- @table actor
+-- @table actor_data
 --
 -- @tfield string name
 -- The name of the actor.
@@ -157,66 +157,66 @@ end
 
 --- Add an actor.
 --
--- @tparam actor whom
-function actor.add (whom)
+-- @tparam actor_data data
+function actor.add (data)
 
-    assert(whom, "Actor definition must be given.")
+    assert(data, "Actor definition must be given.")
 
     -- get the size if a still image is set
-    if whom.image then
-        whom.width, whom.height = whom.image:getDimensions ()
+    if data.image then
+        data.width, data.height = data.image:getDimensions ()
     else
-        whom.width, whom.height = whom.width or 10, whom.height or 10
+        data.width, data.height = data.width or 10, data.height or 10
     end
 
-    assert(whom.x, "Actor x position must be given.")
-    assert(whom.y, "Actor y position must be given.")
-    assert(whom.width, "Actor width must be given.")
-    assert(whom.height, "Actor height must be given.")
+    assert(data.x, "Actor x position must be given.")
+    assert(data.y, "Actor y position must be given.")
+    assert(data.width, "Actor width must be given.")
+    assert(data.height, "Actor height must be given.")
 
-    whom.isactor = true
-    whom["direction recalc delay"] = 0
-    whom.feet = whom.feet or "bottom"
-    whom.direction = "south"
-    whom.speechcolor = whom.speechcolor or {1, 1, 1}
-    whom.action = "idle"
+    data.isactor = true
+    data["direction recalc delay"] = 0
+    data.feet = data.feet or "bottom"
+    data.direction = "south"
+    data.speechcolor = data.speechcolor or {1, 1, 1}
+    data.action = "idle"
 
     -- map the feet position from string to a table
-    if whom.feet == "bottom" then
-        whom.feet = { x = whom.width / 2, y = whom.height}
-    elseif whom.feet == "top" then
-        whom.feet = { x = whom.width / 2, y = 0}
-    elseif whom.feet == "left" then
-        whom.feet = { x = 0, y = whom.height / 2}
-    elseif whom.feet == "right" then
-        whom.feet = { x = whom.width, y = whom.height / 2}
+    if data.feet == "bottom" then
+        data.feet = { x = data.width / 2, y = data.height}
+    elseif data.feet == "top" then
+        data.feet = { x = data.width / 2, y = 0}
+    elseif data.feet == "left" then
+        data.feet = { x = 0, y = data.height / 2}
+    elseif data.feet == "right" then
+        data.feet = { x = data.width, y = data.height / 2}
     end
 
-    assert(type(whom.feet) == "table", "Actor feet property must be string or a table")
-    assert(whom.feet.x, "Actor feet must have x position")
-    assert(whom.feet.y, "Actor feet must have y position")
+    assert(type(data.feet) == "table", "Actor feet property must be string or a table")
+    assert(data.feet.x, "Actor feet must have x position")
+    assert(data.feet.y, "Actor feet must have y position")
 
     -- set the movement speed.
     -- speed is assumed to be the pixels per second to move.
     -- we convert this to time to wait before updating the path.
-    if type(whom.speed) == "number" then
-        whom.movedelay = 1 / whom.speed
+    if type(data.speed) == "number" then
+        data.movedelay = 1 / data.speed
     end
 
-    table.insert(actor.list, whom)
+    table.insert(actor.list, data)
     actor.sort()
-    return whom
+    return data
 
 end
 
 --- Measure distance between two actors.
 --
 -- @param from
--- The object to measure, this can be an @{actor}, a @{point}, or
+-- The object to measure, this can be an @{actor_data}, a @{point}, or
 -- the name of an actor.
 --
 -- @param to
--- The object to measure, this can be an @{actor}, a @{point}, or
+-- The object to measure, this can be an @{actor_data}, a @{point}, or
 -- the name of an actor.
 --
 -- @return Distance in pixels
@@ -345,16 +345,16 @@ end
 --- Update actor path.
 -- Moves an actor to the next point in their movement path.
 --
--- @tparam actor whom
+-- @tparam actor_data data
 -- The actor to update.
 --
 -- @tparam int dt
 -- The delta time since last update.
 --
 -- @local
-function actor.update_movement (whom, dt)
+function actor.update_movement (data, dt)
 
-    if (whom.path and #whom.path > 0) then
+    if (data.path and #data.path > 0) then
 
         -- Check if the actor's speed is set to delay movement.
         -- If no speed is set, we move on every update.
@@ -362,59 +362,59 @@ function actor.update_movement (whom, dt)
         -- TODO change actor movedelay to pixel "speed".
         --      (can we specify this as pixels per second?)
         --      (one step on the path will be ~ 1 pixel)
-        if (whom.movedelay) then
+        if (data.movedelay) then
 
             -- start a new move delay counter
-            if (not whom.movedelaydelta) then
-                whom.movedelaydelta = whom.movedelay
+            if (not data.movedelaydelta) then
+                data.movedelaydelta = data.movedelay
             end
 
-            whom.movedelaydelta = whom.movedelaydelta - dt
+            data.movedelaydelta = data.movedelaydelta - dt
 
             -- the delay has not yet passed
-            if (whom.movedelaydelta > 0) then
+            if (data.movedelaydelta > 0) then
                 return
             end
 
             -- the delay has passed. Reset it and continue.
-            whom.movedelaydelta = whom.movedelay
+            data.movedelaydelta = data.movedelay
 
         end
 
         -- load the next point in the path
-        local point = table.remove(whom.path, 1)
+        local point = table.remove(data.path, 1)
 
         if (point) then
 
             -- update actor position
-            whom.x, whom.y = point.x, point.y
+            data.x, data.y = point.x, point.y
 
             -- Test if we should calculate actor direction
-            whom["direction recalc delay"] = whom["direction recalc delay"] - 1
+            data["direction recalc delay"] = data["direction recalc delay"] - 1
 
             -- TODO: delete this direction delay. works better without it.
             do --(actor["direction recalc delay"] <= 0) then
-                whom["direction recalc delay"] = 5
-                whom.direction = tool.calculate_direction(whom.previousX, whom.previousY, whom.x, whom.y)
+                data["direction recalc delay"] = 5
+                data.direction = tool.calculate_direction(data.previousX, data.previousY, data.x, data.y)
                 -- store previous position, to calculate the
                 -- facing direction on the next iteration.
-                whom.previousX, whom.previousY = whom.x, whom.y
+                data.previousX, data.previousY = data.x, data.y
             end
 
         end
 
         -- the goal is reached
-        if (#whom.path == 0) then
+        if (#data.path == 0) then
 
-            ooze.append(whom.name .. " moved complete")
-            whom.path = nil
-            whom.action = "idle"
+            ooze.append(data.name .. " moved complete")
+            data.path = nil
+            data.action = "idle"
 
             -- notify the moved callback
-            event.actor_moved(whom, whom.clickedX, whom.clickedY)
+            event.actor_moved(data, data.clickedX, data.clickedY)
 
             -- OBSOLETE: replaced by events.move callback
-            slime.callback("moved", whom)
+            slime.callback("moved", data)
 
         end
 
@@ -431,7 +431,7 @@ end
 -- @tparam string name
 -- The name of the actor
 --
--- @return the @{actor} or nil if not found.
+-- @return the @{actor_data} or nil if not found.
 function actor.get (name)
 
     for _, whom in ipairs(actor.list) do
@@ -1082,7 +1082,7 @@ end
 --- Sprite info.
 -- Contains data to draw a sprite.
 --
--- @table spriteInfo
+-- @table sprite_data
 --
 -- @tfield Image image
 -- The sprite image, or the spritesheet that contains the sprite.
@@ -1117,7 +1117,7 @@ end
 --- Actor animation looped event.
 -- TODO REVIEW IF NEEDED
 --
--- @tparam actor actor
+-- @tparam actor_data data
 -- The actor being interacted with
 --
 -- @tparam string key
@@ -1125,7 +1125,7 @@ end
 --
 -- @tparam int counter
 -- The number of times the animation has looped
-function event.animation_looped (actor, key, counter)
+function event.animation_looped (data, key, counter)
 
 end
 
@@ -1141,12 +1141,12 @@ end
 --- Draw speech override.
 -- Override this function to handle drawing spoken text.
 --
--- @tparam actor actor
+-- @tparam actor_data data
 -- The actor who is talking.
 --
 -- @tparam string words
 -- The words to print on screen.
-function event.draw_speech (actor, words)
+function event.draw_speech (data, words)
 
     local y = 0
     local w = love.graphics.getWidth() / draw_scale
@@ -1157,7 +1157,7 @@ function event.draw_speech (actor, words)
     love.graphics.setColor({0, 0, 0, 1})
     love.graphics.printf(words, 1, y + 1, w, "center")
 
-    love.graphics.setColor(actor.speechcolor)
+    love.graphics.setColor(data.speechcolor)
     love.graphics.printf(words, 0, y, w, "center")
 
 end
@@ -1165,17 +1165,17 @@ end
 --- Draw cursor override.
 -- Override this function to handle drawing the cursor.
 --
--- @tparam cursor cursor
--- The @{cursor} data.
+-- @tparam cursor_data data
+-- The cursor that is to be drawn.
 --
 -- @tparam int x
 -- @tparam int y
-function event.draw_cursor (cursor, x, y)
+function event.draw_cursor (data, x, y)
 
-    if cursor.quad then
-        love.graphics.draw(cursor.image, cursor.quad, x, y)
+    if data.quad then
+        love.graphics.draw(data.image, data.quad, x, y)
     else
-        love.graphics.draw(cursor.image, x, y)
+        love.graphics.draw(data.image, x, y)
     end
 
 end
@@ -1187,12 +1187,12 @@ end
 -- Delta time since the last update.
 -- This should be used to forward animations.
 --
--- @tparam actor actor
+-- @tparam actor_data data
 -- The actor whom the sprite request is for. The actor.action, actor.direction
 -- properties can be accessed to determine the sprite to return.
 --
--- @return @{spriteInfo}
-function event.request_sprite (dt, actor)
+-- @return @{sprite_data}
+function event.request_sprite (dt, data)
 
     -- This is a basic sprite request implementation that does not
     -- animate, it only returns the actor's still image.
@@ -1210,13 +1210,13 @@ function event.request_sprite (dt, actor)
     local ox, oy = 0, 0
 
     -- flip when going east
-    if actor.direction == "east" then
+    if data.direction == "east" then
         sx = -1
-        ox = actor.width
+        ox = data.width
     end
 
     return {
-        ["image"] = actor.image,
+        ["image"] = data.image,
         ["quad"] = nil,
         ["x"] = x,
         ["y"] = y,
@@ -1234,15 +1234,15 @@ end
 -- @tparam string event
 -- The name of the cursor
 --
--- @tparam actor actor
+-- @tparam actor_data data
 -- The actor being interacted with
-function event.interact (event, actor)
+function event.interact (event, data)
 
 end
 
 --- Actor finished moving callback.
 --
--- @tparam actor actor
+-- @tparam actor_data data
 -- The actor that moved
 --
 -- @tparam int clickedX
@@ -1254,23 +1254,23 @@ end
 --
 -- @tparam int clickedY
 --
-function event.actor_moved (actor, clickedX, clickedY)
+function event.actor_moved (data, clickedX, clickedY)
 
 end
 
 --- Actor speaking callback.
 --
--- @tparam actor actor
+-- @tparam actor_data data
 -- The talking actor
-function event.speech_started (actor)
+function event.speech_started (data)
 
 end
 
 --- Actor has stopped talking.
 --
--- @tparam actor actor
+-- @tparam actor_data data
 -- The actor whom has finished talking.
-function event.speech_ended (actor)
+function event.speech_ended (data)
 
 end
 
@@ -1284,7 +1284,7 @@ end
 
 --- Custom cursor data
 --
--- @table cursor
+-- @table cursor_data
 --
 -- @tfield string name
 -- Name of the cursor. This gets passed back to the
@@ -1338,7 +1338,7 @@ end
 
 --- Set a custom cursor.
 --
--- @tparam cursor data
+-- @tparam cursor_data data
 -- The cursor data.
 function cursor.set (data)
 

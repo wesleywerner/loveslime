@@ -16,7 +16,7 @@ local portraits = { }
 
 
 -- define our custom cursors.
--- see the @{cursor} table structure here.
+-- see the @{cursor_data} table structure here.
 local cursors = {
     current = 1,
     name = "walk",
