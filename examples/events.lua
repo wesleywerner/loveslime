@@ -212,21 +212,23 @@ end
 
 -- Here we show how to hook into the various SLIME events.
 
--- @{event.animation}
+-- @{event.animation_looped}
 -- When an animation loops.
 --
--- @{event.bag}
+-- @{event.bag_updated}
 -- When the contents of a bag changes.
 --
 -- @{event.interact}
 -- When a call to @{interact} happens over a hotspot or actor.
 --
--- @{event.moved}
+-- @{event.actor_moved}
 -- When an actor reached their destination.
 --
--- @{event.speech}
--- When an actor starts or stops talking.
+-- @{event.speech_started}
+-- When an actor starts talking.
 --
+-- @{event.speech_ended}
+-- When an actor finished talking.
 
 function slime.event.interact (event, actor)
 
@@ -261,28 +263,30 @@ function slime.event.interact (event, actor)
 
 end
 
-function slime.event.moved (actor, clickedX, clickedY)
+function slime.event.actor_moved (actor, clickedX, clickedY)
 
 
 end
 
 -- Override the speech event to show a portrait of the actor
 -- who started talking.
-function slime.event.speech (actor, started_talking)
+function slime.event.speech_started (actor)
 
-    if started_talking then
-        -- show a portrait of the talking actor
-        talkingPortrait = portraits[actor.name]
-    else
-        -- hide the talking portrait
-        talkingPortrait = nil
-    end
+    -- show a portrait of the talking actor
+    talkingPortrait = portraits[actor.name]
+
+end
+
+function slime.event.speech_ended (actor)
+
+    -- hide the talking portrait
+    talkingPortrait = nil
 
 end
 
 -- Override the speech drawing event to wrap
 -- the words around our actor portraits.
-function slime.event.draw.speech (actor, words)
+function slime.event.draw_speech (actor, words)
 
     local x, y = 0, 0
 
@@ -314,7 +318,7 @@ end
 
 -- Override the cursor draw event so that we can colorize cursors
 -- that are hoevered over things.
-function slime.event.draw.cursor (cursor, x, y)
+function slime.event.draw_cursor (cursor, x, y)
 
     if statusText then
         love.graphics.setColor (0, 1, 1)

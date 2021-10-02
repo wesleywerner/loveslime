@@ -272,7 +272,7 @@ function actor.update (dt)
             end
 
             -- request the next sprite frame
-            whom.sprite = event.request.sprite(dt, whom)
+            whom.sprite = event.request_sprite(dt, whom)
 
         end
     end
@@ -402,7 +402,7 @@ function actor.update_movement (whom, dt)
             whom.action = "idle"
 
             -- notify the moved callback
-            event.moved(whom, whom.clickedX, whom.clickedY)
+            event.actor_moved(whom, whom.clickedX, whom.clickedY)
 
             -- OBSOLETE: replaced by events.move callback
             slime.callback("moved", whom)
@@ -870,7 +870,7 @@ function bag.add (name, object)
     table.insert(bag.contents[name], object)
 
     -- notify the callback
-    event.bag(name)
+    event.bag_updated(name)
 
     -- OBSOLETE: replaced by events.bag
     slime.inventoryChanged(name)
@@ -1152,14 +1152,6 @@ end
 --  \___| \_/ \___|_| |_|\__|___/
 --
 
--- TODO create namespaces in events.
--- events.draw.background
---            .speech
---            .sprite
-event.draw = { }
-event.request = { }
-
-
 --- Sprite info.
 -- Contains data to draw a sprite.
 --
@@ -1206,7 +1198,7 @@ event.request = { }
 --
 -- @tparam int counter
 -- The number of times the animation has looped
-function event.animation (actor, key, counter)
+function event.animation_looped (actor, key, counter)
 
 end
 
@@ -1215,7 +1207,7 @@ end
 --
 -- @tparam string bag
 -- The name of the bag that changed
-function event.bag (bag)
+function event.bag_updated (bag)
 
 end
 
@@ -1227,7 +1219,7 @@ end
 --
 -- @tparam string words
 -- The words to print on screen.
-function event.draw.speech (actor, words)
+function event.draw_speech (actor, words)
 
     local y = 0
     local w = love.graphics.getWidth() / slime.scale
@@ -1251,7 +1243,7 @@ end
 --
 -- @tparam int x
 -- @tparam int y
-function event.draw.cursor (cursor, x, y)
+function event.draw_cursor (cursor, x, y)
 
     if cursor.quad then
         love.graphics.draw(cursor.image, cursor.quad, x, y)
@@ -1273,7 +1265,7 @@ end
 -- properties can be accessed to determine the sprite to return.
 --
 -- @return @{spriteInfo}
-function event.request.sprite (dt, actor)
+function event.request_sprite (dt, actor)
 
     -- This is a basic sprite request implementation that does not
     -- animate, it only returns the actor's still image.
@@ -1335,7 +1327,7 @@ end
 --
 -- @tparam int clickedY
 --
-function event.moved (actor, clickedX, clickedY)
+function event.actor_moved (actor, clickedX, clickedY)
 
 end
 
@@ -1343,10 +1335,15 @@ end
 --
 -- @tparam actor actor
 -- The talking actor
+function event.speech_started (actor)
+
+end
+
+--- Actor has stopped talking.
 --
--- @tparam bool started_talking
--- true if the actor has started talking, false if they finished.
-function event.speech (actor, started_talking)
+-- @tparam actor actor
+-- The actor whom has finished talking.
+function event.speech_ended (actor)
 
 end
 
@@ -1394,7 +1391,7 @@ end
 function cursor.draw ()
 
     if cursor.current and cursor.x then
-        event.draw.cursor(cursor.current, cursor.x, cursor.y)
+        event.draw_cursor(cursor.current, cursor.x, cursor.y)
     end
 
 end
@@ -2787,7 +2784,7 @@ function speech.skip ()
         speech.currentLine = nil
 
         -- notify speech ended event
-        event.speech(current.actor, false)
+        event.speech_ended(current.actor)
 
     end
 
@@ -2810,7 +2807,7 @@ function speech.update (dt)
         -- notify speech started event
         if speech.currentLine ~= current.text then
             speech.currentLine = current.text
-            event.speech(current.actor, true)
+            event.speech_started(current.actor)
         end
 
         if (current.time < 0) then
@@ -2829,7 +2826,7 @@ end
 
 --- Draw speech on screen.
 -- If there is speech data in the queue, of course.
--- This calls the @{event.draw.speech} callback.
+-- This calls the @{event.draw_speech} callback.
 --
 -- @local
 function speech.draw ()
@@ -2837,7 +2834,7 @@ function speech.draw ()
     local current = speech.queue[1]
 
     if current then
-        event.draw.speech(current.actor, current.text)
+        event.draw_speech(current.actor, current.text)
     end
 
 end
