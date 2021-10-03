@@ -1,7 +1,19 @@
+# merge tool backups
 *.orig
+
+# lua code coverage
+luacov.stats.out
+luacov.report.out
+
+# build files
 release/
-examples/slime.lua
 doc/
+
+# slime lib in examples
+examples/slime.lua
 tutorial/slime
+
+# user files
 .scripts
 TODO
+

@@ -1,0 +1,5 @@
+modules = {
+   ["slime"] = "src/slime.lua"
+}
+runreport = true
+deletestats = true

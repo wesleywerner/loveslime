@@ -1,9 +1,35 @@
+# Unit Testing
+
+Testing and code coverage uses the busted and luacov libraries. Busted auto generates code coverage statistics (luacov.stats.out).
+
+## Dependencies
+
+- luarocks install busted
+- luarocks install luacov
+
+Run tests:
+
+```
+busted
+```
+
+Generate coverage report (luacov.report.out):
+
+```
+luacov
+```
+
 # Documentation
 
-Requirements
+Generated from source comments with the LDoc library, output into the `doc` directory:
+
+```
+lua LDoc\ldoc.lua .
+```
+
+Requirements:
 
 - Lua 5.2
-- LuaRocks
 
 ## Dependencies
 

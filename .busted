@@ -1,0 +1,6 @@
+return {
+    _all = {
+        ROOT = {"tests"},
+        coverage = true
+    }
+}
