@@ -790,6 +790,11 @@ function bag.add (name, object)
         object.image = love.graphics.newImage(object.image)
     end
 
+    assert(object.name, "bag item requires a name")
+
+    assert(not bag.contains(name, object.name),
+        string.format("bag %q already contains %q", name, object.name))
+
     -- create it
     bag.contents[name] = bag.contents[name] or { }
 
@@ -797,7 +802,7 @@ function bag.add (name, object)
     table.insert(bag.contents[name], object)
 
     -- notify the callback
-    event.bag_updated(name)
+    event.bag_updated(name, object.name)
 
     -- OBSOLETE: replaced by events.bag
     slime.inventoryChanged(name)
@@ -808,20 +813,20 @@ end
 
 --- Remove a thing from a bag.
 --
--- @tparam string name
+-- @tparam string bag_name
 -- Name of the bag.
 --
--- @tparam string thingName
+-- @tparam string thing_name
 -- Name of the thing to remove.
-function bag.remove (name, thingName)
+function bag.remove (bag_name, thing_name)
 
-    local inv = bag.contents[name] or { }
+    local inv = bag.contents[bag_name] or { }
 
     for i, item in pairs(inv) do
-        if (item.name == thingName) then
+        if (item.name == thing_name) then
             table.remove(inv, i)
-            ooze.append(string.format("Removed %s", thingName))
-            slime.inventoryChanged(name)
+            ooze.append(string.format("Removed %s", thing_name))
+            event.bag_updated(bag_name, thing_name)
         end
     end
 
@@ -829,17 +834,17 @@ end
 
 --- Test if a bag has a thing.
 --
--- @tparam string name
+-- @tparam string bag_name
 -- Name of bag to search.
 --
--- @tparam string thingName
+-- @tparam string thing_name
 -- Name of thing to find.
-function bag.contains (name, thingName)
+function bag.contains (bag_name, thing_name)
 
-    local inv = bag.contents[name] or { }
+    local inv = bag.contents[bag_name] or { }
 
     for _, v in pairs(inv) do
-        if v.name == thingName then
+        if v.name == thing_name then
             return true
         end
     end
@@ -3515,6 +3520,7 @@ end
 --  \___/_/\_\ .__/ \___/|_|   \__| /_/   \_\_|  |___|
 --           |_|
 
+slime.reset()
 slime.actor = actor
 slime.background = background
 slime.bag = bag
