@@ -275,8 +275,8 @@ function slime.event.speech_started (actor_name)
     -- show a portrait of the talking actor
     talkingPortrait = portraits[actor_name]
 
-    -- stop walking
-    slime.actor.stop(actor_name)
+    -- pause movement
+    slime.actor.pause(actor_name)
 
 end
 
@@ -284,6 +284,9 @@ function slime.event.speech_ended (actor_name)
 
     -- hide the talking portrait
     talkingPortrait = nil
+
+    -- resume movement
+    slime.actor.resume(actor_name)
 
 end
 

@@ -259,7 +259,7 @@ function actor.update (dt)
         if whom.isactor then
 
             -- update the movement path
-            if actor.update_movement(whom, dt) then
+            if not whom.movement_paused and actor.update_movement(whom, dt) then
                 actorsMoved = true
             end
 
@@ -355,6 +355,8 @@ end
 function actor.update_movement (data, dt)
 
     if (data.path and #data.path > 0) then
+
+        data.action = "walk"
 
         -- Check if the actor's speed is set to delay movement.
         -- If no speed is set, we move on every update.
@@ -625,6 +627,20 @@ function actor.move_to (actor_name, target_name)
         ooze.append("no actor named " .. target_name)
     end
 
+end
+
+function actor.pause (actor_name)
+    local _actor = actor.get(actor_name)
+    if _actor.path then
+        _actor.movement_paused = true
+    end
+end
+
+function actor.resume (actor_name)
+    local _actor = actor.get(actor_name)
+    if _actor.movement_paused then
+        _actor.movement_paused = false
+    end
 end
 
 --- Stop and actor.
@@ -1259,6 +1275,8 @@ end
 -- The talking actor
 function event.speech_started (actor_name)
 
+    actor.pause(actor_name)
+
 end
 
 --- Actor has stopped talking.
@@ -1266,6 +1284,8 @@ end
 -- @tparam string actor_name
 -- The actor whom has finished talking.
 function event.speech_ended (actor_name)
+
+    actor.resume(actor_name)
 
 end
 
@@ -2697,8 +2717,12 @@ function speech.skip ()
         -- clear the current spoken line
         speech.current_text = nil
 
-        -- notify speech ended event
-        event.speech_ended(_speech_data.name)
+        -- fire speech ended event
+        -- only if the next speech is not the same actor
+        local _next_speech = speech.queue[1]
+        if not _next_speech or _next_speech.name ~= _speech_data.name then
+            event.speech_ended(_speech_data.name)
+        end
 
     end
 
@@ -2720,6 +2744,8 @@ function speech.update (dt)
         -- notify speech started event
         if speech.current_text ~= _speech_data.text then
             speech.current_text = _speech_data.text
+            local _actor = actor.get(_speech_data.name)
+            _actor.action = "talk"
             event.speech_started(_speech_data.name)
         end
 
