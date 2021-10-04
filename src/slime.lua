@@ -2606,7 +2606,9 @@ function path.find (width, height, start, goal, openTest, useCache)
 
     end
 
-    path.write_cache(start, goal, walked_points)
+    if useCache then
+        path.write_cache(start, goal, walked_points)
+    end
 
     -- reverse the closed list to get the solution
     return walked_points
