@@ -425,14 +425,14 @@ end
 --- Get an actor.
 -- Find an actor by name.
 --
--- @tparam string name
+-- @tparam string actor_name
 -- The name of the actor
 --
 -- @return the @{actor_data} or nil if not found.
-function actor.get (name)
+function actor.get (actor_name)
 
     for _, whom in ipairs(actor.list) do
-        if whom.name == name then
+        if whom.name == actor_name then
             return whom
         end
     end
@@ -442,12 +442,12 @@ end
 --- Remove an actor.
 -- Removes an actor by name
 --
--- @tparam string name
+-- @tparam string actor_name
 -- The name of the actor to remove.
-function actor.remove (name)
+function actor.remove (actor_name)
 
     for i, whom in ipairs(actor.list) do
-        if whom.name == name then
+        if whom.name == actor_name then
             table.remove(actor.list, i)
             return true
         end
@@ -503,7 +503,7 @@ end
 -- Uses path finding when a walkable floor is set, otherwise
 -- if no floor is set an actor can walk anywhere.
 --
--- @tparam string name
+-- @tparam string actor_name
 -- Name of the actor to move.
 --
 -- @tparam int x
@@ -513,15 +513,15 @@ end
 -- Y-position to move to.
 --
 -- @see floor.set
-function actor.move (name, x, y)
+function actor.move (actor_name, x, y)
 
     x, y = tool.scale_point(x, y)
 
     -- intercept chaining
     if chain.capturing then
-        ooze.append(string.format("chaining %s move", name))
+        ooze.append(string.format("chaining %s move", actor_name))
         chain.add(actor.move,
-            {actor, name, x, y},
+            {actor, actor_name, x, y},
             -- expires when actor path is empty
             function (parameters)
                 local whom = actor.get(parameters[2])
@@ -534,10 +534,10 @@ function actor.move (name, x, y)
     end
 
     -- test if the actor is on the stage
-    local whom = actor.get(name)
+    local whom = actor.get(actor_name)
 
     if (whom == nil) then
-        ooze.append("No actor named " .. name)
+        ooze.append("No actor named " .. actor_name)
         return
     end
 
@@ -574,7 +574,7 @@ function actor.move (name, x, y)
         whom.previousX, whom.previousY = whom.x, whom.y
         whom.direction = tool.calculate_direction(whom.x, whom.y, x, y)
         -- Output debug
-        ooze.append("move " .. name .. " to " .. x .. " : " .. y)
+        ooze.append("move " .. actor_name .. " to " .. x .. " : " .. y)
     else
         ooze.append("no actor path found")
     end
@@ -584,21 +584,21 @@ end
 --- Turn an actor.
 -- Turn to face a cardinal direction, north south east or west.
 --
--- @tparam string name
+-- @tparam string actor_name
 -- The actor to turn.
 --
 -- @tparam string direction
 -- A cardinal direction: north, south, east or west.
-function actor.turn (name, direction)
+function actor.turn (actor_name, direction)
 
     -- intercept chaining
     if chain.capturing then
-        ooze.append(string.format("chaining %s turn %s", name, direction))
-        chain.add(actor.turn, {actor, name, direction})
+        ooze.append(string.format("chaining %s turn %s", actor_name, direction))
+        chain.add(actor.turn, {actor, actor_name, direction})
         return
     end
 
-    local whom = actor.get(name)
+    local whom = actor.get(actor_name)
 
     if (whom) then
         whom.direction = direction
@@ -610,19 +610,19 @@ end
 -- Moves towards another actor, as close as possible as
 -- the walkable floor allows.
 --
--- @tparam string name
+-- @tparam string actor_name
 -- Name of the actor to move.
 --
--- @tparam string target
+-- @tparam string target_name
 -- Name of the actor to move towards.
-function actor.move_to (name, target)
+function actor.move_to (actor_name, target_name)
 
-    local whom = actor.get(target)
+    local whom = actor.get(target_name)
 
     if (whom) then
-        actor.move(name, whom.x, whom.y)
+        actor.move(actor_name, whom.x, whom.y)
     else
-        ooze.append("no actor named " .. target)
+        ooze.append("no actor named " .. target_name)
     end
 
 end
@@ -630,11 +630,11 @@ end
 --- Stop and actor.
 -- Stop an actor from moving along their movement path.
 --
--- @tparam string name
+-- @tparam string actor_name
 -- Name of the actor.
-function actor.stop (name)
+function actor.stop (actor_name)
 
-    local whom = actor.get(name)
+    local whom = actor.get(actor_name)
 
     if whom then
         whom.path = nil
@@ -2628,7 +2628,7 @@ end
 --- Make an actor talk.
 -- Call this multiple times to queue speech.
 --
--- @tparam string name
+-- @tparam string actor_name
 -- Name of the actor.
 --
 -- @tparam string text
@@ -2636,16 +2636,16 @@ end
 --
 -- @tparam[opt=3] int seconds
 -- Seconds to display the words.
-function speech.say (name, text, seconds)
+function speech.say (actor_name, text, seconds)
 
     -- default seconds
     seconds = seconds or 3
 
     -- intercept chaining
     if chain.capturing then
-        ooze.append(string.format("chaining %s say", name))
+        ooze.append(string.format("chaining %s say", actor_name))
         chain.add(speech.say,
-                    {name, text, seconds},
+                    {actor_name, text, seconds},
                     -- expires when actor is not talking
                     function (parameters)
                         return not speech.is_talking(parameters[1])
@@ -2655,13 +2655,13 @@ function speech.say (name, text, seconds)
     end
 
     local newSpeech = {
-        ["actor"] = actor.get(name),
+        ["actor"] = actor.get(actor_name),
         ["text"] = text,
         ["time"] = seconds
         }
 
     if (not newSpeech.actor) then
-        ooze.append("Speech failed: No actor named " .. name)
+        ooze.append("Speech failed: No actor named " .. actor_name)
         return
     end
 
