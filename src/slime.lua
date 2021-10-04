@@ -1646,6 +1646,12 @@ end
 -- @tparam int h
 function hotspot.add (name, x, y, w, h)
 
+    assert(type(name) == "string", "hotspot.add missing name argument")
+    assert(type(x) == "number", "hotspot.add missing x argument")
+    assert(type(y) == "number", "hotspot.add missing y argument")
+    assert(type(w) == "number", "hotspot.add missing w argument")
+    assert(type(h) == "number", "hotspot.add missing h argument")
+
     local point = {
         ["name"] = name,
         ["x"] = x,
@@ -1656,6 +1662,32 @@ function hotspot.add (name, x, y, w, h)
 
     table.insert(hotspot.list, point)
     return point
+
+end
+
+--- TODO Document
+function hotspot.get (a, b)
+
+    if type(a) == "string" then
+
+        for _, item in pairs(hotspot.list) do
+            if item.name == a then
+                return item
+            end
+        end
+
+    elseif type(a) == "number" and type(b) == "number" then
+
+        for _, item in pairs(hotspot.list) do
+            if (a >= item.x and a <= item.x + item.w) and
+                (b >= item.y and b <= item.y + item.h) then
+                return item
+            end
+        end
+
+    else
+        error("hotspot.get called with invalid arguments")
+    end
 
 end
 
