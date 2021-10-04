@@ -411,7 +411,7 @@ function actor.update_movement (data, dt)
             data.action = "idle"
 
             -- notify the moved callback
-            event.actor_moved(data, data.clickedX, data.clickedY)
+            event.actor_moved(data.name, data.clickedX, data.clickedY)
 
         end
 
@@ -1135,15 +1135,16 @@ end
 --- Draw speech override.
 -- Override this function to handle drawing spoken text.
 --
--- @tparam actor_data data
+-- @tparam string actor_name
 -- The actor who is talking.
 --
 -- @tparam string words
 -- The words to print on screen.
-function event.draw_speech (data, words)
+function event.draw_speech (actor_name, words)
 
     local y = 0
     local w = love.graphics.getWidth() / draw_scale
+    local _actor = actor.get(actor_name)
 
     love.graphics.setFont(setting["speech font"])
 
@@ -1151,7 +1152,7 @@ function event.draw_speech (data, words)
     love.graphics.setColor({0, 0, 0, 1})
     love.graphics.printf(words, 1, y + 1, w, "center")
 
-    love.graphics.setColor(data.speechcolor)
+    love.graphics.setColor(_actor.speechcolor)
     love.graphics.printf(words, 0, y, w, "center")
 
 end
@@ -1236,7 +1237,7 @@ end
 
 --- Actor finished moving callback.
 --
--- @tparam actor_data data
+-- @tparam string actor_name
 -- The actor that moved
 --
 -- @tparam int clickedX
@@ -1248,23 +1249,23 @@ end
 --
 -- @tparam int clickedY
 --
-function event.actor_moved (data, clickedX, clickedY)
+function event.actor_moved (actor_name, clickedX, clickedY)
 
 end
 
 --- Actor speaking callback.
 --
--- @tparam actor_data data
+-- @tparam string actor_name
 -- The talking actor
-function event.speech_started (data)
+function event.speech_started (actor_name)
 
 end
 
 --- Actor has stopped talking.
 --
--- @tparam actor_data data
+-- @tparam string actor_name
 -- The actor whom has finished talking.
-function event.speech_ended (data)
+function event.speech_ended (actor_name)
 
 end
 
@@ -2633,19 +2634,13 @@ end
 --
 -- @tparam string text
 -- The words to display.
---
--- @tparam[opt=3] int seconds
--- Seconds to display the words.
-function speech.say (actor_name, text, seconds)
-
-    -- default seconds
-    seconds = seconds or 3
+function speech.say (actor_name, text)
 
     -- intercept chaining
     if chain.capturing then
         ooze.append(string.format("chaining %s say", actor_name))
         chain.add(speech.say,
-                    {actor_name, text, seconds},
+                    {actor_name, text},
                     -- expires when actor is not talking
                     function (parameters)
                         return not speech.is_talking(parameters[1])
@@ -2654,18 +2649,12 @@ function speech.say (actor_name, text, seconds)
         return
     end
 
-    local newSpeech = {
-        ["actor"] = actor.get(actor_name),
-        ["text"] = text,
-        ["time"] = seconds
-        }
-
-    if (not newSpeech.actor) then
+    if (not actor.get(actor_name)) then
         ooze.append("Speech failed: No actor named " .. actor_name)
         return
     end
 
-    table.insert(speech.queue, newSpeech)
+    table.insert(speech.queue, {name=actor_name, text=text})
 
 end
 
@@ -2681,7 +2670,7 @@ function speech.is_talking (actor_name)
 
     if actor_name then
         -- if a specific actor is talking
-        return speech.queue[1] and speech.queue[1].actor.name == actor_name or false
+        return speech.queue[1] and speech.queue[1].name == actor_name or false
     else
         -- if any actor is talking
         return (#speech.queue > 0)
@@ -2694,21 +2683,22 @@ end
 -- Jumps to the next line in the queue.
 function speech.skip ()
 
-    local current = speech.queue[1]
+    local _speech_data = speech.queue[1]
 
-    if (current) then
+    if (_speech_data) then
 
         -- remove the line
         table.remove(speech.queue, 1)
 
         -- restore the idle animation
-        current.actor.action = "idle"
+        local _actor = actor.get(_speech_data.name)
+        _actor.action = "idle"
 
         -- clear the current spoken line
-        speech.currentLine = nil
+        speech.current_text = nil
 
         -- notify speech ended event
-        event.speech_ended(current.actor)
+        event.speech_ended(_speech_data.name)
 
     end
 
@@ -2725,22 +2715,12 @@ function speech.update (dt)
 
     if (#speech.queue > 0) then
 
-        local current = speech.queue[1]
-        current.time = current.time - dt
+        local _speech_data = speech.queue[1]
 
         -- notify speech started event
-        if speech.currentLine ~= current.text then
-            speech.currentLine = current.text
-            event.speech_started(current.actor)
-        end
-
-        if (current.time < 0) then
-            speech.skip()
-        else
-            current.actor.action = "talk"
-            if not setting["walk and talk"] then
-                current.actor.path = nil
-            end
+        if speech.current_text ~= _speech_data.text then
+            speech.current_text = _speech_data.text
+            event.speech_started(_speech_data.name)
         end
 
     end
@@ -2755,10 +2735,10 @@ end
 -- @local
 function speech.draw ()
 
-    local current = speech.queue[1]
+    local _speech_data = speech.queue[1]
 
-    if current then
-        event.draw_speech(current.actor, current.text)
+    if _speech_data then
+        event.draw_speech(_speech_data.name, _speech_data.text)
     end
 
 end
@@ -2937,9 +2917,6 @@ function setting.clear ()
     setting["speech position"] = 0
 
     setting["speech font"] = love.graphics.newFont(10)
-
-    -- actors stop walking when they speak
-    setting["walk and talk"] = false
 
 end
 

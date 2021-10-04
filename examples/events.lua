@@ -270,14 +270,17 @@ end
 
 -- Override the speech event to show a portrait of the actor
 -- who started talking.
-function slime.event.speech_started (actor)
+function slime.event.speech_started (actor_name)
 
     -- show a portrait of the talking actor
-    talkingPortrait = portraits[actor.name]
+    talkingPortrait = portraits[actor_name]
+
+    -- stop walking
+    slime.actor.stop(actor_name)
 
 end
 
-function slime.event.speech_ended (actor)
+function slime.event.speech_ended (actor_name)
 
     -- hide the talking portrait
     talkingPortrait = nil
@@ -286,7 +289,7 @@ end
 
 -- Override the speech drawing event to wrap
 -- the words around our actor portraits.
-function slime.event.draw_speech (actor, words)
+function slime.event.draw_speech (actor_name, words)
 
     local x, y = 0, 0
 
@@ -305,6 +308,7 @@ function slime.event.draw_speech (actor, words)
     love.graphics.rectangle ("fill", 0, 0, 170, 96)
 
     -- print words
+    local actor = slime.actor.get(actor_name)
     love.graphics.setColor(actor.speechcolor)
     love.graphics.printf(words, x, y, w, "center")
 

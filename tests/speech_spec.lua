@@ -22,7 +22,7 @@ describe("speech", function()
     it("draw", function()
         local _message = "hello, world!"
         slime.clear()
-        local _actor = slime.actor.add({name="ego", x=1, y=1})
+        slime.actor.add({name="ego", x=1, y=1})
         slime.speech.say("ego", _message)
 
         -- test default draw
@@ -35,12 +35,12 @@ describe("speech", function()
         slime.speech.draw()
         slime.event.draw_speech = _default_draw_speech
 
-        assert.spy(_event_draw_speech).was_called_with(_actor, _message)
+        assert.spy(_event_draw_speech).was_called_with("ego", _message)
     end)
 
     it("update", function()
         slime.clear()
-        local _actor = slime.actor.add({name="ego", x=1, y=1})
+        slime.actor.add({name="ego", x=1, y=1})
         slime.speech.say("ego", "hello, world!")
 
         local _event_started = spy.new(mock_speech_started)
@@ -60,8 +60,8 @@ describe("speech", function()
         slime.event.speech_started = _default_speech_started
         slime.event.speech_ended = _default_speech_ended
 
-        assert.spy(_event_started).was_called_with(_actor)
-        assert.spy(_event_ended).was_called_with(_actor)
+        assert.spy(_event_started).was_called_with("ego")
+        assert.spy(_event_ended).was_called_with("ego")
     end)
 
 end)
