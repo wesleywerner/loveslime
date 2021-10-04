@@ -1760,7 +1760,7 @@ function layer.image_from_mask (source, mask)
     local maskData = love.image.newImageData(mask)
 
     local sourceW, sourceH = sourceData:getDimensions()
-    layerData = love.image.newImageData( sourceW, sourceH )
+    layerData = love.image.newImageData(sourceW, sourceH)
 
     -- copy the orignal
     layerData:paste(sourceData, 0, 0, 0, 0, sourceW, sourceH)
@@ -2504,7 +2504,7 @@ function path.adjacent_points (width, height, point, openTest)
         local py = tool.clamp(point.y + position.y, 1, height)
         local value = openTest(px, py)
         if value then
-            table.insert( result, { x = px, y = py  } )
+            table.insert(result, { x = px, y = py  })
         end
     end
 
