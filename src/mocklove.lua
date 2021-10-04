@@ -33,6 +33,7 @@
 local mock = {}
 
 mock.graphics = {}
+mock.image = {}
 
 function mock.graphics.draw ()
 
@@ -42,32 +43,107 @@ function mock.graphics.getDimensions ()
     return 800, 600
 end
 
+function mock.graphics.getWidth ()
+    return 800
+end
+
 function mock.graphics.newFont ()
     return true
 end
 
-function mock.graphics.newImage ()
+function mock.graphics.newImage (a)
     local _image = {}
-    _image.getDimensions = function()
+    if type(a) == "table" then
+        _image.pixeldata = a.pixeldata
+    end
+    _image.getDimensions = function ()
         return 800, 600
     end
     return _image
 end
 
-function mock.graphics.pop()
+function mock.graphics.pop ()
 
 end
 
-function mock.graphics.push()
+function mock.graphics.printf ()
 
 end
 
-function mock.graphics.scale()
+function mock.graphics.push ()
 
 end
 
-function mock.graphics.setColor()
+function mock.graphics.scale ()
 
+end
+
+function mock.graphics.setColor ()
+
+end
+
+function mock.graphics.setFont ()
+
+end
+
+-- Mocks an image object with instance functions.
+-- Provides a mechanism to override the pixel data by setting
+-- love.mock_pixels
+function mock.image.newImageData (a, b)
+    local _image = {width=640, height=480}
+    if type(a) == "string" then
+        _image.filename = a
+    end
+    if type(a) == "number" then
+        _image.w, _image.h = a, b
+        _image.filename = tostring(math.random())
+    end
+    if _image.filename == "small.png" then
+        _image.w, _image.h = 10, 10
+    end
+    if mock.mock_pixels and mock.mock_pixels[_image.filename] then
+        _image.pixeldata = mock.mock_pixels[_image.filename]
+        _image.w = #_image.pixeldata[1]
+        _image.h = #_image.pixeldata
+    end
+    _image.getDimensions = function (self)
+        return self:getWidth(), self:getHeight()
+    end
+    _image.getWidth = function (self)
+        return self.w
+    end
+    _image.getHeight = function (self)
+        return self.h
+    end
+    _image.getPixel = function(self, x, y)
+        if self.pixeldata then
+            local _v = self.pixeldata[y][x]
+            return _v, _v, _v, _v
+        else
+            return 1, 1, 1, 1
+        end
+    end
+    _image.mapPixel = function (self, func)
+        for _y=1, self.h do
+            for _x=1, self.w do
+                local _r, _g, _b, _a = self:getPixel(_x, _y)
+                _image.pixeldata[_y][_x] = func(_x, _y, _r, _g, _b, _a)
+            end
+        end
+    end
+    _image.paste = function (self, source, x, y, w, h, sw, sh)
+        _image.pixeldata = {}
+        for _y=1, self.h do
+            table.insert(_image.pixeldata, {})
+        end
+        for _y=1, sh do
+            for _x=1, sw do
+                local _r, _g, _b, _a = source:getPixel(_x, _y)
+                _image.pixeldata[_y][_x] = _r+_g+_b+_a
+            end
+        end
+    end
+    return _image
 end
 
 return mock
