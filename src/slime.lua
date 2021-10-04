@@ -2683,20 +2683,16 @@ end
 
 --- Test if someone is talking.
 --
--- @tparam[opt] string actor
+-- @tparam[opt] string actor_name
 -- The actor to test against.
 -- If not given, any talking actor is tested.
 --
 -- @return true if any actor, or the specified actor is talking.
-function speech.is_talking (actor)
+function speech.is_talking (actor_name)
 
-    if type(actor) == "string" then
-        actor = actor.get(actor)
-    end
-
-    if actor then
+    if actor_name then
         -- if a specific actor is talking
-        return speech.queue[1] and speech.queue[1].actor.name == actor
+        return speech.queue[1] and speech.queue[1].actor.name == actor_name or false
     else
         -- if any actor is talking
         return (#speech.queue > 0)
