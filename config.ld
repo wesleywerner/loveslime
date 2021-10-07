@@ -1,5 +1,6 @@
 file = "src/slime.lua"
-title = "SLIME API"
+project = "SLIME"
+title = "slime api"
 description = "point-and-click adventure game library."
 all = true
 sort = true
@@ -8,3 +9,4 @@ examples = { "examples", exclude = {} }
 readme = "README.md"
 format = "markdown"
 style = true
+no_lua_ref = true

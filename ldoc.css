@@ -300,3 +300,155 @@ pre .user-keyword { color: #800080; }
 pre .prompt { color: #558817; }
 pre .url { color: #272fc2; text-decoration: underline; }
 
+/*
+ * Provide custom colors for SLIME
+ */
+/*
+    $base03:    #002b36;
+    $base02:    #073642;
+    $base01:    #586e75;
+    $base00:    #657b83;
+    $base0:     #839496;
+    $base1:     #93a1a1;
+    $base2:     #eee8d5;
+    $base3:     #fdf6e3;
+    $yellow:    #b58900;
+    $orange:    #cb4b16;
+    $red:       #dc322f;
+    $magenta:   #d33682;
+    $violet:    #6c71c4;
+    $blue:      #268bd2;
+    $cyan:      #2aa198;
+    $green:     #859900;
+*/
+@media (prefers-color-scheme: light) {
+    body {
+        background-color: #ffffff;
+        color: #586e75;
+    }
+    a:link {
+        color: #859900;
+    }
+    a:visited {
+        color: #859900;
+    }
+    a:target + * {
+        color: #fdf6e3;
+        background-color: #859900;
+        padding: 3px;
+    }
+    hr {
+        border-top: 1px dashed #2aa198;
+    }
+    legend {
+        color: #859900;
+    }
+    pre {
+        background-color: light-gray;
+        border: 1px solid #859900;
+    }
+    table.function_list td.name {
+        background-color: inherit;
+    }
+    table.function_list {
+        border-color: #586e75;
+    }
+    table.function_list td {
+        border-color: #586e75;
+    }
+    dl.table dt, dl.function dt {
+        border-top: 2px dashed #657b83;
+    }
+    #container {
+        background-color: #fdf6e3;
+    }
+    #main {
+        background-color: #eee8d5;
+        border-left: 2px solid #586e75;
+    }
+    #navigation {
+        background-color: #eee8d5;
+    }
+    #navigation h2 {
+        background-color:#fdf6e3;
+        color:#859900;
+        border-top:1px solid #586e75;
+        border-bottom:1px solid #586e75;
+    }
+    #content {
+        border-left: 2px solid #586e75;
+        border-right: 2px solid #586e75;
+        background-color: #eee8d5;
+    }
+    #about {
+        border-top: 2px solid #657b83;
+        background-color: #eee8d5;
+    }
+}
+@media (prefers-color-scheme: dark) {
+    html {
+        scrollbar-color: #859900 #002b36;
+    }
+    body {
+        background-color: #000000;
+        color: #657b83;
+    }
+    a:link {
+        color: #859900;
+    }
+    a:visited {
+        color: #859900;
+    }
+    a:target + * {
+        color: #002b36;
+        background-color: #859900;
+        padding: 3px;
+    }
+    hr {
+        border-top: 1px dashed #2aa198;
+    }
+    legend {
+        color: #859900;
+    }
+    pre {
+        background-color: #000000;
+        border: 1px solid #859900;
+    }
+    table.function_list td.name {
+        background-color: inherit;
+    }
+    table.function_list {
+        border-color: #586e75;
+    }
+    table.function_list td {
+        border-color: #586e75;
+    }
+    dl.table dt, dl.function dt {
+        border-top: 2px dashed #657b83;
+    }
+    #container {
+        background-color: #f0f0f0;
+    }
+    #main {
+        background-color: #073642;
+        border-left: 2px solid #586e75;
+    }
+    #navigation {
+        background-color: #073642;
+    }
+    #navigation h2 {
+        background-color:#002b36;
+        color:#859900;
+        border-top:1px solid #586e75;
+        border-bottom:1px solid #586e75;
+    }
+    #content {
+        border-left: 2px solid #586e75;
+        border-right: 2px solid #586e75;
+        background-color: #073642;
+    }
+    #about {
+        border-top: 2px solid #657b83;
+        background-color: #002b36;
+    }
+}
