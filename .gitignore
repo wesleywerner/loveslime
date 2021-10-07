@@ -15,5 +15,6 @@ tutorial/slime
 
 # user files
 .scripts
+.tmp
 TODO
 
