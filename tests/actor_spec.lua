@@ -19,7 +19,7 @@ describe("actor", function()
         slime.actor.clear()
         slime.actor.add ({
             name = "P1",
-            image = love.graphics.newImage("mock.png"), -- with
+            image = love.graphics.newImage("small.png"),
             feet = "bottom", x = 80, y = 40
         })
         slime.actor.add ({

@@ -56,8 +56,15 @@ function mock.graphics.newImage (a)
     if type(a) == "table" then
         _image.pixeldata = a.pixeldata
     end
+    if type(a) == "string" then
+        _image.filename = a
+    end
     _image.getDimensions = function ()
-        return 800, 600
+        if _image.filename == "small.png" then
+            return 10, 40
+        else
+            return 800, 600
+        end
     end
     return _image
 end

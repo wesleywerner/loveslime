@@ -6,8 +6,6 @@ describe("layer", function()
 
     it("add", function()
         -- A pixel map defining both background and layer.
-        -- The goal is non-walkable so slime should pick the point just
-        -- below it (which is walkable)
         _G.love.mock_pixels = {}
         _G.love.mock_pixels["background.png"] = {
                                 {1,1,1,1,1},
