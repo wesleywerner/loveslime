@@ -2934,14 +2934,6 @@ end
 -- @local
 function setting.clear ()
 
-    -- The y-position to display status text
-    setting["status position"] = 70
-
-    setting["status font"] = love.graphics.newFont(12)
-
-    -- The y-position to display speech text
-    setting["speech position"] = 0
-
     setting["speech font"] = love.graphics.newFont(10)
 
 end
