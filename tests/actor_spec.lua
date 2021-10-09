@@ -6,7 +6,7 @@ describe("actor", function()
 
     -- mock callback returns sprite data during update call.
     -- dt 1 gives the sprite a quad value.
-    function mock_request_sprite(dt)
+    function mock_request_sprite(actor_name, action, direction, dt)
         return {
             ["image"] = true,
             x = 0,

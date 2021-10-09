@@ -270,7 +270,7 @@ function actor.update (dt)
             end
 
             -- request the next sprite frame
-            whom.sprite = event.request_sprite(dt, whom)
+            whom.sprite = event.request_sprite(whom.name, whom.action, whom.direction, dt)
 
         end
     end
@@ -1167,40 +1167,7 @@ end
 -- properties can be accessed to determine the sprite to return.
 --
 -- @return @{sprite_data}
-function event.request_sprite (dt, data)
-
-    -- This is a basic sprite request implementation that does not
-    -- animate, it only returns the actor's still image.
-
-    -- sprite draw offset
-    local x, y = 0, 0
-
-    -- sprite orientation
-    local r = 0
-
-    -- sprite scaling
-    local sx, sy = 1, 1
-
-    -- sprite draw origin
-    local ox, oy = 0, 0
-
-    -- flip when going east
-    if data.direction == "east" then
-        sx = -1
-        ox = data.width
-    end
-
-    return {
-        ["image"] = data.image,
-        ["quad"] = nil,
-        ["x"] = x,
-        ["y"] = y,
-        ["r"] = r,
-        ["sx"] = sx,
-        ["sy"] = sy,
-        ["ox"] = ox,
-        ["oy"] = oy
-    }
+function event.request_sprite (actor_name, action, direction, dt)
 
 end
 
