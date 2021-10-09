@@ -38,7 +38,7 @@ describe("layer", function()
         -- layers and actors share a table for quick sorting
         local _data = slime.actor.list[1]
         assert.is_not_nil(_data)
-        assert.is_true(_data.islayer)
+        assert.is_true(_data._is_layer)
         assert.are.same(_expected, _data.image.pixeldata)
     end)
 

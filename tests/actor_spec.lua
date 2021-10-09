@@ -164,8 +164,8 @@ describe("actor", function()
         slime.actor.draw()
         slime.actor.update(1) -- and with
         slime.actor.draw()
-        assert.are.equals("number", type(_data.drawX))
-        assert.are.equals("number", type(_data.drawY))
+        assert.are.equals("number", type(_data._drawx))
+        assert.are.equals("number", type(_data._drawy))
     end)
 
     it("measure distance between", function()

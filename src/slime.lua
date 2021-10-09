@@ -140,7 +140,10 @@ local tool = { }
 -- @tfield string direction
 -- The direction the actor is facing, one of "north", "south", "east", "west".
 --
-
+-- @tfield[opt] number z_order
+-- Overrides the draw order which is normally handled against the actor's y-position.
+-- Positive values (greater than your game's pixel height) will draw it top-most
+-- and negative values draw it bottom-most.
 
 --- Clear actors.
 -- This gets called by @{slime.clear}
@@ -164,10 +167,9 @@ function actor.add (data)
     assert(data.width, "Actor width must be given.")
     assert(data.height, "Actor height must be given.")
 
-    data.isactor = true
+    data._is_actor = true
     data.feet = data.feet or "bottom"
     data.direction = "south"
-    data.speechcolor = data.speechcolor or {1, 1, 1}
     data.action = "idle"
 
     -- map the feet position from string to a table
@@ -189,7 +191,7 @@ function actor.add (data)
     -- speed is assumed to be the pixels per second to move.
     -- we convert this to time to wait before updating the path.
     if type(data.speed) == "number" then
-        data.movedelay = 1 / data.speed
+        data._move_delay = 1 / data.speed
     end
 
     table.insert(actor.list, data)
@@ -242,21 +244,21 @@ end
 function actor.update (dt)
 
     -- remember if any actors moved during this update
-    local actorsMoved = false
+    local _actors_moved = false
 
     for _, whom in ipairs(actor.list) do
-        if whom.isactor then
+        if whom._is_actor then
 
             -- update the movement path
             if not whom.movement_paused and actor.update_movement(whom, dt) then
-                actorsMoved = true
+                _actors_moved = true
             end
 
             -- calculate the sprite draw position
             -- relative to the actor's feet
             if whom.x and whom.feet then
-                whom.drawX = whom.x - whom.feet.x
-                whom.drawY = whom.y - whom.feet.y
+                whom._drawx = whom.x - whom.feet.x
+                whom._drawy = whom.y - whom.feet.y
             end
 
             -- request the next sprite frame
@@ -266,7 +268,7 @@ function actor.update (dt)
     end
 
     -- sort the draw order of actor if any moved
-    if actorsMoved then
+    if _actors_moved then
         actor.sort()
     end
 
@@ -283,34 +285,21 @@ function actor.sort ( )
 
     table.sort(actor.list, function (a, b)
 
-            --~ local m = a.isactor and a.y or a.baseline
-            --~ local n = b.isactor and b.y or b.baseline
-            --~ if a.isactor and a.nozbuffer then m = 10000 end
-            --~ if b.isactor and b.nozbuffer then n = 10001 end
-            --~ return m < n
-
-            -- layers only have a baseline.
-            -- actors can optionally have a baseline.
-
             local aY = 0
             local bY = 0
 
-            if a.islayer then
+            if a._is_layer then
                 aY = a.baseline
-            elseif a.onTop then
-                aY = 10000
-            elseif a.onBottom then
-                aY = -10000
+            elseif a.z_order then
+                aY = a.z_order
             else
                 aY = a.y + (a.baseline or 0)
             end
 
-            if b.islayer then
+            if b._is_layer then
                 bY = b.baseline
-            elseif b.onTop then
-                bY = 10001
-            elseif b.onBottom then
-                bY = -10001
+            elseif b.z_order then
+                bY = b.z_order
             else
                 bY = b.y + (b.baseline or 0)
             end
@@ -337,28 +326,22 @@ function actor.update_movement (data, dt)
 
         data.action = "walk"
 
-        -- Check if the actor's speed is set to delay movement.
-        -- If no speed is set, we move on every update.
+        -- delay movement as set by actor's speed property
+        if (data._move_delay) then
 
-        -- TODO change actor movedelay to pixel "speed".
-        --      (can we specify this as pixels per second?)
-        --      (one step on the path will be ~ 1 pixel)
-        if (data.movedelay) then
-
-            -- start a new move delay counter
-            if (not data.movedelaydelta) then
-                data.movedelaydelta = data.movedelay
+            if (not data._move_delta) then
+                data._move_delta = data._move_delay
             end
 
-            data.movedelaydelta = data.movedelaydelta - dt
+            data._move_delta = data._move_delta - dt
 
-            -- the delay has not yet passed
-            if (data.movedelaydelta > 0) then
+            if (data._move_delta > 0) then
+                -- wait until next update
                 return
             end
 
-            -- the delay has passed. Reset it and continue.
-            data.movedelaydelta = data.movedelay
+            -- movement is allowed, reset delta and continue
+            data._move_delta = data._move_delay
 
         end
 
@@ -382,8 +365,6 @@ function actor.update_movement (data, dt)
             ooze.append(data.name .. " moved complete")
             data.path = nil
             data.action = "idle"
-
-            -- notify the moved callback
             event.actor_moved(data.name, data.clickedX, data.clickedY)
 
         end
@@ -441,8 +422,8 @@ function actor.draw ()
                 love.graphics.draw(
                     whom.sprite.image,
                     whom.sprite.quad,
-                    whom.drawX + whom.sprite.x,
-                    whom.drawY + whom.sprite.y,
+                    whom._drawx + whom.sprite.x,
+                    whom._drawy + whom.sprite.y,
                     whom.sprite.r,
                     whom.sprite.sx,
                     whom.sprite.sy,
@@ -454,8 +435,8 @@ function actor.draw ()
                 -- drawable without a quad
                 love.graphics.draw(
                     whom.sprite.image,
-                    whom.drawX + whom.sprite.x,
-                    whom.drawY + whom.sprite.y,
+                    whom._drawx + whom.sprite.x,
+                    whom._drawy + whom.sprite.y,
                     whom.sprite.r,
                     whom.sprite.sx,
                     whom.sprite.sy,
@@ -464,7 +445,7 @@ function actor.draw ()
 
             end
 
-        elseif whom.islayer then
+        elseif whom._is_layer then
             love.graphics.draw(whom.image, 0, 0)
         end
     end
@@ -1122,7 +1103,7 @@ function event.draw_speech (actor_name, words)
     love.graphics.setColor({0, 0, 0, 1})
     love.graphics.printf(words, 1, y + 1, w, "center")
 
-    love.graphics.setColor(_actor.speechcolor)
+    love.graphics.setColor({1, 1, 0})
     love.graphics.printf(words, 0, y, w, "center")
 
 end
@@ -1657,7 +1638,7 @@ function layer.add (background, mask, baseline)
     local newLayer = {
         ["image"] = layer.image_from_mask(background, mask),
         ["baseline"] = baseline,
-        islayer = true
+        _is_layer = true
         }
 
     -- layers are merged with actors so that we can perform
@@ -1952,12 +1933,12 @@ function ooze.outliner.draw (scale)
 
     -- outline actors
     for _, actor in ipairs(actor.list) do
-        if actor.isactor then
+        if actor._is_actor then
             love.graphics.setColor(ooze.outliner.actorColor)
             -- TODO calculate draw position in actor:update
-            love.graphics.rectangle("line", actor.drawX, actor.drawY, actor.width, actor.height)
+            love.graphics.rectangle("line", actor._drawx, actor._drawy, actor.width, actor.height)
             love.graphics.circle("line", actor.x, actor.y, 1, 6)
-        elseif actor.islayer then
+        elseif actor._is_layer then
             -- draw baselines for layers
             local layerColorIndex = math.max(1, layerCounter % (#ooze.outliner.layerColors + 1))
             love.graphics.setColor(ooze.outliner.layerColors[layerColorIndex])
@@ -2789,7 +2770,7 @@ function slime.get_objects (x, y)
     local objects = { }
 
     for _, actor in pairs(actor.list) do
-        if actor.isactor and
+        if actor._is_actor and
             (x >= actor.x - actor.feet.x
             and x <= actor.x - actor.feet.x + actor.width)
         and (y >= actor.y - actor.feet.y
