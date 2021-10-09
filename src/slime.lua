@@ -520,14 +520,15 @@ function actor.move (actor_name, x, y)
     x, y = tool.scale_point(x, y)
 
     -- intercept chaining
-    if chain.capturing then
+    if chain.capture then
         ooze.append(string.format("chaining %s move", actor_name))
-        chain.add(actor.move,
-            {actor, actor_name, x, y},
+        chain.add(
+            actor.move,
+            {actor_name, x, y},
             -- expires when actor path is empty
-            function (parameters)
-                local whom = actor.get(parameters[2])
-                if not whom or not whom.path then
+            function (_name)
+                local _actor = actor.get(_name)
+                if not _actor or not _actor.path then
                     return true
                 end
             end
@@ -594,9 +595,9 @@ end
 function actor.turn (actor_name, direction)
 
     -- intercept chaining
-    if chain.capturing then
+    if chain.capture then
         ooze.append(string.format("chaining %s turn %s", actor_name, direction))
-        chain.add(actor.turn, {actor, actor_name, direction})
+        chain.add(actor.turn, {actor_name, direction})
         return
     end
 
@@ -922,21 +923,16 @@ end
 -- This gets called by @{slime.clear}
 --
 -- @local
-function chain.clear ()
+function chain.clear (name)
 
-    -- Allow calling this table like it was a function.
-    -- We do this for brevity sake.
-    setmetatable(chain, {
-        __call = function (...)
-            return chain.capture(...)
-        end
-    })
+    if name then
+        chain.list[name] = nil
+    else
+        -- clear all
+        chain.list = { }
+    end
 
-    chain.list = { }
-
-    -- when capturing: certain actor functions will queue themselves
-    -- to the chain instead of actioning instantly.
-    chain.capturing = nil
+    chain.capture = nil
 
 end
 
@@ -952,31 +948,29 @@ end
 -- User provided function to add to the chain.
 --
 -- @return The slime instance
---
--- @function chain
-function chain.capture (name, userFunction)
+function chain.begin (name)
 
     -- use a default chain name if none is provided
     name = name or "default"
 
     -- fetch the chain from storage
-    chain.capturing = chain.list[name]
+    local _current = chain.list[name]
 
     -- create a new chain instead
-    if not chain.capturing then
-        chain.capturing = { name = name, actions = { } }
-        chain.list[name] = chain.capturing
+    if not _current then
+        _current = {name=name, actions={}}
+        chain.list[name] = _current
         ooze.append(string.format("created chain %q", name))
     end
 
-    -- queue custom function
-    if type(userFunction) == "function" then
-        chain.add(userFunction, { })
-        ooze.append(string.format("user function chained"))
-    end
+    chain.capture = _current
 
-    -- return the slime instance to allow further action chaining
-    return slime
+end
+
+--- Document this.
+function chain.done ()
+
+    chain.capture = nil
 
 end
 
@@ -996,6 +990,13 @@ end
 -- @local
 function chain.add (func, parameters, expired)
 
+    if type(expired) ~= "function" then
+        expired = function()
+            -- expires instantly
+            return true
+        end
+    end
+
     local command = {
         -- the function to be called
         func = func,
@@ -1008,10 +1009,10 @@ function chain.add (func, parameters, expired)
     }
 
     -- queue this command in the capturing chain
-    table.insert(chain.capturing.actions, command)
+    table.insert(chain.capture.actions, command)
 
     -- release this capture
-    chain.capturing = nil
+    chain.capture = nil
 
 end
 
@@ -1021,7 +1022,7 @@ end
 -- Delta time since the last update
 --
 -- @local
-function chain.update (dt)
+function chain.update ()
 
     -- for each chain
     for key, chain in pairs(chain.list) do
@@ -1038,11 +1039,8 @@ function chain.update (dt)
                 command.func(unpack(command.parameters))
             end
 
-            -- test if the action expired
-            local skipTest = type(command.expired) ~= "function"
-
             -- remove expired actions from this chain
-            if skipTest or command.expired(command.parameters, dt) then
+            if command.expired(unpack(command.parameters)) then
                 --ooze.append (string.format("chain action expired"))
                 table.remove(chain.actions, 1)
             end
@@ -1059,23 +1057,15 @@ end
 -- Seconds to wait before the next action is run.
 function chain.wait (seconds)
 
-    if chain.capturing then
-
+    if chain.capture then
         --ooze.append (string.format("waiting %ds", seconds))
-
-        chain.add(chain.wait,
-
-                    -- pack parameter twice, the second being
-                    -- our countdown
-                    {seconds, seconds},
-
-                    -- expires when the countdown reaches zero
-                    function (p, dt)
-                        p[2] = p[2] - dt
-                        return p[2] < 0
-                    end
-                    )
-
+        chain.add(
+            function() end,
+            {seconds},
+            function (timeout)
+                timeout = timeout - last_dt
+                return timeout < 0
+            end)
     end
 
 end
@@ -1424,7 +1414,7 @@ end
 function floor.set (filename)
 
     -- intercept chaining
-    if chain.capturing then
+    if chain.capture then
         chain.add(floor.set, {filename})
         return
     end
@@ -2657,13 +2647,13 @@ end
 function speech.say (actor_name, text)
 
     -- intercept chaining
-    if chain.capturing then
+    if chain.capture then
         ooze.append(string.format("chaining %s say", actor_name))
         chain.add(speech.say,
                     {actor_name, text},
                     -- expires when actor is not talking
-                    function (parameters)
-                        return not speech.is_talking(parameters[1])
+                    function (_name)
+                        return not speech.is_talking(_name)
                     end
                     )
         return
@@ -2816,10 +2806,10 @@ end
 function slime.update (dt)
 
     last_dt = dt
-    chain.update(dt)
     background.update(dt)
     actor.update(dt)
     speech.update(dt)
+    chain.update(dt)
 
 end
 
