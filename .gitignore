@@ -10,7 +10,7 @@ release/
 doc/
 
 # slime lib in examples
-examples/slime.lua
+examples/*/slime.lua
 tutorial/slime
 
 # user files
