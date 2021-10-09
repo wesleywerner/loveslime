@@ -21,18 +21,16 @@ describe("actor", function()
     it("add", function()
         slime.actor.clear()
         slime.actor.add ({
-            name = "P1",
-            image = love.graphics.newImage("small.png"),
-            feet = "bottom", x = 80, y = 40
+            name="P1", feet="bottom", x=80, y=40, width=12, height=20
         })
         slime.actor.add ({
-            name = "P2", image = nil, feet = "top", x = 200, y = 100
+            name="P2", feet="top", x=200, y=100, width=12, height=20
         })
         local _p3 = slime.actor.add ({
-            name = "P3", image = nil, feet = "left", x = 80, y = 40
+            name="P3", feet="left", x=80, y=40, width=12, height=20
         })
         slime.actor.add ({
-            name = "P4", image = nil, feet = "right", x = 80, y = 40
+            name="P4", feet="right", x=80, y=40, width=12, height=20
         })
         local _data = slime.actor.get("P3")
         assert.are.equals(_p3, _data)
@@ -63,10 +61,7 @@ describe("actor", function()
         _G.love.mock_pixels = nil
 
         local _data = slime.actor.add({
-            name="ego",
-            x=2,
-            y=2,
-            movedelay=1
+            name="ego", x=2, y=2, width=12, height=20, movedelay=1
         })
 
         slime.actor.move("ego", 2, 4)
@@ -118,15 +113,10 @@ describe("actor", function()
         _G.love.mock_pixels = nil
 
         local _ego = slime.actor.add({
-            name="ego",
-            x=2,
-            y=2,
-            movedelay=1
+            name="ego", x=2, y=2, width=12, height=20, movedelay=1
         })
         local _apple = slime.actor.add({
-            name="apple",
-            x=2,
-            y=5
+            name="apple", x=2, y=5, width=6, height=6
         })
 
         slime.actor.move_to("ego", "apple")
@@ -156,7 +146,7 @@ describe("actor", function()
     it("turn", function()
         slime.actor.clear()
         local _data = slime.actor.add ({
-            name = "P1", feet = "bottom", x = 80, y = 40
+            name="P1", feet="bottom", x=80, y=40, width=12, height=20
         })
         slime.actor.turn("P1", "west")
         assert.are.equals("west", _data.direction)
@@ -166,9 +156,7 @@ describe("actor", function()
     it("update / draw", function()
         slime.actor.clear()
         local _data = slime.actor.add ({
-            name = "P1",
-            image = love.graphics.newImage("mock.png"),
-            feet = "bottom", x = 80, y = 40, speed = 10
+            name = "P1", feet = "bottom", x=80, y=40, speed=10, width=12, height=20
         })
         slime.actor.turn("P1", "east")
         slime.event.request_sprite = mock_request_sprite
@@ -183,10 +171,10 @@ describe("actor", function()
     it("measure distance between", function()
         slime.actor.clear()
         slime.actor.add ({
-            name = "P1", feet = "bottom", x = 80, y = 40
+            name="P1", feet="bottom", x=80, y=40, width=12, height=20
         })
         slime.actor.add ({
-            name = "P2", feet = "bottom", x = 200, y = 100
+            name="P2", feet="bottom", x=200, y=100, width=12, height=20
         })
         local _dist = math.floor(slime.actor.measure("P1", "P2"))
         assert.are.equals(134, _dist)
@@ -195,7 +183,7 @@ describe("actor", function()
     it("remove", function()
         slime.actor.clear()
         slime.actor.add ({
-            name = "P1", feet = "bottom", x = 80, y = 40
+            name="P1", feet="bottom", x=80, y=40, width=12, height=20
         })
         local _return = slime.actor.remove("P1")
         local _data = slime.actor.get("P1")

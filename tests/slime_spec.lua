@@ -28,9 +28,7 @@ describe("slime", function()
 
         -- adds an actor, it should be returned by get_objects
         local _actor = slime.actor.add ({
-            name = "ego",
-            image = love.graphics.newImage("small.png"),
-            feet = "bottom", x = 80, y = 40
+            name="ego", feet="bottom", x=80, y=40, width=10, height=40
         })
 
         -- adds a hotspot, it should be returned by get_objects
@@ -54,9 +52,7 @@ describe("slime", function()
         -- use a custom cursor name
         slime.cursor.set({name="look", image=true})
         local _actor = slime.actor.add ({
-            name = "ego",
-            image = love.graphics.newImage("small.png"),
-            feet = "bottom", x = 80, y = 40
+            name="ego", feet="bottom", x=80, y=40, width=10, height=40
         })
         local _event = spy.new(function()end)
         local _default = slime.event.interact
@@ -84,9 +80,7 @@ describe("slime", function()
         slime.clear()
         slime.background.add("mock.png")
         slime.actor.add ({
-            name = "ego",
-            image = love.graphics.newImage("small.png"),
-            feet = "bottom", x = 80, y = 40
+            name="ego", feet="bottom", x=80, y=40, width=10, height=40
         })
         slime.update(0.1)
         slime.draw()

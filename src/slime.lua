@@ -131,9 +131,6 @@ local tool = { }
 -- @tfield[opt="bottom"] string feet
 -- Position of the actor's feet relative to the sprite.
 --
--- @tfield love.Image image
--- A still image drawn for this actor.
---
 -- @tfield int speed
 -- Movement speed of actor measured in pixels per second.
 --
@@ -161,13 +158,6 @@ end
 function actor.add (data)
 
     assert(data, "Actor definition must be given.")
-
-    -- get the size if a still image is set
-    if data.image then
-        data.width, data.height = data.image:getDimensions ()
-    else
-        data.width, data.height = data.width or 10, data.height or 10
-    end
 
     assert(data.x, "Actor x position must be given.")
     assert(data.y, "Actor y position must be given.")

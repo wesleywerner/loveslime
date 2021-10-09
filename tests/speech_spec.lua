@@ -10,7 +10,7 @@ describe("speech", function()
 
     it("add", function()
         slime.clear()
-        slime.actor.add({name="ego", x=1, y=1})
+        slime.actor.add({name="ego", x=1, y=1, width=10, height=40})
         assert.is_false(slime.speech.is_talking())
         assert.is_false(slime.speech.is_talking("ego"))
 
@@ -22,7 +22,7 @@ describe("speech", function()
     it("draw", function()
         local _message = "hello, world!"
         slime.clear()
-        slime.actor.add({name="ego", x=1, y=1})
+        slime.actor.add({name="ego", x=1, y=1, width=10, height=40})
         slime.speech.say("ego", _message)
 
         -- test default draw
@@ -40,7 +40,7 @@ describe("speech", function()
 
     it("update", function()
         slime.clear()
-        slime.actor.add({name="ego", x=1, y=1})
+        slime.actor.add({name="ego", x=1, y=1, width=10, height=40})
         slime.speech.say("ego", "hello, world!")
 
         local _event_started = spy.new(mock_speech_started)

@@ -29,8 +29,12 @@ describe("chain", function()
 
         -- set up actors
         slime.clear()
-        local _ego = slime.actor.add({name="ego", feet="bottom", x=10, y=10})
-        local _lamp = slime.actor.add({name="lamp", feet="bottom", x=14, y=14})
+        local _ego = slime.actor.add({
+            name="ego", feet="bottom", x=10, y=10, width=10, height=40
+        })
+        local _lamp = slime.actor.add({
+            name="lamp", feet="bottom", x=14, y=14, width=10, height=40
+        })
 
         -- test chain has begun
         slime.chain.clear()
@@ -94,7 +98,9 @@ describe("chain", function()
 
     it("actor turn", function()
         slime.clear()
-        local _ego = slime.actor.add({name="ego", feet="bottom", x=10, y=10})
+        local _ego = slime.actor.add({
+            name="ego", feet="bottom", x=10, y=10, width=10, height=40
+        })
         slime.chain.begin()
         slime.actor.turn("ego", "west")
         assert.are.equals("south", _ego.direction)
@@ -116,7 +122,9 @@ describe("chain", function()
         local _default = slime.event.speech_started
         slime.event.speech_started = _event
         slime.clear()
-        slime.actor.add({name="ego", feet="bottom", x=10, y=10})
+        slime.actor.add({
+            name="ego", feet="bottom", x=10, y=10, width=10, height=40
+        })
 
         -- chain speech
         slime.chain.begin()
