@@ -175,7 +175,6 @@ function actor.add (data)
     assert(data.height, "Actor height must be given.")
 
     data.isactor = true
-    data["direction recalc delay"] = 0
     data.feet = data.feet or "bottom"
     data.direction = "south"
     data.speechcolor = data.speechcolor or {1, 1, 1}
@@ -385,22 +384,14 @@ function actor.update_movement (data, dt)
 
         -- load the next point in the path
         local point = table.remove(data.path, 1)
+        local next_point = data.path[1]
 
         if (point) then
 
-            -- update actor position
             data.x, data.y = point.x, point.y
 
-            -- Test if we should calculate actor direction
-            data["direction recalc delay"] = data["direction recalc delay"] - 1
-
-            -- TODO: delete this direction delay. works better without it.
-            do --(actor["direction recalc delay"] <= 0) then
-                data["direction recalc delay"] = 5
-                data.direction = tool.calculate_direction(data.previousX, data.previousY, data.x, data.y)
-                -- store previous position, to calculate the
-                -- facing direction on the next iteration.
-                data.previousX, data.previousY = data.x, data.y
+            if next_point then
+                data.direction = tool.calculate_direction(data.x, data.y, next_point.x, next_point.y)
             end
 
         end
@@ -417,7 +408,6 @@ function actor.update_movement (data, dt)
 
         end
 
-        -- return movement signal
         return true
 
     end
@@ -566,17 +556,11 @@ function actor.move (actor_name, x, y)
         route = floor.bresenham(start, goal)
     end
 
-    -- we have a path
     if route then
         whom.clickedX = x
         whom.clickedY = y
         whom.path = route
-        -- Default to walking animation
         whom.action = "walk"
-        -- Calculate actor direction immediately
-        whom.previousX, whom.previousY = whom.x, whom.y
-        whom.direction = tool.calculate_direction(whom.x, whom.y, x, y)
-        -- Output debug
         ooze.append("move " .. actor_name .. " to " .. x .. " : " .. y)
     else
         ooze.append("no actor path found")
