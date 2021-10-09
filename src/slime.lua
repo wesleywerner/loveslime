@@ -269,16 +269,6 @@ function actor.update (dt)
                 whom.drawY = whom.y - whom.feet.y
             end
 
-            -- set the animation key.
-            -- walking or talking includes the facing direction.
-            if whom.action == "talk"
-            or whom.action == "walk"
-            or whom.action == "idle" then
-                whom.key = string.format("%s %s", whom.action, whom.direction)
-            else
-                whom.key = whom.action
-            end
-
             -- request the next sprite frame
             whom.sprite = event.request_sprite(dt, whom)
 
