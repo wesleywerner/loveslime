@@ -61,7 +61,7 @@ describe("actor", function()
         _G.love.mock_pixels = nil
 
         local _data = slime.actor.add({
-            name="ego", x=2, y=2, width=12, height=20, movedelay=1
+            name="ego", x=2, y=2, width=12, height=20, speed=1
         })
 
         slime.actor.move("ego", 2, 4)
@@ -113,7 +113,7 @@ describe("actor", function()
         _G.love.mock_pixels = nil
 
         local _ego = slime.actor.add({
-            name="ego", x=2, y=2, width=12, height=20, movedelay=1
+            name="ego", x=2, y=2, width=12, height=20, speed=1
         })
         local _apple = slime.actor.add({
             name="apple", x=2, y=5, width=6, height=6
@@ -190,6 +190,38 @@ describe("actor", function()
         assert.are.equals(true, _return)
         assert.is_nil(_data)
         assert.are.equals(0, #slime.actor.list)
+    end)
+
+    it("move pause, resume and stop", function()
+        slime.clear()
+        local _ego = slime.actor.add({
+            name="ego", x=1, y=1, width=12, height=20
+        })
+        slime.actor.move("ego", 40, 1)
+
+        -- starting path size
+        assert.are.equals(40, #_ego.path)
+
+        -- positive test: moves one point
+        slime.actor.update(0)
+        assert.are.equals(39, #_ego.path)
+
+        -- pause and test
+        slime.actor.pause("ego")
+        slime.actor.update(0)
+        slime.actor.update(0)
+        slime.actor.update(0)
+        assert.are.equals(39, #_ego.path)
+
+        -- resume and test
+        slime.actor.resume("ego")
+        slime.actor.update(0)
+        assert.are.equals(38, #_ego.path)
+
+        -- stop movement
+        slime.actor.stop("ego")
+        assert.is_nil(_ego.path)
+
     end)
 
 end)
