@@ -1,4 +1,4 @@
 function love.conf (t)
-	t.version = "11.0"
-	t.window.title = "SLIME Examples"
+    t.version = "11.3"
+    t.window.title = "basic slime example"
 end
