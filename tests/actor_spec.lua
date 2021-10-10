@@ -224,4 +224,14 @@ describe("actor", function()
 
     end)
 
+    it("set speed", function()
+        local _ego = slime.actor.add({
+            name="ego", x=2, y=2, width=12, height=20
+        })
+        assert.is_nil(_ego._move_delay)
+        slime.actor.set_speed("ego", 2)
+        assert.are.equals(2, _ego.speed)
+        assert.are.equals(0.5, _ego._move_delay)
+    end)
+
 end)

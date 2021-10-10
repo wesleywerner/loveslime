@@ -196,18 +196,18 @@ function actor.add (data)
 
     table.insert(actor.list, data)
     actor.sort()
-    return data
+    return actor.get(data.name)
 
 end
 
 --- Measure distance between two actors.
 --
 -- @param from
--- The object to measure, this can be an @{actor_data}, a @{point}, or
+-- The object to measure, this can be an @{actortype}, a @{point}, or
 -- the name of an actor.
 --
 -- @param to
--- The object to measure, this can be an @{actor_data}, a @{point}, or
+-- The object to measure, this can be an @{actortype}, a @{point}, or
 -- the name of an actor.
 --
 -- @return Distance in pixels
@@ -375,13 +375,29 @@ function actor.update_movement (data, dt)
 
 end
 
+--- Set the movement speed of an actor.
+-- The speed is measured as the number of steps in the path (pixels) per second.
+--
+-- @tparam string actor_name
+-- The name of the actor
+--
+-- @tparam int speed
+-- The new speed value.
+function actor.set_speed (actor_name, speed)
+    local data = actor.get(actor_name)
+    if data then
+        data.speed = speed
+        data._move_delay = 1 / speed
+    end
+end
+
 --- Get an actor.
 -- Find an actor by name.
 --
 -- @tparam string actor_name
 -- The name of the actor
 --
--- @return the @{actor_data} or nil if not found.
+-- @return the @{actortype} or nil if not found.
 function actor.get (actor_name)
 
     for _, whom in ipairs(actor.list) do
