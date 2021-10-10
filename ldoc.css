@@ -322,6 +322,9 @@ pre .url { color: #272fc2; text-decoration: underline; }
     $green:     #859900;
 */
 @media (prefers-color-scheme: light) {
+    html {
+        background-color: #ffffff;
+    }
     body {
         background-color: #ffffff;
         color: #586e75;
@@ -346,6 +349,9 @@ pre .url { color: #272fc2; text-decoration: underline; }
     pre {
         background-color: light-gray;
         border: 1px solid #859900;
+    }
+    table.module_list td.name {
+        background-color: inherit;
     }
     table.function_list td.name {
         background-color: inherit;
@@ -387,6 +393,7 @@ pre .url { color: #272fc2; text-decoration: underline; }
 }
 @media (prefers-color-scheme: dark) {
     html {
+        background-color: #002b36;
         scrollbar-color: #859900 #002b36;
     }
     body {
@@ -413,6 +420,9 @@ pre .url { color: #272fc2; text-decoration: underline; }
     pre {
         background-color: #000000;
         border: 1px solid #859900;
+    }
+    table.module_list td.name {
+        background-color: inherit;
     }
     table.function_list td.name {
         background-color: inherit;
