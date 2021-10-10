@@ -43,6 +43,7 @@ describe("chain", function()
 
         -- test actor movement chained
         slime.actor.move_to("ego", "lamp")
+        slime.chain.done()
         local _move_action = _chain.actions[1]
         assert.are.equals(1, #_chain.actions)
         assert.are.equals(_lamp.x, _move_action.parameters[2])
@@ -75,6 +76,7 @@ describe("chain", function()
         slime.chain.begin("test")
         -- wait 3 seconds
         slime.chain.wait(3)
+        slime.chain.done()
         -- action exists
         local _chain = slime.chain.list["test"]
         assert.are.equals(1, #_chain.actions)
@@ -103,6 +105,7 @@ describe("chain", function()
         })
         slime.chain.begin()
         slime.actor.turn("ego", "west")
+        slime.chain.done()
         assert.are.equals("south", _ego.direction)
         slime.chain.update()
         assert.are.equals("west", _ego.direction)
@@ -112,6 +115,7 @@ describe("chain", function()
         slime.clear()
         slime.chain.begin()
         slime.floor.set("small.png")
+        slime.chain.done()
         assert.is.falsy(slime.floor.walkableMap)
         slime.chain.update()
         assert.is.truthy(slime.floor.walkableMap)
@@ -129,6 +133,7 @@ describe("chain", function()
         -- chain speech
         slime.chain.begin()
         slime.speech.say("ego", "hello world")
+        slime.chain.done()
 
         -- negative test
         slime.speech.update()
