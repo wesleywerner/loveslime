@@ -119,34 +119,51 @@ local tool = { }
 -- like people, animals and robots.
 -- They can also be inanimate objects like doors, toasters and computers.
 --
--- @table actor_data
+-- @table actorinfo
 --
 -- @tfield string name
 -- The name of the actor.
 --
 -- @tfield int x
+-- The x position of this actor on the stage.
 --
 -- @tfield int y
+-- The y position of this actor on the stage.
 --
 -- @tfield[opt="bottom"] string feet
--- Position of the actor's feet relative to the sprite.
+-- Position of the actor's feet relative to its bounding box (width and height).
+-- This is the point within the actor's bounds that moves on its movement path.
+-- "bottom" refers to the point on the bottom-center of the bounding box.
+-- "top" refers to the top-center point, "left" and "right" refer to the
+-- middle left and middle right respectively.
+-- If you need to specify a point other than these, you can pass a @{point} to
+-- this argument instead of a string. The xy values are relative to the actor's
+-- bounding box ( x:0 is the left-most edge).
 --
--- @tfield int speed
+-- @tfield[opt] number speed
 -- Movement speed of actor measured in pixels per second.
+-- If not given then the actor will step to each point in its path every update.
+-- The movement delay is calculated from this value on actor add, so changing
+-- speed after the actor was added has no effect. To alter the speed of an
+-- existing actor use @{actor.set_speed} instead.
 --
 -- @tfield string action
--- The actor's current action. One of "idle", "walk" or "talk".
+-- The actor's current action: "idle", "walk" or "talk".
+-- This value is set by slime and reflects if the actor is moving
+-- or has speech displaying.
 --
 -- @tfield string direction
 -- The direction the actor is facing, one of "north", "south", "east", "west".
+-- This value is set by slime and calculated during movement.
 --
 -- @tfield[opt] number z_order
 -- Overrides the draw order which is normally handled against the actor's y-position.
--- Positive values (greater than your game's pixel height) will draw it top-most
+-- Positive values (greater than your game's resoltion height) will draw it top-most
 -- and negative values draw it bottom-most.
 
---- Clear actors.
--- This gets called by @{slime.clear}
+--- Clear all actors from the stage.
+-- This gets called by @{slime.clear}. You can call this if you need to remove
+-- all actors while keeping your backgrounds, layers and cursors.
 --
 -- @local
 function actor.clear ( )
@@ -155,17 +172,19 @@ function actor.clear ( )
 
 end
 
---- Add an actor.
+--- Add an actor to the stage.
+-- The data argument is a table which defines the actor.
 --
--- @tparam actor_data data
+-- @tparam actorinfo data
+--
+-- @treturn actorinfo
 function actor.add (data)
 
-    assert(data, "Actor definition must be given.")
-
-    assert(data.x, "Actor x position must be given.")
-    assert(data.y, "Actor y position must be given.")
-    assert(data.width, "Actor width must be given.")
-    assert(data.height, "Actor height must be given.")
+    assert(type(data)=="table", "Actor definition must be given.")
+    assert(type(data.x)=="number", "Actor x position must be given.")
+    assert(type(data.y)=="number", "Actor y position must be given.")
+    assert(type(data.width)=="number", "Actor width must be given.")
+    assert(type(data.height)=="number", "Actor height must be given.")
 
     data._is_actor = true
     data.feet = data.feet or "bottom"
@@ -184,8 +203,8 @@ function actor.add (data)
     end
 
     assert(type(data.feet) == "table", "Actor feet property must be string or a table")
-    assert(data.feet.x, "Actor feet must have x position")
-    assert(data.feet.y, "Actor feet must have y position")
+    assert(type(data.feet.x)=="number", "Actor feet must have x position")
+    assert(type(data.feet.y)=="number", "Actor feet must have y position")
 
     -- set the movement speed.
     -- speed is assumed to be the pixels per second to move.
@@ -200,14 +219,14 @@ function actor.add (data)
 
 end
 
---- Measure distance between two actors.
+--- Measure distance between two actors or points.
 --
 -- @param from
--- The object to measure, this can be an @{actortype}, a @{point}, or
+-- The object to measure, this can be an @{actorinfo}, a @{point}, or
 -- the name of an actor.
 --
 -- @param to
--- The object to measure, this can be an @{actortype}, a @{point}, or
+-- The object to measure, this can be an @{actorinfo}, a @{point}, or
 -- the name of an actor.
 --
 -- @return Distance in pixels
@@ -233,11 +252,12 @@ function actor.measure (from, to)
 
 end
 
---- Update actors
+--- Update actors.
+-- This function is called by @{slime.update}.
+-- It moves actors along their movement paths, and requests the current
+-- sprite via the @{event.request_sprite} callback.
 --
---  animations and movement.
---
--- @tparam int dt
+-- @tparam number dt
 -- The delta time since the last update.
 --
 -- @local
@@ -274,11 +294,10 @@ function actor.update (dt)
 
 end
 
---- Sort actors.
---
--- Orders actors and layers for correct z-order drawing.
--- It sorts by actor feet position (for actors)
--- and baselines (for layers).
+--- Sort actors and layer.
+-- Orders is determined by y position (actors), baseline (layers)
+-- and z_orders (optional actor property).
+-- This is called internally by slime to keep the drawable order up to date.
 --
 -- @local
 function actor.sort ( )
@@ -310,13 +329,16 @@ function actor.sort ( )
 
 end
 
---- Update actor path.
+--- Update actor movements.
 -- Moves an actor to the next point in their movement path.
+-- It also calculates the actor's direction, handles movement delay (speed)
+-- and fires the @{event.actor_moved} callback when the destination is reached.
+-- This is called internally by slime.
 --
--- @tparam actor_data data
+-- @tparam actorinfo data
 -- The actor to update.
 --
--- @tparam int dt
+-- @tparam number dt
 -- The delta time since last update.
 --
 -- @local
@@ -381,7 +403,7 @@ end
 -- @tparam string actor_name
 -- The name of the actor
 --
--- @tparam int speed
+-- @tparam number speed
 -- The new speed value.
 function actor.set_speed (actor_name, speed)
     local data = actor.get(actor_name)
@@ -391,13 +413,13 @@ function actor.set_speed (actor_name, speed)
     end
 end
 
---- Get an actor.
--- Find an actor by name.
+--- Get actor on stage.
+-- Gets the actor of the given name.
 --
 -- @tparam string actor_name
--- The name of the actor
 --
--- @return the @{actortype} or nil if not found.
+-- @return
+-- @{actorinfo} or nil if not found.
 function actor.get (actor_name)
 
     for _, whom in ipairs(actor.list) do
@@ -408,11 +430,13 @@ function actor.get (actor_name)
 
 end
 
---- Remove an actor.
--- Removes an actor by name
+--- Remove actor from stage.
+-- Removes the actor by the given name.
 --
 -- @tparam string actor_name
--- The name of the actor to remove.
+--
+-- @return
+-- true if successful.
 function actor.remove (actor_name)
 
     for i, whom in ipairs(actor.list) do
@@ -424,7 +448,11 @@ function actor.remove (actor_name)
 
 end
 
---- Draw actors on screen.
+--- Draws actors.
+-- Draws both actors and layers in order as calculated
+-- by @{actor.sort}, using the sprite info returned from
+-- the @{event.request_sprite} callback.
+-- This is called internally by @{slime.draw}.
 --
 -- @local
 function actor.draw ()
@@ -468,20 +496,26 @@ function actor.draw ()
 
 end
 
---- Move an actor.
--- Uses path finding when a walkable floor is set, otherwise
--- if no floor is set an actor can walk anywhere.
+--- Moves an actor to a x,y position.
+-- If a floor was set then path finding is used to find a route.
+-- If no floor was set then a straight line is set as the route.
+--
+-- This function is @{chain.begin|chainable}.
 --
 -- @tparam string actor_name
 -- Name of the actor to move.
 --
--- @tparam int x
+-- @tparam number x
 -- X-position to move to.
 --
--- @tparam int y
+-- @tparam number y
 -- Y-position to move to.
 --
 -- @see floor.set
+-- @see actor.move_to
+-- @see actor.stop
+-- @see actor.pause
+-- @see actor.resume
 function actor.move (actor_name, x, y)
 
     x, y = tool.scale_point(x, y)
@@ -545,14 +579,18 @@ function actor.move (actor_name, x, y)
 
 end
 
---- Turn an actor.
--- Turn to face a cardinal direction, north south east or west.
+--- Turn an actor to face a specific direction.
+-- The actor's direction is set to "north", "south", "east" or "west".
+-- Note that if the actor is busy walking, their direction will be updated to
+-- the current direction they are walking toward.
+-- This function is useful for actors standing still (idle), and you want to
+-- face them a particular direction.
+--
+-- This function is @{chain.begin|chainable}.
 --
 -- @tparam string actor_name
--- The actor to turn.
 --
 -- @tparam string direction
--- A cardinal direction: north, south, east or west.
 function actor.turn (actor_name, direction)
 
     -- intercept chaining
@@ -570,15 +608,18 @@ function actor.turn (actor_name, direction)
 
 end
 
---- Move an actor.
--- Moves towards another actor, as close as possible as
--- the walkable floor allows.
+--- Move an actor towards another actor.
+-- Moves as close as possible where the walkable floor allows.
+--
+-- This function is @{chain.begin|chainable}.
 --
 -- @tparam string actor_name
 -- Name of the actor to move.
 --
 -- @tparam string target_name
 -- Name of the actor to move towards.
+--
+-- @see actor.move
 function actor.move_to (actor_name, target_name)
 
     local whom = actor.get(target_name)
@@ -591,6 +632,14 @@ function actor.move_to (actor_name, target_name)
 
 end
 
+--- Pause actor movement.
+-- This preserves the movement path so that the actor can @{actor.resume|resume}
+-- movement later. While paused the actor won't move along its path even if
+-- a new path is set.
+-- The default callbacks @{event.speech_started} and @{event.speech_ended}
+-- call this to pause actors while they are talking.
+--
+-- @tparam string actor_name
 function actor.pause (actor_name)
     local _actor = actor.get(actor_name)
     if _actor.path then
@@ -598,6 +647,12 @@ function actor.pause (actor_name)
     end
 end
 
+--- Resume actor movement.
+-- Resume movement previously @{actor.pause|paused}.
+-- The default callbacks @{event.speech_started} and @{event.speech_ended}
+-- call this to resume movement when an actor finished talking.
+--
+-- @tparam string actor_name
 function actor.resume (actor_name)
     local _actor = actor.get(actor_name)
     if _actor.movement_paused then
@@ -605,11 +660,14 @@ function actor.resume (actor_name)
     end
 end
 
---- Stop and actor.
--- Stop an actor from moving along their movement path.
+--- Stop actor movement.
+-- This clears the movement path.
 --
 -- @tparam string actor_name
--- Name of the actor.
+--
+-- @see actor.move
+-- @see actor.pause
+-- @see actor.resume
 function actor.stop (actor_name)
 
     local whom = actor.get(actor_name)
@@ -629,18 +687,13 @@ end
 --                    |___/
 
 --- Add a background.
--- Called multiple times, is how one creates animated backgrounds,
--- with a delay (in seconds), which when expired,
--- cycles to the next background.
---
--- The image size of each one, has to match the background before it.
--- If no delay is given, the background will draw forever.
+-- Can be called multiple times to create an animated background.
 --
 -- @tparam string path
 -- The image path.
 --
--- @tparam[opt] int seconds
--- Seconds to display before cycling the background.
+-- @tparam[opt] number seconds
+-- Delay to display before cycling next background.
 function background.add (path, seconds)
 
     local image = love.graphics.newImage(path)
@@ -663,7 +716,7 @@ function background.add (path, seconds)
 end
 
 --- Clear all backgrounds.
--- This gets called by @{slime.clear}
+-- This is called internally by @{slime.clear}.
 --
 -- @local
 function background.clear ()
@@ -680,6 +733,7 @@ function background.clear ()
 end
 
 --- Draw the background.
+-- This is called internally by @{slime.draw}.
 --
 -- @local
 function background.draw ()
@@ -693,9 +747,10 @@ function background.draw ()
 end
 
 --- Update backgrounds.
--- Tracks background delays and performs their rotation.
+-- This performs rotation of multiple backgrounds, if set.
+-- This is called internally by @{slime.update}.
 --
--- @tparam int dt
+-- @tparam number dt
 -- Delta time since the last update.
 --
 -- @local
@@ -740,7 +795,8 @@ end
 -- |_.__/ \__,_|\__, |___/
 --              |___/
 
---- Clear all bags.
+--- Clear bags.
+-- Removes all items from all bags.
 -- This gets called by @{slime.clear}
 --
 -- @local
@@ -750,10 +806,10 @@ function bag.clear ()
 
 end
 
---- Add a thing to a bag.
+--- Add an item to a bag.
 --
 -- @tparam string name
--- Name of the bag to store in.
+-- Name of the bag to store the item in.
 --
 -- @tparam table object
 -- TODO: this bag object thing is a bit under-developed.
@@ -783,13 +839,13 @@ function bag.add (name, object)
 
 end
 
---- Remove a thing from a bag.
+--- Remove an item from a bag.
 --
 -- @tparam string bag_name
 -- Name of the bag.
 --
 -- @tparam string thing_name
--- Name of the thing to remove.
+-- Name of the item to remove.
 function bag.remove (bag_name, thing_name)
 
     local inv = bag.contents[bag_name] or { }
@@ -879,11 +935,12 @@ end
 
 -- Provides ways to chain actions to run in sequence
 
---- Clear all chained actions.
--- Call this to start or append an actor action to build a chain of events.
+--- Clear chained actions.
+-- Removes a chain of action previously defined.
 -- This gets called by @{slime.clear}
 --
--- @local
+-- @tparam[opt] string name
+-- The name of the chain to clear. If not given, all chains are cleared.
 function chain.clear (name)
 
     if name then
@@ -898,17 +955,15 @@ function chain.clear (name)
 end
 
 --- Begins chain capturing mode.
--- While in this mode, the next call to a slime function
--- will be added to the chain action list instead of executing
--- immediately.
+-- Provides a way to chain actions to run in sequence.
+-- While in this mode, calls to slime functions labeled "chainable"
+-- will be added to the chain of events instead of executing
+-- immediately. If a chain with the same name exists, then
+-- that chain is appended.
 --
 -- @tparam[opt] string name
--- Specifying a name allows creating multiple, concurrent chains.
---
--- @tparam[opt] function userFunction
--- User provided function to add to the chain.
---
--- @return The slime instance
+-- Name of the chain. If not given then "default" is used.
+-- Specifying a name allows creating multiple chains that run concurrently.
 function chain.begin (name)
 
     -- use a default chain name if none is provided
@@ -928,28 +983,35 @@ function chain.begin (name)
 
 end
 
---- Document this.
+--- Ends chain capturing mode.
+-- This ends the currently capturing chain.
+-- @see chain.begin
 function chain.done ()
 
     chain.capture = nil
 
 end
 
---- Add an action to the capturing chain.
+--- Add a function to the chain of events.
+-- This function requires you call @{chain.begin} to start capture mode.
+-- This function is called internally by slime from all chainable functions.
 --
 -- @tparam function func
--- The function to call
+-- The function that will be called when this action occurs.
+-- This function will only be called once.
 --
 -- @tparam table parameters
--- The function parameters
+-- A list of parameters that will be passed into func and expired.
 --
 -- @tparam[opt] function expired
--- Function that returns true when the action
--- has expired, which does so instantly if this parameter
--- is not given.
---
--- @local
+-- A function that should return true when the action
+-- has expired, at which point the action is popped off the chain and the
+-- next action is executed. If this is not given then the action expires
+-- immediately when it is executed.
+-- This function receives the parameters provided.
 function chain.add (func, parameters, expired)
+
+    assert(type(chain.capture)=="table", "not chain beign captured. see chain.begin()")
 
     if type(expired) ~= "function" then
         expired = function()
@@ -972,15 +1034,13 @@ function chain.add (func, parameters, expired)
     -- queue this command in the capturing chain
     table.insert(chain.capture.actions, command)
 
-    -- release this capture
-    chain.capture = nil
-
 end
 
---- Process chains.
+--- Update chained actions.
+-- Takes care of unrolling chains, running their funcs once, and waiting for
+-- actions to expire.
 --
--- @tparam int dt
--- Delta time since the last update
+-- This is called internally by @{slime.update}.
 --
 -- @local
 function chain.update ()
@@ -1012,10 +1072,14 @@ function chain.update ()
 
 end
 
---- Pause the chain.
+--- Waits for a number of seconds.
 --
--- @tparam int seconds
+-- This function is @{chain.begin|chainable}.
+--
+-- @tparam number seconds
 -- Seconds to wait before the next action is run.
+--
+-- @see chain.begin
 function chain.wait (seconds)
 
     if chain.capture then
@@ -1041,16 +1105,16 @@ end
 --
 
 --- Sprite info.
--- Contains data to draw a sprite.
+-- A table that defines the data needed to draw a sprite.
 --
--- @table sprite_data
+-- @table spriteinfo
 --
--- @tfield Image image
+-- @tfield love.Image image
 -- The sprite image, or the spritesheet that contains the sprite.
+-- If a spritesheet is given, then you should also provide a quad value.
 --
--- @tfield Quad quad
--- The quad of the sprite within the spritesheet. Can be given as nil if
--- the image is not a spritesheet.
+-- @tfield[opt] love.Quad quad
+-- The quad of the sprite within the sprite sheet image.
 --
 -- @tfield number x
 -- The x offset of the sprite relative to the actor's position.
@@ -1074,24 +1138,9 @@ end
 -- Origin offset on the y-axiz.
 
 
-
---- Actor animation looped event.
--- TODO REVIEW IF NEEDED
---
--- @tparam actor_data data
--- The actor being interacted with
---
--- @tparam string key
--- The animation key that looped
---
--- @tparam int counter
--- The number of times the animation has looped
-function event.animation_looped (data, key, counter)
-
-end
-
---- Bag contents changed event.
+--- Callback: when the contentsof a bag changed.
 -- This is fired when something is added or removed from a bag.
+-- This is a callback function that you can override.
 --
 -- @tparam string bag
 -- The name of the bag that changed
@@ -1099,8 +1148,8 @@ function event.bag_updated (bag)
 
 end
 
---- Draw speech override.
--- Override this function to handle drawing spoken text.
+--- Callback: when actor speech is drawn.
+-- This is a callback function that you can override.
 --
 -- @tparam string actor_name
 -- The actor who is talking.
@@ -1124,14 +1173,14 @@ function event.draw_speech (actor_name, words)
 
 end
 
---- Draw cursor override.
--- Override this function to handle drawing the cursor.
+--- Callback: when the mouse cursor is drawn.
+-- This is a callback function that you can override.
 --
--- @tparam cursor_data data
+-- @tparam cursorinfo data
 -- The cursor that is to be drawn.
 --
--- @tparam int x
--- @tparam int y
+-- @tparam number x
+-- @tparam number y
 function event.draw_cursor (data, x, y)
 
     if data.quad then
@@ -1142,65 +1191,80 @@ function event.draw_cursor (data, x, y)
 
 end
 
---- Request sprite drawable event.
--- Fired when requesting the drawable for an animated sprite.
+--- Callback: when an actor sprite is requested.
+-- This gets called when slime requests the sprite info for an actor.
+-- You need to override this function to return the sprite info.
 --
--- @tparam int dt
+-- @tparam string actor_name
+-- The name of the actor whom the request is for.
+--
+-- @tparam string action
+-- The action of the actor: "idle", "walk" or "talk".
+--
+-- @tparam string direction
+-- The compass direction the actor is facing: "north", "south" "east" or "west".
+--
+-- @tparam number dt
 -- Delta time since the last update.
--- This should be used to forward animations.
+-- This is the value that was given in the call to @{slime.update}.
 --
--- @tparam actor_data data
--- The actor whom the sprite request is for. The actor.action, actor.direction
--- properties can be accessed to determine the sprite to return.
---
--- @return @{sprite_data}
+-- @return @{spriteinfo}
 function event.request_sprite (actor_name, action, direction, dt)
 
 end
 
---- Callback when a mouse interaction occurs.
+--- Callback: when user interaction hits.
+-- This event is fired for every object that is hit from calling @{slime.interact}.
+-- This is a callback function that you can override.
 --
 -- @tparam string event
 -- The name of the cursor
 --
--- @tparam actor_data data
--- The actor being interacted with
+-- @tparam object data
+-- The @{actorinfo|actor} or @{hotspotinfo|hotspot} being interacted with.
 function event.interact (event, data)
 
 end
 
---- Actor finished moving callback.
+--- Callback: when an actor reached their destination.
+-- This is a callback function that you can override.
 --
 -- @tparam string actor_name
--- The actor that moved
+-- The name of the actor that moved.
 --
--- @tparam int clickedX
+-- @tparam number clickedX
 -- The point given to the original @{actor.move} method.
 -- This may be different than the actor's location, if for example
 -- the floor does not allow standing on the point, the actor moves
 -- as close as possible to the point.
 -- This can be used to call @{interact} after an actor has moved.
 --
--- @tparam int clickedY
+-- @tparam number clickedY
 --
 function event.actor_moved (actor_name, clickedX, clickedY)
 
 end
 
---- Actor speaking callback.
+--- Callback: when an actor speech has started.
+-- This is a callback function that you can override.
 --
 -- @tparam string actor_name
 -- The talking actor
+--
+-- @see actor.pause
 function event.speech_started (actor_name)
 
     actor.pause(actor_name)
 
 end
 
---- Actor has stopped talking.
+--- Callback: when an actor speech has ended.
+-- This is a callback function that you can override.
 --
 -- @tparam string actor_name
 -- The actor whom has finished talking.
+--
+-- @see actor.resume
 function event.speech_ended (actor_name)
 
     actor.resume(actor_name)
@@ -1215,30 +1279,27 @@ end
 --  \___|\__,_|_|  |___/\___/|_|
 --
 
---- Custom cursor data
+--- Defines custom cursor data.
 --
--- @table cursor_data
+-- @table cursorinfo
 --
 -- @tfield string name
--- Name of the cursor. This gets passed back to the
--- @{event.interact} callback event.
+-- Name of the cursor. This name is sent to the @{event.interact} callback.
 --
--- @tfield image image
+-- @tfield love.Image image
 -- The cursor image.
 --
--- @tfield[opt] quad quad
+-- @tfield[opt] love.Quad quad
 -- If image is a spritesheet, then quad defines the position
 -- in of the cursor in the image.
 --
--- @tfield[opt] table hotspot
--- The {x, y} point on the cursor that identifies as the click point.
+-- @tfield[opt] point hotspot
+-- Identifies the click point.
 -- Defaults to the top-left corner if not specified.
 
 
---- Clear the custom cursor.
--- This gets called by @{slime.clear}
---
--- @local
+--- Clear the cursor.
+-- This gets called by @{slime.clear}.
 function cursor.clear ()
 
     cursor.current = nil
@@ -1246,6 +1307,7 @@ function cursor.clear ()
 end
 
 --- Draw the cursor.
+-- This is called internally by slime and fires the @{event.draw_cursor} callback.
 --
 -- @local
 function cursor.draw ()
@@ -1256,9 +1318,8 @@ function cursor.draw ()
 
 end
 
---- Get the current cursor name.
---
--- @local
+--- Get current cursor name.
+-- @treturn string
 function cursor.name ()
 
     if cursor.current then
@@ -1269,10 +1330,9 @@ function cursor.name ()
 
 end
 
---- Set a custom cursor.
+--- Set a cursor.
 --
--- @tparam cursor_data data
--- The cursor data.
+-- @tparam cursorinfo data
 function cursor.set (data)
 
     assert(data.name, "cursor needs a name")
@@ -1287,10 +1347,12 @@ function cursor.set (data)
 
 end
 
---- Update the cursor position.
+--- Update the cursor.
 --
--- @tparam int x
--- @tparam int y
+-- @tparam number x
+-- The new x position of the cursor.
+-- @tparam number y
+-- The new y position of the cursor.
 function cursor.update (x, y)
 
     x, y = tool.scale_point(x, y)
@@ -1314,17 +1376,17 @@ end
 -- |_| |_|\___/ \___/|_|  |___/
 
 
---- Clear walkable floors.
--- This gets called by @{slime.clear}
---
--- @local
+--- Clear floor.
+-- This removes any walkable floors that were set.
+-- This is called internally by @{slime.clear}.
 function floor.clear ()
 
     floor.walkableMap = nil
 
 end
 
---- Test if a walkable map is loaded.
+--- Test if a walkable floor is set.
+-- This is called internally by slime.
 --
 -- @local
 function floor.hasMap ()
@@ -1334,11 +1396,11 @@ function floor.hasMap ()
 end
 
 --- Set a walkable floor.
--- The floor mask defines where actors can walk.
--- Any non-black pixel is walkable.
+-- The image defines where actors can walk. Non-black pixels are walkable.
+--
+-- This function is @{chain.begin|chainable}.
 --
 -- @tparam string filename
--- The image mask defining walkable areas.
 function floor.set (filename)
 
     -- intercept chaining
@@ -1351,8 +1413,9 @@ function floor.set (filename)
 
 end
 
---- Convert a walkable floor mask.
+--- Convert an image to a floor mask.
 -- Prepares the mask for use in path finding.
+-- This is called internally by slime.
 --
 -- @tparam string filename
 -- The floor map image filename
@@ -1396,11 +1459,12 @@ end
 
 --- Test if a point is walkable.
 -- This is the callback used by path finding.
+-- This is called internally by slime.
 --
--- @tparam int x
+-- @tparam number x
 -- X-position to test.
 --
--- @tparam int y
+-- @tparam number y
 -- Y-position to test.
 --
 -- @return true if the position is open to walk
@@ -1420,7 +1484,8 @@ function floor.isWalkable (x, y)
 
 end
 
---- Get the size of the floor.
+--- Get the floor size.
+-- This is called internally by slime.
 --
 -- @local
 function floor.size ()
@@ -1435,6 +1500,7 @@ function floor.size ()
 end
 
 --- Get the points of a line.
+-- This is called internally by slime.
 -- http://www.roguebasin.com/index.php?title=Bresenham%27s_Line_Algorithm#Lua
 --
 -- @tparam table start
@@ -1443,7 +1509,8 @@ end
 -- @tparam table goal
 -- {x, y} of the line end.
 --
--- @return table of list of points from start to goal.
+-- @return
+-- table of points from start to goal.
 --
 -- @local
 function floor.bresenham (start, goal)
@@ -1494,10 +1561,11 @@ function floor.bresenham (start, goal)
 
 end
 
---- Find the nearest open point.
+--- Find the nearest walkable point.
 -- Use the bresenham line algorithm to project four lines from the goal:
--- North, south, East and West, and find the first open point on each line.
--- We then choose the point with the shortest distance from the goal.
+-- North, South, East and West, then find the first open point on each line.
+-- We choose the point with the shortest distance from the goal.
+-- This is called internally by slime.
 --
 -- @tparam table point
 -- {x, y} of the point to reach.
@@ -1553,6 +1621,14 @@ end
 --   |_| |_|\___/ \__|___/ .__/ \___/ \__|___/
 --                       |_|
 
+--- Provides a clickable area on screen.
+-- @tfield string name
+-- @tfield number x
+-- @tfield number y
+-- @tfield number w
+-- @tfield number h
+-- @table hotspotinfo
+
 --- Clear hotspots.
 -- This gets called by @{slime.clear}
 --
@@ -1564,14 +1640,18 @@ function hotspot.clear ()
 end
 
 --- Add a hotspot.
+-- A hotspot provides a clickable area on screen, which is returned in
+-- the @{event.interact} callback and the @{slime.get_objects} function.
 --
 -- @tparam string name
 -- Name of the hotspot.
 --
--- @tparam int x
--- @tparam int y
--- @tparam int w
--- @tparam int h
+-- @tparam number x
+-- @tparam number y
+-- @tparam number w
+-- @tparam number h
+--
+-- @treturn hotspotinfo
 function hotspot.add (name, x, y, w, h)
 
     assert(type(name) == "string", "hotspot.add missing name argument")
@@ -1580,7 +1660,7 @@ function hotspot.add (name, x, y, w, h)
     assert(type(w) == "number", "hotspot.add missing w argument")
     assert(type(h) == "number", "hotspot.add missing h argument")
 
-    local point = {
+    local _hotspot = {
         ["name"] = name,
         ["x"] = x,
         ["y"] = y,
@@ -1588,27 +1668,34 @@ function hotspot.add (name, x, y, w, h)
         ["h"] = h
     }
 
-    table.insert(hotspot.list, point)
-    return point
+    table.insert(hotspot.list, _hotspot)
+    return _hotspot
 
 end
 
---- TODO Document
-function hotspot.get (a, b)
+--- Get a hotspot.
+-- Given one string argument, get the hotspot by its name.
+-- given two number arguments, get the hotspot at xy.
+--
+-- @tparam number x
+-- @tparam number y
+--
+-- @treturn hotspotinfo
+function hotspot.get (x, y)
 
-    if type(a) == "string" then
+    if type(x) == "string" then
 
         for _, item in pairs(hotspot.list) do
-            if item.name == a then
+            if item.name == x then
                 return item
             end
         end
 
-    elseif type(a) == "number" and type(b) == "number" then
+    elseif type(x) == "number" and type(y) == "number" then
 
         for _, item in pairs(hotspot.list) do
-            if (a >= item.x and a <= item.x + item.w) and
-                (b >= item.y and b <= item.y + item.h) then
+            if (x >= item.x and x <= item.x + item.w) and
+                (y >= item.y and y <= item.y + item.h) then
                 return item
             end
         end
@@ -1628,20 +1715,20 @@ end
 --   |_|\__,_|\__, |\___|_|  |___/
 --            |___/
 --
--- Layers define areas of the background that actors can walk behind.
 
 --- Add a walk-behind layer.
--- The layer mask is used to cut out a piece of the background, and
--- drawn over other actors to create a walk-behind layer.
+-- Layers define areas of the background that actors can walk behind.
+-- The mask is used to cut out a piece of the background.
 --
 -- @tparam string background
--- Filename of the background to cut out.
+-- The background image to cut out.
 --
 -- @tparam string mask
--- Filename of the mask.
+-- The mask that defines the areas to cut.
+-- Black pixels are ignore, and colored pixels are cut out to become the layer.
 --
--- @tparam int baseline
--- The Y-position on the mask that defines the behind/in-front point.
+-- @tparam number baseline
+-- The y-position that determines if an actor is in front or behind the layer.
 function layer.add (background, mask, baseline)
 
     assert(background ~= nil, "Missing parameter background")
@@ -1665,18 +1752,17 @@ function layer.add (background, mask, baseline)
 
 end
 
---- Cut a shape out of an image.
--- All corresponding black pixels from the mask will cut and discard
--- pixels (they become transparent), and only non-black mask pixels
--- preserve the matching source pixels.
+--- Converts a background and mask into a layer image.
+-- Black mask pixels become transparent, and colored mask pixels
+-- are cut from the corresponding background pixels.
 --
 -- @tparam string source
--- Source image filename.
+-- This is the image whose pixels are copied.
 --
 -- @tparam string mask
--- Mask image filename.
+-- Defines which pixels to preserve or discard.
 --
--- @return the cut out image.
+-- @treturn love.Image
 --
 -- @local
 function layer.image_from_mask (source, mask)
@@ -2263,10 +2349,9 @@ end
 -- |_|
 --
 
---- A 2D point.
---
--- @tparam int x
--- @tparam int y
+--- A table representing a 2D point.
+-- @tparam number x
+-- @tparam number y
 -- @table point
 
 
@@ -2396,10 +2481,10 @@ end
 
 --- Get adjacent map points.
 --
--- @tparam int width
+-- @tparam number width
 --
 --
--- @tparam int height
+-- @tparam number height
 --
 --
 -- @tparam table point
@@ -2443,10 +2528,10 @@ end
 
 --- Find a walkable path.
 --
--- @tparam int width
+-- @tparam number width
 -- Width of the floor.
 --
--- @tparam int height
+-- @tparam number height
 -- Height of the floor.
 --
 -- @tparam table start
@@ -2554,7 +2639,7 @@ end
 
 
 --- Clear queued speeches.
--- This gets called by @{slime.clear}
+-- This is called internally by @{slime.clear}.
 --
 -- @local
 function speech.clear ()
@@ -2564,8 +2649,12 @@ function speech.clear ()
 end
 
 
---- Make an actor talk.
--- Call this multiple times to queue speech.
+--- Queue words to display on screen.
+-- When speech is presented the @{event.speech_started} callback is fired once.
+-- @{event.draw_speech} is fired while the speech is printed.
+-- Speech stays visible until @{speech.skip} is called.
+--
+-- This function is @{chain.begin|chainable}.
 --
 -- @tparam string actor_name
 -- Name of the actor.
@@ -2597,13 +2686,12 @@ function speech.say (actor_name, text)
 end
 
 
---- Test if someone is talking.
+--- Test if an actor is talking.
 --
 -- @tparam[opt] string actor_name
--- The actor to test against.
--- If not given, any talking actor is tested.
+-- If not given then tests for any actor.
 --
--- @return true if any actor, or the specified actor is talking.
+-- @treturn boolean
 function speech.is_talking (actor_name)
 
     if actor_name then
@@ -2617,8 +2705,9 @@ function speech.is_talking (actor_name)
 end
 
 
---- Skip the current spoken line.
--- Jumps to the next line in the queue.
+--- Skip the current speech.
+-- Jumps to the next speech in the queue.
+-- This triggers @{event.speech_ended} if a current speech is ended.
 function speech.skip ()
 
     local _speech_data = speech.queue[1]
@@ -2648,8 +2737,10 @@ end
 
 
 --- Update speech.
+-- This starts the next queued speech and fires {@event.speech_started}.
+-- This is called internally by @{slime.update}.
 --
--- @tparam int dt
+-- @tparam number dt
 -- Delta time since the last update.
 --
 -- @local
@@ -2672,9 +2763,9 @@ function speech.update (dt)
 end
 
 
---- Draw speech on screen.
--- If there is speech data in the queue, of course.
--- This calls the @{event.draw_speech} callback.
+--- Draws speech.
+-- This fires the @{event.draw_speech} callback.
+-- This is called internally by @{slime.draw}.
 --
 -- @local
 function speech.draw ()
@@ -2727,9 +2818,9 @@ function slime.reset ()
 
 end
 
---- Update the game.
+--- Main Update function.
 --
--- @tparam int dt
+-- @tparam number dt
 -- Delta time since the last update.
 function slime.update (dt)
 
@@ -2741,9 +2832,10 @@ function slime.update (dt)
 
 end
 
---- Draw the room.
+--- Main Draw function.
+-- Draws background, actors, speech and cursor.
 --
--- @tparam[opt=1] int scale
+-- @tparam[opt=1] number scale
 -- Draw at the given scale.
 function slime.draw (scale)
 
@@ -2770,15 +2862,16 @@ end
 
 
 --- Get objects at a point.
--- Includes actors, hotspots.
+-- Includes actors and hotspots.
 --
--- @tparam int x
+-- @tparam number x
 -- X-position to test.
 --
--- @tparam int y
+-- @tparam number y
 -- Y-position to test.
 --
--- @return table of objects.
+-- @treturn table
+-- List of objects at the xy point.
 function slime.get_objects (x, y)
 
     x, y = tool.scale_point(x, y)
@@ -2795,12 +2888,9 @@ function slime.get_objects (x, y)
         end
     end
 
-    -- TODO convert to hotspots:getAt()
-    for ihotspot, hotspot in pairs(hotspot.list) do
-        if (x >= hotspot.x and x <= hotspot.x + hotspot.w) and
-            (y >= hotspot.y and y <= hotspot.y + hotspot.h) then
-            table.insert(objects, hotspot)
-        end
+    local _hotspot = hotspot.get(x, y)
+    if _hotspot then
+        table.insert(objects, _hotspot)
     end
 
     if (#objects == 0) then
@@ -2811,14 +2901,15 @@ function slime.get_objects (x, y)
 
 end
 
---- Interact with objects.
+--- Interact with objects on the stage.
 -- This triggers the @{event.interact} callback for every
--- object that is interacted with, passing the current cursor name.
+-- object that is interacted at the given location, the current cursor name
+-- is passed to that callback.
 --
--- @tparam int x
+-- @tparam number x
 -- X-position to interact with.
 --
--- @tparam int y
+-- @tparam number y
 -- Y-position to interact with.
 function slime.interact (x, y)
 
@@ -2866,16 +2957,16 @@ end
 
 --- Get direction between two points.
 --
--- @tparam int x1
+-- @tparam number x1
 -- Point 1 x
 --
--- @tparam int y1
+-- @tparam number y1
 -- Point 1 y
 --
--- @tparam int x2
+-- @tparam number x2
 -- Point 2 x
 --
--- @tparam int y2
+-- @tparam number y2
 -- Point 2 y
 --
 -- @return nearest cardinal direction represented by the angle:
@@ -2922,13 +3013,13 @@ end
 
 --- Clamp a value to a range.
 --
--- @tparam int x
+-- @tparam number x
 -- The value to test.
 --
--- @tparam int min
+-- @tparam number min
 -- Minimum value.
 --
--- @tparam int max
+-- @tparam number max
 -- Maximum value.
 --
 -- @local
@@ -2940,10 +3031,10 @@ end
 
 --- Measure the distance between two points.
 --
--- @tparam int x1
--- @tparam int y1
--- @tparam int x2
--- @tparam int y2
+-- @tparam number x1
+-- @tparam number y1
+-- @tparam number x2
+-- @tparam number y2
 --
 -- @local
 function tool.distance (x1, y1, x2, y2)
@@ -3001,8 +3092,8 @@ end
 -- This is used internally so that the end user does not have to bother
 -- to perform coordinate scaling.
 --
--- @tparam int x
--- @tparam int y
+-- @tparam number x
+-- @tparam number y
 --
 -- @return The scaled x, y values.
 function tool.scale_point (x, y)
