@@ -59,7 +59,7 @@ describe("slime", function()
         slime.event.interact = _event
         slime.interact(80, 40)
         slime.event.interact = _default
-        assert.spy(_event).was_called_with("look", _actor)
+        assert.spy(_event).was_called_with("look", _actor, 80, 40)
 
     end)
 
@@ -72,7 +72,7 @@ describe("slime", function()
         slime.event.interact = _event
         slime.interact(5, 5)
         slime.event.interact = _default
-        assert.spy(_event).was_called_with("interact", _hotspot)
+        assert.spy(_event).was_called_with("interact", _hotspot, 5, 5)
 
     end)
 

@@ -387,7 +387,7 @@ function actor.update_movement (data, dt)
             ooze.append(data.name .. " moved complete")
             data.path = nil
             data.action = "idle"
-            event.actor_moved(data.name, data.clickedX, data.clickedY)
+            event.actor_moved(data.name, data.clicked_x * draw_scale, data.clicked_y * draw_scale)
 
         end
 
@@ -573,8 +573,8 @@ function actor.move (actor_name, x, y)
     end
 
     if route then
-        whom.clickedX = x
-        whom.clickedY = y
+        whom.clicked_x = x
+        whom.clicked_y = y
         whom.path = route
         whom.action = "walk"
         ooze.append("move " .. actor_name .. " to " .. x .. " : " .. y)
@@ -1227,26 +1227,34 @@ end
 --
 -- @tparam object data
 -- The @{actorinfo|actor} or @{hotspotinfo|hotspot} being interacted with.
-function event.interact (event, data)
+--
+-- @tparam number clicked_x
+-- The point given to the original @{slime.interact} method.
+--
+-- @tparam number clicked_y
+-- The point given to the original @{slime.interact} method.
+--
+function event.interact (event, data, clicked_x, clicked_y)
 
 end
 
 --- Callback: when an actor reached their destination.
 -- This is a callback function that you can override.
+-- `clicked_x` and `clicked_y` may be different than the
+-- @{actorinfo|actor's} actual `x` and `y` location. If for example
+-- the floor does not allow standing on the point given to @{actor.move},
+-- the actor moves as close as possible to the point.
 --
 -- @tparam string actor_name
 -- The name of the actor that moved.
 --
--- @tparam number clickedX
+-- @tparam number clicked_x
 -- The point given to the original @{actor.move} method.
--- This may be different than the actor's location, if for example
--- the floor does not allow standing on the point, the actor moves
--- as close as possible to the point.
--- This can be used to call @{interact} after an actor has moved.
 --
--- @tparam number clickedY
+-- @tparam number clicked_y
+-- The point given to the original @{actor.move} method.
 --
-function event.actor_moved (actor_name, clickedX, clickedY)
+function event.actor_moved (actor_name, clicked_x, clicked_y)
 
 end
 
@@ -2913,9 +2921,13 @@ end
 --
 -- @tparam number x
 -- X-position to interact with.
+-- This is the scaled screen point, the same you get from love.mousepressed,
+-- and not a point in the game's native resolution.
 --
 -- @tparam number y
 -- Y-position to interact with.
+-- This is the scaled screen point, the same you get from love.mousepressed,
+-- and not a point in the game's native resolution.
 function slime.interact (x, y)
 
     local objects = slime.get_objects(x, y)
@@ -2925,8 +2937,7 @@ function slime.interact (x, y)
 
     for i, object in pairs(objects) do
         ooze.append(cursorname .. " on " .. object.name)
-        -- fire the interact event
-        event.interact(cursorname, object)
+        event.interact(cursorname, object, x, y)
     end
 
     return true
