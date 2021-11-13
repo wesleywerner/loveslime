@@ -507,9 +507,13 @@ end
 --
 -- @tparam number x
 -- X-position to move to.
+-- This is the scaled screen point, the same you get from love.mousepressed,
+-- and not a point in the game's native resolution.
 --
 -- @tparam number y
 -- Y-position to move to.
+-- This is the scaled screen point, the same you get from love.mousepressed,
+-- and not a point in the game's native resolution.
 --
 -- @see floor.set
 -- @see actor.move_to
@@ -517,8 +521,6 @@ end
 -- @see actor.pause
 -- @see actor.resume
 function actor.move (actor_name, x, y)
-
-    x, y = tool.scale_point(x, y)
 
     -- intercept chaining
     if chain.capture then
@@ -536,6 +538,9 @@ function actor.move (actor_name, x, y)
             )
         return
     end
+
+    -- scale the screen point down to native game resolution
+    x, y = tool.scale_point(x, y)
 
     -- test if the actor is on the stage
     local whom = actor.get(actor_name)
@@ -625,7 +630,7 @@ function actor.move_to (actor_name, target_name)
     local whom = actor.get(target_name)
 
     if (whom) then
-        actor.move(actor_name, whom.x, whom.y)
+        actor.move(actor_name, whom.x * draw_scale, whom.y * draw_scale)
     else
         ooze.append("no actor named " .. target_name)
     end
