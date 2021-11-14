@@ -148,4 +148,15 @@ describe("chain", function()
         assert.spy(_event).was_called_with("ego")
     end)
 
+    it("active", function()
+        slime.clear()
+        slime.chain.begin("active test")
+        slime.chain.wait(1)
+        slime.chain.done()
+        assert.is_false(slime.chain.active("default"))
+        assert.is_true(slime.chain.active("active test"))
+    end)
+
+    pending("interact", function()end)
+
 end)

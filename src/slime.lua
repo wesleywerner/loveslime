@@ -997,6 +997,23 @@ function chain.done ()
 
 end
 
+--- Tests if a chain is active.
+-- A chain is active if it has actions remaining in it's queue.
+--
+-- @tparam string name
+-- Name of the chain. If not given then "default" is used.
+--
+-- @treturn boolean
+function chain.active (name)
+
+    if chain.list[name] then
+        return #chain.list[name].actions > 0
+    else
+        return false
+    end
+
+end
+
 --- Add a function to the chain of events.
 -- This function requires you call @{chain.begin} to start capture mode.
 -- This function is called internally by slime from all chainable functions.
@@ -1016,7 +1033,7 @@ end
 -- This function receives the parameters provided.
 function chain.add (func, parameters, expired)
 
-    assert(type(chain.capture)=="table", "not chain beign captured. see chain.begin()")
+    assert(type(chain.capture)=="table", "chain capturing not enabled. call chain.begin()")
 
     if type(expired) ~= "function" then
         expired = function()

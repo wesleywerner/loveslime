@@ -149,14 +149,22 @@ function love.mousepressed (x, y, button, istouch, presses)
         return
     end
 
+    -- interrupt the chained sequence of events.
+    if slime.chain.active("move to intercom") then
+        slime.chain.clear("move to intercom")
+        slime.actor.stop("Player")
+        return
+    end
+
     -- interact with an object if the mouse is over something
     if statusText then
         slime.interact(x, y)
-    else
-        -- otherwise, walk there
-        -- see @{actor.move}
-        slime.actor.move("Player", x, y)
+        return
     end
+
+    -- walk the actor to the clicked position
+    -- see @{actor.move}
+    slime.actor.move("Player", x, y)
 
 end
 
@@ -201,7 +209,7 @@ local dialogPosition = 1
 -- an actor or hotspot.
 -- The "event" parameter will be "interact" by default, or the name of the
 -- cursor if you set one, but we won't check it's value in this example.
-function slime.event.interact (event, actor)
+function slime.event.interact (event, actor, clicked_x, clicked_y)
 
     -- see @{speech.say}
     if actor.name == "Intercom" then
@@ -210,7 +218,11 @@ function slime.event.interact (event, actor)
         local distance = slime.actor.measure("Player", actor)
 
         if distance > 20 then
-            slime.speech.say("Player", "I am not close enough")
+            slime.chain.begin("move to intercom")
+            slime.speech.say("Player", "I am not close enough. I will move closer.")
+            slime.actor.move_to("Player", actor.name)
+            -- TODO: slime.interact(clicked_x, clicked_y)
+            slime.chain.done()
             return
         end
 
