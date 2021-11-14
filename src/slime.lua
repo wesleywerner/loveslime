@@ -2917,9 +2917,17 @@ function slime.get_objects (x, y)
 end
 
 --- Interact with objects on the stage.
--- This triggers the @{event.interact} callback for every
--- object that is interacted at the given location, the current cursor name
--- is passed to that callback.
+-- This calls the @{event.interact} callback for every
+-- object that at the given `xy` position, with the current cursor name
+-- passed to that event.
+--
+-- Note: Care should be taken when calling this function from inside the
+-- @{event.interact} callback. This can cause an infinite loop if the object
+-- being interacted with repeatedly calls back into this function.
+-- Slime has a recursion limit @{settings|setting} which throws the error
+-- "interact recursion detected" when interact is called repeatedly too
+-- many times.
+-- As a rule of thumb, avoid calling this function from event.interact.
 --
 -- @tparam number x
 -- X-position to interact with.
@@ -2937,10 +2945,20 @@ function slime.interact (x, y)
 
     local cursorname = cursor.name()
 
+    -- prevent infinite recursion when this is called from within event.interact
+    if interact_recursion_count then
+        interact_recursion_count = interact_recursion_count - 1
+        assert(interact_recursion_count > 0, "interact recursion detected")
+    else
+        interact_recursion_count = setting["interact_recursion_limit"]
+    end
+
     for i, object in pairs(objects) do
         ooze.append(cursorname .. " on " .. object.name)
         event.interact(cursorname, object, x, y)
     end
+
+    interact_recursion_count = nil
 
     return true
 
@@ -2955,6 +2973,17 @@ end
 -- |___/\___|\__|\__|_|_| |_|\__, |___/
                           -- |___/
 
+--- Settings that change engine behaviour.
+--
+-- @tfield number interact_recursion_limit
+-- The number of times @{slime.interact} can be called successively before
+-- error "interact recursion detected" is raised. (default 20)
+--
+-- @tfield love.Font
+-- The default font used by the @{event.draw_speech} callback.
+--
+-- @table settings
+
 --- Clear slime settings.
 -- This gets called by @{slime.reset}
 --
@@ -2962,6 +2991,7 @@ end
 function setting.clear ()
 
     setting["speech_font"] = love.graphics.newFont(10)
+    setting["interact_recursion_limit"] = 20
 
 end
 

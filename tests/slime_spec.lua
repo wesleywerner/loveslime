@@ -86,4 +86,21 @@ describe("slime", function()
         slime.draw()
     end)
 
+    it("interact recursion", function()
+
+        -- test recursion catching calling slime.interact from event.interact
+        slime.clear()
+        local _hotspot = slime.hotspot.add("spot", 0, 0, 20, 20)
+        local _event = function(event, actor, clicked_x, clicked_y)
+            slime.interact(clicked_x, clicked_y)
+        end
+        local _call_interact = function()
+            slime.interact(5, 5)
+        end
+        local _default = slime.event.interact
+        slime.event.interact = _event
+        assert.has_error(_call_interact, "interact recursion detected")
+        slime.event.interact = _default
+    end)
+
 end)
