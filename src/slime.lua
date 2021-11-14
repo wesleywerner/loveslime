@@ -384,10 +384,7 @@ function actor.update_movement (data, dt)
         -- the goal is reached
         if (#data.path == 0) then
 
-            ooze.append(data.name .. " moved complete")
-            data.path = nil
-            data.action = "idle"
-            event.actor_moved(data.name, data.clicked_x * draw_scale, data.clicked_y * draw_scale)
+            actor.stop(data.name)
 
         end
 
@@ -678,7 +675,10 @@ function actor.stop (actor_name)
     local whom = actor.get(actor_name)
 
     if whom then
+        ooze.append(actor_name .. " moved complete")
         whom.path = nil
+        whom.action = "idle"
+        event.actor_moved(whom.name, whom.clicked_x * draw_scale, whom.clicked_y * draw_scale)
     end
 
 end

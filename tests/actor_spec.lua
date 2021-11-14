@@ -90,6 +90,7 @@ describe("actor", function()
     end)
 
     it("move_to", function()
+        slime.clear()
         -- A pixel map defining the walkable path.
         -- The goal is non-walkable so slime should pick the point just
         -- below it (which is walkable)
