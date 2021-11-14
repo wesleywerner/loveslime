@@ -1154,6 +1154,8 @@ function event.bag_updated (bag)
 end
 
 --- Callback: when actor speech is drawn.
+-- This callback provides a basic drawing routine that prints text at the
+-- center of the screen.
 -- This is a callback function that you can override.
 --
 -- @tparam string actor_name
@@ -1167,7 +1169,7 @@ function event.draw_speech (actor_name, words)
     local w = love.graphics.getWidth() / draw_scale
     local _actor = actor.get(actor_name)
 
-    love.graphics.setFont(setting["speech font"])
+    love.graphics.setFont(setting["speech_font"])
 
     -- Black shadow
     love.graphics.setColor({0, 0, 0, 1})
@@ -2959,7 +2961,7 @@ end
 -- @local
 function setting.clear ()
 
-    setting["speech font"] = love.graphics.newFont(10)
+    setting["speech_font"] = love.graphics.newFont(10)
 
 end
 
