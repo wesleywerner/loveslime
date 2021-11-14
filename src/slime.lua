@@ -1092,9 +1092,9 @@ function chain.wait (seconds)
         chain.add(
             function() end,
             {seconds},
-            function (timeout)
-                timeout = timeout - last_dt
-                return timeout < 0
+            function ()
+                seconds = seconds - last_dt
+                return seconds < 0
             end)
     end
 
@@ -3174,5 +3174,4 @@ slime.floor = floor
 slime.layer = layer
 slime.setting = setting
 slime.speech = speech
-slime.wait = chain.wait
 return slime

@@ -81,7 +81,8 @@ describe("chain", function()
         local _chain = slime.chain.list["test"]
         assert.are.equals(1, #_chain.actions)
         -- simulate 3 seconds passed
-        slime.update(3.1)
+        slime.update(2)
+        slime.update(2)
         assert.are.equals(0, #_chain.actions)
     end)
 
