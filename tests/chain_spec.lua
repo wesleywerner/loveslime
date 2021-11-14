@@ -157,6 +157,29 @@ describe("chain", function()
         assert.is_true(slime.chain.active("active test"))
     end)
 
-    pending("interact", function()end)
+    it("interact", function()
+
+        -- spy on the slime.interact method
+        local _default = slime.interact
+        local _event = spy.new(slime.interact)
+        slime.interact = _event
+
+        slime.clear()
+        slime.chain.begin("interact test")
+        slime.interact(10, 22)
+        slime.chain.done()
+
+        -- test action parameters
+        local _chain = slime.chain.list["interact test"]
+        assert.are.equals(1, #_chain.actions)
+        assert.are.same({10, 22}, _chain.actions[1].parameters)
+
+        -- test method called n times with correct parameters
+        slime.chain.update()
+        assert.spy(_event).was_called(2)
+        assert.spy(_event).was_called_with(10, 22)
+
+        slime.interact = _default
+    end)
 
 end)

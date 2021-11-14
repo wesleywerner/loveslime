@@ -2946,6 +2946,8 @@ end
 -- many times.
 -- As a rule of thumb, avoid calling this function from event.interact.
 --
+-- This function is @{chain.begin|chainable}.
+--
 -- @tparam number x
 -- X-position to interact with.
 -- This is the scaled screen point, the same you get from love.mousepressed,
@@ -2956,6 +2958,12 @@ end
 -- This is the scaled screen point, the same you get from love.mousepressed,
 -- and not a point in the game's native resolution.
 function slime.interact (x, y)
+
+    -- intercept chaining
+    if chain.capture then
+        chain.add(slime.interact, {x, y})
+        return
+    end
 
     local objects = slime.get_objects(x, y)
     if (not objects) then return end
