@@ -213,6 +213,8 @@ function actor.add (data)
         data._move_delay = 1 / data.speed
     end
 
+    data.sprite = {image=nil, quad=nil, x=0, y=0, r=0, sx=1, sy=1, ox=0, oy=0}
+
     table.insert(actor.list, data)
     actor.sort()
     return actor.get(data.name)
@@ -281,8 +283,8 @@ function actor.update (dt)
                 whom._drawy = whom.y - whom.feet.y
             end
 
-            -- request the next sprite frame
-            whom.sprite = event.request_sprite(whom.name, whom.action, whom.direction, dt)
+            -- request the next sprite frame, updates whom.sprite
+            event.request_sprite(whom.name, whom.action, whom.direction, dt, whom.sprite)
 
         end
     end
@@ -1217,7 +1219,7 @@ end
 
 --- Callback: when an actor sprite is requested.
 -- This gets called when slime requests the sprite info for an actor.
--- You need to override this function to return the sprite info.
+-- You need to override this function to set the sprite info.
 --
 -- @tparam string actor_name
 -- The name of the actor whom the request is for.
@@ -1232,8 +1234,10 @@ end
 -- Delta time since the last update.
 -- This is the value that was given in the call to @{slime.update}.
 --
--- @return @{spriteinfo}
-function event.request_sprite (actor_name, action, direction, dt)
+-- @tparam spriteinfo sprite
+-- Set the image, quad and related properties on this object
+-- to match the requested actor's action.
+function event.request_sprite (actor_name, action, direction, dt, sprite)
 
 end
 
