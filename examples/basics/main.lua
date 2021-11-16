@@ -40,7 +40,7 @@ function love.load ()
     -- add a couple of hotspots to interact with
     slime.hotspot.add("Cameras", 9, 2, 40, 20)
 
-    images={
+    actor_sprites={
         Intercom=love.graphics.newImage("media/intercom-still.png"),
         Player=love.graphics.newImage("media/scientist.png")
     }
@@ -143,20 +143,22 @@ end
 
 function love.mousepressed (x, y, button, istouch, presses)
 
-    -- skip any speech currently on screen, and ignore further clicks.
+    -- skip any speech currently on screen.
     if slime.speech.is_talking() then
         slime.speech.skip()
         return
     end
 
     -- interrupt the chained sequence of events.
-    if slime.chain.active("move to intercom") then
-        slime.chain.clear("move to intercom")
+    -- see @{chain.active}
+    if slime.chain.active("moving towards the intercom") then
+        slime.chain.clear("moving towards the intercom")
         slime.actor.stop("Player")
         return
     end
 
-    -- interact with an object if the mouse is over something
+    -- interact with an object if the mouse is over something.
+    -- see @{slime.interact}
     if statusText then
         slime.interact(x, y)
         return
@@ -214,14 +216,17 @@ function slime.event.interact (event, actor, clicked_x, clicked_y)
     -- see @{speech.say}
     if actor.name == "Intercom" then
 
-        -- ensure we are close enough to speak into the Intercom
+        -- Test Player is close enough to speak into the Intercom.
+        -- If not then move closer and interact again.
         local distance = slime.actor.measure("Player", actor)
 
         if distance > 20 then
-            slime.chain.begin("move to intercom")
-            slime.speech.say("Player", "I am not close enough. I will move closer.")
+            -- begin a chain of of sequencial actions.
+            -- see @{chain.begin}
+            slime.chain.begin("moving towards the intercom")
+            slime.speech.say("Player", "I need to move closer to the Intercom.")
             slime.actor.move_to("Player", actor.name)
-            -- TODO: slime.interact(clicked_x, clicked_y)
+            slime.interact(clicked_x, clicked_y)
             slime.chain.done()
             return
         end
@@ -236,7 +241,11 @@ function slime.event.interact (event, actor, clicked_x, clicked_y)
         -- advance the dialog position
         dialogPosition = math.min(#dialog, dialogPosition + 1)
 
-    elseif actor.name == "Cameras" then
+        return
+
+    end
+
+    if actor.name == "Cameras" then
 
         slime.speech.say("Player", "Our lab is monitored.")
         slime.speech.say("Player", "This is top-secret work.")
@@ -264,8 +273,11 @@ function slime.event.request_sprite(actor_name, action, direction, dt)
     end
 
     return {
-        image=images[actor_name], quad=quad,
-        x=0, y=0, r=0, sx=sx, sy=1, ox=ox, oy=0
+        image=actor_sprites[actor_name],
+        quad=quad,
+        x=0, y=0, r=0,
+        sx=sx, sy=1,
+        ox=ox, oy=0
     }
 
 end
