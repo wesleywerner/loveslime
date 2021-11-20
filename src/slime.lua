@@ -124,10 +124,10 @@ local tool = { }
 -- @tfield string name
 -- The name of the actor.
 --
--- @tfield int x
+-- @tfield number x
 -- The x position of this actor on the stage.
 --
--- @tfield int y
+-- @tfield number y
 -- The y position of this actor on the stage.
 --
 -- @tfield[opt="bottom"] string feet
@@ -495,9 +495,13 @@ function actor.draw ()
 
 end
 
---- Moves an actor to a x,y position.
+--- Moves an actor to the `xy` position on screen.
 -- If a floor was set then path finding is used to find a route.
 -- If no floor was set then a straight line is set as the route.
+--
+-- Note: The point should be in scaled screen coordinates
+-- (like those given by love.mousepressed),
+-- and not a point in the game's native resolution.
 --
 -- This function is @{chain.begin|chainable}.
 --
@@ -506,13 +510,9 @@ end
 --
 -- @tparam number x
 -- X-position to move to.
--- This is the scaled screen point, the same you get from love.mousepressed,
--- and not a point in the game's native resolution.
 --
 -- @tparam number y
 -- Y-position to move to.
--- This is the scaled screen point, the same you get from love.mousepressed,
--- and not a point in the game's native resolution.
 --
 -- @see floor.set
 -- @see actor.move_to
@@ -804,7 +804,7 @@ end
 
 --- Clear bags.
 -- Removes all items from all bags.
--- This gets called by @{slime.clear}
+-- This gets called by @{slime.reset}.
 --
 -- @local
 function bag.clear ()
@@ -1250,7 +1250,8 @@ end
 -- This is a callback function that you can override.
 --
 -- @tparam string event
--- The name of the cursor
+-- The name of the current cursor as set by @{cursor.set}.
+-- If no cursor was set then "interact" is given as the default.
 --
 -- @tparam object data
 -- The @{actorinfo|actor} or @{hotspotinfo|hotspot} being interacted with.
@@ -1387,12 +1388,17 @@ function cursor.set (data)
 
 end
 
---- Update the cursor.
+--- Update the cursor position.
+--
+-- Note: The point should be in scaled screen coordinates
+-- (like those given by love.mousepressed),
+-- and not a point in the game's native resolution.
 --
 -- @tparam number x
--- The new x position of the cursor.
+-- The new x position.
+--
 -- @tparam number y
--- The new y position of the cursor.
+-- The new y position.
 function cursor.update (x, y)
 
     x, y = tool.scale_point(x, y)
@@ -1540,17 +1546,19 @@ function floor.size ()
 end
 
 --- Get the points of a line.
--- This is called internally by slime.
--- http://www.roguebasin.com/index.php?title=Bresenham%27s_Line_Algorithm#Lua
+-- This is called internally by path finding.
 --
--- @tparam table start
--- {x, y} of the line start.
+-- This implementation is taken from
+-- <http://www.roguebasin.com/index.php?title=Bresenham%27s_Line_Algorithm#Lua>
 --
--- @tparam table goal
--- {x, y} of the line end.
+-- @tparam point start
+-- line start.
+--
+-- @tparam point goal
+-- line end.
 --
 -- @return
--- table of points from start to goal.
+-- table of @{point|points} from start to goal.
 --
 -- @local
 function floor.bresenham (start, goal)
@@ -1682,6 +1690,8 @@ end
 --- Add a hotspot.
 -- A hotspot provides a clickable area on screen, which is returned in
 -- the @{event.interact} callback and the @{slime.get_objects} function.
+--
+-- Note: The points should be in the native game resolution.
 --
 -- @tparam string name
 -- Name of the hotspot.
@@ -2902,7 +2912,10 @@ end
 
 
 --- Get objects at a point.
--- Includes actors and hotspots.
+--
+-- Note: The point should be in scaled screen coordinates
+-- (like those given by love.mousepressed),
+-- and not a point in the game's native resolution.
 --
 -- @tparam number x
 -- X-position to test.
@@ -2911,7 +2924,7 @@ end
 -- Y-position to test.
 --
 -- @treturn table
--- List of objects at the xy point.
+-- of @{actorinfo|actor} and @{hotspotinfo|hotspot} objects.
 function slime.get_objects (x, y)
 
     x, y = tool.scale_point(x, y)
@@ -2942,9 +2955,13 @@ function slime.get_objects (x, y)
 end
 
 --- Interact with objects on the stage.
--- This calls the @{event.interact} callback for every
--- object that at the given `xy` position, with the current cursor name
+-- This fires @{event.interact} for every
+-- object that at the given point, the current cursor name is
 -- passed to that event.
+--
+-- Note: The point should be in scaled screen coordinates
+-- (like those given by love.mousepressed),
+-- and not a point in the game's native resolution.
 --
 -- Note: Care should be taken when calling this function from inside the
 -- @{event.interact} callback. This can cause an infinite loop if the object
@@ -2957,14 +2974,10 @@ end
 -- This function is @{chain.begin|chainable}.
 --
 -- @tparam number x
--- X-position to interact with.
--- This is the scaled screen point, the same you get from love.mousepressed,
--- and not a point in the game's native resolution.
+-- The x point of the interaction.
 --
 -- @tparam number y
--- Y-position to interact with.
--- This is the scaled screen point, the same you get from love.mousepressed,
--- and not a point in the game's native resolution.
+-- The y point of the interaction.
 function slime.interact (x, y)
 
     -- intercept chaining
