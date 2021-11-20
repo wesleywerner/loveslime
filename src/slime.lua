@@ -554,7 +554,7 @@ function actor.move (actor_name, x, y)
 
     -- If the goal is on a solid block find the nearest open point
     if floor.hasMap() then
-        if not floor.isWalkable(goal.x, goal.y) then
+        if not floor.is_walkable(goal.x, goal.y) then
             goal = floor.nearest_walkable_point(goal)
         end
     end
@@ -565,7 +565,7 @@ function actor.move (actor_name, x, y)
     local route
 
     if floor.hasMap() then
-        route = path.find(width, height, start, goal, floor.isWalkable, useCache)
+        route = path.find(width, height, start, goal, floor.is_walkable, useCache)
     else
         -- no floor is loaded, so move in a straight line
         route = floor.bresenham(start, goal)
@@ -1434,7 +1434,7 @@ end
 -- This is called internally by @{slime.clear}.
 function floor.clear ()
 
-    floor.walkableMap = nil
+    floor.data = nil
 
 end
 
@@ -1444,7 +1444,7 @@ end
 -- @local
 function floor.hasMap ()
 
-    return floor.walkableMap ~= nil
+    return floor.data ~= nil
 
 end
 
@@ -1486,7 +1486,7 @@ function floor.convert (filename)
 
     if setting["cache_floors"] then
         if cache.contains(filename) then
-            floor.walkableMap = cache.get(filename)
+            floor.data = cache.get(filename)
             return
         end
     end
@@ -1496,7 +1496,7 @@ function floor.convert (filename)
     local g = nil
     local b = nil
     local a = nil
-    floor.walkableMap = { }
+    floor.data = { }
 
     -- builds a 2D array of the image size, each index references
     -- a pixel in the mask
@@ -1512,11 +1512,11 @@ function floor.convert (filename)
                 table.insert(row, true)
             end
         end
-        table.insert(floor.walkableMap, row)
+        table.insert(floor.data, row)
     end
 
     if setting["cache_floors"] then
-        cache.set(filename, floor.walkableMap)
+        cache.set(filename, floor.data)
     end
 
 end
@@ -1534,13 +1534,13 @@ end
 -- @return true if the position is open to walk
 --
 -- @local
-function floor.isWalkable (x, y)
+function floor.is_walkable (x, y)
 
     if floor.hasMap() then
         -- clamp to floor boundary
         x = tool.clamp(x, 1, floor.width - 1)
         y = tool.clamp(y, 1, floor.height - 1)
-        return floor.walkableMap[y][x]
+        return floor.data[y][x]
     else
         -- no floor is always walkable
         return true
@@ -1554,7 +1554,7 @@ end
 -- @local
 function floor.size ()
 
-    if floor.walkableMap then
+    if floor.data then
         return floor.width, floor.height
     else
         -- without a floor map, we return the background size
@@ -1662,7 +1662,7 @@ function floor.nearest_walkable_point (point)
                 continueSearch = false
             else
                 goal = table.remove(walkTheLine)
-                continueSearch = not floor.isWalkable(goal.x, goal.y)
+                continueSearch = not floor.is_walkable(goal.x, goal.y)
             end
         end
         -- math.sqrt( (x2 - x1)^2 + (y2 - y1)^2 )
