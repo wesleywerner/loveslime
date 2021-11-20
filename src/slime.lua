@@ -895,40 +895,47 @@ end
 --  \___\__,_|\___|_| |_|\___|
 --
 
---- Initialize image cache.
--- Clears cached image references.
+--- Clears the cache store.
 --
 -- @local
-function cache.init ()
-
-    -- Calling a table like a function
-    setmetatable(cache, {
-        __call = function (cache, ...)
-            return cache.interface(...)
-        end
-    })
+function cache.clear ()
 
     cache.store = { }
 
 end
 
---- Save to cache and return a copy.
+--- Test if the cache contains a key.
 --
--- @tparam string path
--- Path to the image to load.
+-- @tparam string key
+-- The key to test.
+function cache.contains (key)
+
+    return cache.store[key] ~= nil
+
+end
+
+--- Get a cached item.
+--
+-- @tparam string key
+-- The key to retrieve.
+function cache.get (key)
+
+    return cache.store[key]
+
+end
+
+--- Save object to the cache.
+--
+-- @tparam string key
+-- The identifier for this cache item.
+--
+-- @tparam object data
+-- The data to store.
 --
 -- @local
-function cache.interface (path)
+function cache.set (key, data)
 
-    -- cache tileset image to save loading duplicate images
-    local image = cache.store[path]
-
-    if not image then
-        image = love.graphics.newImage(path)
-        cache.store[path] = image
-    end
-
-    return image
+    cache.store[key] = data
 
 end
 
@@ -1477,6 +1484,13 @@ function floor.convert (filename)
     -- store the size
     floor.width, floor.height = w, h
 
+    if setting["cache_floors"] then
+        if cache.contains(filename) then
+            floor.walkableMap = cache.get(filename)
+            return
+        end
+    end
+
     local row = nil
     local r = nil
     local g = nil
@@ -1499,6 +1513,10 @@ function floor.convert (filename)
             end
         end
         table.insert(floor.walkableMap, row)
+    end
+
+    if setting["cache_floors"] then
+        cache.set(filename, floor.walkableMap)
     end
 
 end
@@ -2863,7 +2881,7 @@ function slime.reset ()
     slime.clear()
     bag.clear()
     setting.clear()
-    cache.init()
+    cache.clear()
     ooze.clear()
 
 end
@@ -3025,8 +3043,11 @@ end
 -- The number of times @{slime.interact} can be called successively before
 -- error "interact recursion detected" is raised. (default 20)
 --
--- @tfield love.Font
+-- @tfield love.Font speech_font
 -- The default font used by the @{event.draw_speech} callback.
+--
+-- @tfield boolean cache_floors
+-- Walkable floors are cached.
 --
 -- @table settings
 
@@ -3038,6 +3059,7 @@ function setting.clear ()
 
     setting["speech_font"] = love.graphics.newFont(10)
     setting["interact_recursion_limit"] = 20
+    setting["cache_floors"] = true
 
 end
 
@@ -3222,6 +3244,7 @@ slime.reset()
 slime.actor = actor
 slime.background = background
 slime.bag = bag
+slime.cache = cache
 slime.chain = chain
 slime.cursor = cursor
 slime.hotspot = hotspot

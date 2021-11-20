@@ -24,4 +24,18 @@ describe("floor", function()
         assert.are.equals(10, _h)
     end)
 
+    it("cache enabled", function()
+        slime.reset()
+        slime.setting["cache_floors"] = true
+        slime.floor.set("small.png")
+        assert.is_true(slime.cache.contains("small.png"))
+    end)
+
+    it("cache disabled", function()
+        slime.reset()
+        slime.setting["cache_floors"] = false
+        slime.floor.set("small.png")
+        assert.is_false(slime.cache.contains("small.png"))
+    end)
+
 end)
