@@ -2536,19 +2536,7 @@ function path.adjacent_points (width, height, point, openTest)
 
     local result = { }
 
-    local positions = {
-        { x = 0, y = -1 },  -- top
-        { x = -1, y = 0 },  -- left
-        { x = 0, y = 1 },   -- bottom
-        { x = 1, y = 0 },   -- right
-        -- include diagonal movements
-        { x = -1, y = -1 },   -- top left
-        { x = 1, y = -1 },   -- top right
-        { x = -1, y = 1 },   -- bot left
-        { x = 1, y = 1 },   -- bot right
-    }
-
-    for _, position in ipairs(positions) do
+    for _, position in ipairs(path.adjacent_positions) do
         local px = tool.clamp(point.x + position.x, 1, width)
         local py = tool.clamp(point.y + position.y, 1, height)
         local value = openTest(px, py)
@@ -2598,6 +2586,18 @@ function path.find (width, height, start, goal, openTest, useCache)
     local success = false
     local open = { }
     local closed = { }
+
+    path.adjacent_positions = {
+        { x = 0, y = -1 },  -- top
+        { x = -1, y = 0 },  -- left
+        { x = 0, y = 1 },   -- bottom
+        { x = 1, y = 0 },   -- right
+        -- include diagonal movements
+        { x = -1, y = -1 },   -- top left
+        { x = 1, y = -1 },   -- top right
+        { x = -1, y = 1 },   -- bot left
+        { x = 1, y = 1 },   -- bot right
+    }
 
     start.score = 0
     start.G = 0
