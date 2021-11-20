@@ -3032,6 +3032,22 @@ end
 --  \__\___/ \___/|_|___/
 --
 
+--- Test a value is between a range.
+--
+-- @tparam number n
+-- The value to test
+--
+-- @tparam number a
+-- The inclusive minimum
+--
+-- @tparam number b
+-- The inclusive maximum
+--
+-- @treturn boolean
+function tool.between (n, a, b)
+    return n >= a and n <= b
+end
+
 --- Get direction between two points.
 --
 -- @tparam number x1
@@ -3064,11 +3080,6 @@ function tool.calculate_direction (x1, y1, x2, y2)
     --         S
     --         0
 
-    -- test value between a range
-    local between = function(n, a, b)
-        return n >= a and n <= b
-    end
-
     -- calculate the angle between the two points
     local ang = math.atan2(y2 - y1, x2 - x1) * 180 / math.pi
 
@@ -3076,13 +3087,13 @@ function tool.calculate_direction (x1, y1, x2, y2)
     ang = 90 - ang
     if (ang < 0) then ang = ang + 360 end
 
-    if between(ang, 0, 45) or between(ang, 315, 359) then
+    if tool.between(ang, 0, 45) or tool.between(ang, 315, 359) then
         return 'south'
-    elseif between(ang, 45, 135) then
+    elseif tool.between(ang, 45, 135) then
         return 'east'
-    elseif between(ang, 135, 225) then
+    elseif tool.between(ang, 135, 225) then
         return 'north'
-    elseif between(ang, 225, 315) then
+    elseif tool.between(ang, 225, 315) then
         return 'west'
     end
 
