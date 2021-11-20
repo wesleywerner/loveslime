@@ -1130,6 +1130,10 @@ end
 
 --- Sprite info.
 -- A table that defines the data needed to draw a sprite.
+-- The transformation values `x, y, r, sx, sy, ox, oy` are passed
+-- to `love.draw()`. The origin offsets positions the point around
+-- which scaling and rotations revolve.
+-- Consult the Löve API to learn more about these values.
 --
 -- @table spriteinfo
 --
