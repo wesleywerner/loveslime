@@ -213,7 +213,7 @@ function actor.add (data)
         data._move_delay = 1 / data.speed
     end
 
-    data.sprite = {image=nil, quad=nil, x=0, y=0, r=0, sx=1, sy=1, ox=0, oy=0}
+    data.sprite = {image=data.image, quad=nil, x=0, y=0, r=0, sx=1, sy=1, ox=0, oy=0}
 
     table.insert(actor.list, data)
     actor.sort()
@@ -1295,6 +1295,8 @@ end
 
 --- Callback: when an actor speech has started.
 -- This is a callback function that you can override.
+-- Note: If you override this method you likely will want to call
+-- @{actor.pause} from your implementation, to pause actor movement while talking.
 --
 -- @tparam string actor_name
 -- The talking actor
@@ -1308,6 +1310,8 @@ end
 
 --- Callback: when an actor speech has ended.
 -- This is a callback function that you can override.
+-- Note: If you override this method you likely will want to call
+-- @{actor.resume} from your implementation, to resume actor movement after talking.
 --
 -- @tparam string actor_name
 -- The actor whom has finished talking.
