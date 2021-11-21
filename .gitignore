@@ -10,8 +10,8 @@ release/
 doc/
 
 # slime lib in examples
-examples/*/slime.lua
-examples/*/simpleanim.lua
+examples/slime.lua
+examples/simpleanim.lua
 tutorial/slime
 
 # user files

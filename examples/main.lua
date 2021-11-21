@@ -1,6 +1,6 @@
 local examples = {
-    "getting-started",
-    "speech",
+    "basic_setup",
+    "animated_sprites",
     "events"
 }
 

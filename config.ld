@@ -10,12 +10,9 @@ all = true
 sort = true
 prettify_files = "show"
 examples = {
-    "examples/basics",
-    exclude = {
-            "examples/basics/conf.lua",
-            "examples/basics/slime.lua",
-            "examples/basics/simpleanim.lua"
-    }
+    "examples/basic_setup.lua",
+    "examples/animated_sprites.lua",
+    "examples/events.lua"
 }
 readme = "README.md"
 format = "markdown"
