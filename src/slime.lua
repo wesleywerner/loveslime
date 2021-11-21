@@ -553,7 +553,7 @@ function actor.move (actor_name, x, y)
     local goal = { x = x, y = y }
 
     -- If the goal is on a solid block find the nearest open point
-    if floor.hasMap() then
+    if floor.is_set() then
         if not floor.is_walkable(goal.x, goal.y) then
             goal = floor.nearest_walkable_point(goal)
         end
@@ -564,7 +564,7 @@ function actor.move (actor_name, x, y)
 
     local route
 
-    if floor.hasMap() then
+    if floor.is_set() then
         route = path.find(width, height, start, goal, floor.is_walkable, useCache)
     else
         -- no floor is loaded, so move in a straight line
@@ -1442,7 +1442,7 @@ end
 -- This is called internally by slime.
 --
 -- @local
-function floor.hasMap ()
+function floor.is_set ()
 
     return floor.data ~= nil
 
@@ -1462,61 +1462,18 @@ function floor.set (filename)
         return
     end
 
-    floor.convert(filename)
-
-end
-
---- Convert an image to a floor mask.
--- Prepares the mask for use in path finding.
--- This is called internally by slime.
---
--- @tparam string filename
--- The floor map image filename
---
--- @local
-function floor.convert (filename)
-
-    -- Converts a walkable image mask into map points.
-    local mask = love.image.newImageData(filename)
-    local w = mask:getWidth()
-    local h = mask:getHeight()
-
-    -- store the size
-    floor.width, floor.height = w, h
-
-    if setting["cache_floors"] then
-        if cache.contains(filename) then
-            floor.data = cache.get(filename)
-            return
-        end
+    if cache.contains(filename) then
+        local _store = cache.get(filename)
+        floor.data = _store.data
+        floor.width, floor.height = _store.width, _store.height
+        return
     end
 
-    local row = nil
-    local r = nil
-    local g = nil
-    local b = nil
-    local a = nil
-    floor.data = { }
-
-    -- builds a 2D array of the image size, each index references
-    -- a pixel in the mask
-    for ih = 1, h - 1 do
-        row = { }
-        for iw = 1, w - 1 do
-            r, g, b, a = mask:getPixel(iw, ih)
-            if (r + g + b == 0) then
-                -- not walkable
-                table.insert(row, false)
-            else
-                -- walkable
-                table.insert(row, true)
-            end
-        end
-        table.insert(floor.data, row)
-    end
+    floor.data = love.image.newImageData(filename)
+    floor.width, floor.height = floor.data:getWidth(), floor.data:getHeight()
 
     if setting["cache_floors"] then
-        cache.set(filename, floor.data)
+        cache.set(filename, {data=floor.data, width=floor.width, height=floor.height})
     end
 
 end
@@ -1536,11 +1493,12 @@ end
 -- @local
 function floor.is_walkable (x, y)
 
-    if floor.hasMap() then
+    if floor.is_set() then
         -- clamp to floor boundary
         x = tool.clamp(x, 1, floor.width - 1)
         y = tool.clamp(y, 1, floor.height - 1)
-        return floor.data[y][x]
+        local r, g, b, a = floor.data:getPixel(x, y)
+        return (r + g + b > 0)
     else
         -- no floor is always walkable
         return true
@@ -1873,6 +1831,8 @@ end
 
 -- components inside ooze:
 
+ooze.floor = {}
+
 -- Logs events
 ooze.logger = { }
 
@@ -1997,6 +1957,18 @@ function ooze.wheelmoved (x, y)
 
 end
 
+function ooze.floor.draw (scale)
+    if floor.is_set () then
+        if not floor.floor_image then
+            floor.floor_image = love.graphics.newImage(floor.data)
+        end
+        love.graphics.push()
+        love.graphics.scale(scale)
+        love.graphics.setColor(1, 1, 1, .2)
+        love.graphics.draw(floor.floor_image)
+        love.graphics.pop()
+    end
+end
 
 --                       _
 --   ___   ___ _______  | | ___   __ _  __ _  ___ _ __
