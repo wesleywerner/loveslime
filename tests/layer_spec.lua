@@ -42,4 +42,34 @@ describe("layer", function()
         assert.are.same(_expected, _data.image.pixeldata)
     end)
 
+    it("cache enabled", function()
+        _G.love.mock_pixels = {}
+        _G.love.mock_pixels["background.png"] = {
+                                {1,1,1,1,1},
+                                {2,2,2,2,2},
+                                {3,3,3,3,3},
+                                {4,4,4,4,4},
+                                {5,5,5,5,5}}
+        slime.reset()
+        slime.setting["cache_layers"] = true
+        slime.layer.add("background.png", "small.png", 10)
+        _G.love.mock_pixels = nil
+        assert.is_true(slime.cache.contains("background.pngsmall.png"))
+    end)
+
+    it("cache disabled", function()
+        _G.love.mock_pixels = {}
+        _G.love.mock_pixels["background.png"] = {
+                                {1,1,1,1,1},
+                                {2,2,2,2,2},
+                                {3,3,3,3,3},
+                                {4,4,4,4,4},
+                                {5,5,5,5,5}}
+        slime.reset()
+        slime.setting["cache_layers"] = false
+        slime.layer.add("background.png", "small.png", 10)
+        _G.love.mock_pixels = nil
+        assert.is_false(slime.cache.contains("background.pngsmall.png"))
+    end)
+
 end)

@@ -1764,11 +1764,24 @@ function layer.add (background, mask, baseline)
     -- TODO: allow empty baseline, which is then calculated as the
     --      largest Y point in the mask.
 
+    local data = nil
+    local key = background..mask
+
+    if cache.contains(key) then
+        data = cache.get(key)
+    else
+        data = layer.image_from_mask(background, mask)
+    end
+
     local newLayer = {
-        ["image"] = layer.image_from_mask(background, mask),
+        ["image"] = data,
         ["baseline"] = baseline,
         _is_layer = true
         }
+
+    if setting["cache_layers"] then
+        cache.set(key, data)
+    end
 
     -- layers are merged with actors so that we can perform
     -- efficient sorting, enabling drawing of actors behind layers.
@@ -3021,6 +3034,9 @@ end
 -- @tfield boolean cache_floors
 -- Walkable floors are cached.
 --
+-- @tfield boolean cache_layers
+-- Layers are cached.
+--
 -- @table settings
 
 --- Clear slime settings.
@@ -3032,6 +3048,7 @@ function setting.clear ()
     setting["speech_font"] = love.graphics.newFont(10)
     setting["interact_recursion_limit"] = 20
     setting["cache_floors"] = true
+    setting["cache_layers"] = true
 
 end
 
