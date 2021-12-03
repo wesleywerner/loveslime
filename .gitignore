@@ -10,6 +10,7 @@ release/
 doc/
 
 # slime lib in examples
+examples/ooze.lua
 examples/slime.lua
 examples/simpleanim.lua
 tutorial/slime

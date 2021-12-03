@@ -15,6 +15,7 @@ local scale = 5
 
 -- stores the displayed status text
 local status_text = nil
+local status_font = nil
 
 -- Stores animations and sprites.
 local animations = {}
@@ -61,6 +62,9 @@ function love.load ()
     -- set window size, font and drawing filter
     love.window.setMode(width, height)
     love.graphics.setDefaultFilter("nearest", "nearest", 1)
+    require("ooze")(slime)
+
+    status_font = love.graphics.newFont(10)
 
     -- load the cursor image.
     -- we do this here, after calling setDefaultFilter, because
@@ -176,6 +180,7 @@ function love.draw ()
     -- print the text of the thing under the mouse cursor.
     if status_text then
         love.graphics.setColor({1, 1, 1})
+        love.graphics.setFont(status_font)
         love.graphics.printf(status_text, 0, 84, 170, "center")
     end
 

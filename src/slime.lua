@@ -43,7 +43,7 @@ local slime = {
 -- The draw scale is used to calculate the correct point on the screen
 -- when the game is drawn at a enlarged scale.
 -- Set in the slime.draw function.
-local draw_scale = 1
+-- slime.draw_scale = 1
 
 -- Stores the delta time from the most recent update.
 local last_dt = 0
@@ -100,9 +100,6 @@ local setting = { }
 
 -- Manages talking actors.
 local speech = { }
-
--- Provides an integrated debugging environment
-local ooze = { }
 
 -- Reusable functions
 local tool = { }
@@ -523,7 +520,7 @@ function actor.move (actor_name, x, y)
 
     -- intercept chaining
     if chain.capture then
-        ooze.append(string.format("chaining %s move", actor_name))
+        tool.logger(string.format("chaining %s move", actor_name))
         chain.add(
             actor.move,
             {actor_name, x, y},
@@ -545,7 +542,7 @@ function actor.move (actor_name, x, y)
     local whom = actor.get(actor_name)
 
     if (whom == nil) then
-        ooze.append("No actor named " .. actor_name)
+        tool.logger("No actor named " .. actor_name)
         return
     end
 
@@ -576,9 +573,9 @@ function actor.move (actor_name, x, y)
         whom.clicked_y = y
         whom.path = route
         whom.action = "walk"
-        ooze.append("move " .. actor_name .. " to " .. x .. " : " .. y)
+        tool.logger("move " .. actor_name .. " to " .. x .. " : " .. y)
     else
-        ooze.append("no actor path found")
+        tool.logger("no actor path found")
     end
 
 end
@@ -599,7 +596,7 @@ function actor.turn (actor_name, direction)
 
     -- intercept chaining
     if chain.capture then
-        ooze.append(string.format("chaining %s turn %s", actor_name, direction))
+        tool.logger(string.format("chaining %s turn %s", actor_name, direction))
         chain.add(actor.turn, {actor_name, direction})
         return
     end
@@ -629,9 +626,9 @@ function actor.move_to (actor_name, target_name)
     local whom = actor.get(target_name)
 
     if (whom) then
-        actor.move(actor_name, whom.x * draw_scale, whom.y * draw_scale)
+        actor.move(actor_name, whom.x * slime.draw_scale, whom.y * slime.draw_scale)
     else
-        ooze.append("no actor named " .. target_name)
+        tool.logger("no actor named " .. target_name)
     end
 
 end
@@ -677,10 +674,10 @@ function actor.stop (actor_name)
     local whom = actor.get(actor_name)
 
     if whom then
-        ooze.append(actor_name .. " moved complete")
+        tool.logger(actor_name .. " moved complete")
         whom.path = nil
         whom.action = "idle"
-        event.actor_moved(whom.name, whom.clicked_x * draw_scale, whom.clicked_y * draw_scale)
+        event.actor_moved(whom.name, whom.clicked_x * slime.draw_scale, whom.clicked_y * slime.draw_scale)
     end
 
 end
@@ -842,7 +839,7 @@ function bag.add (name, object)
     -- notify the callback
     event.bag_updated(name, object.name)
 
-    ooze.append(string.format("Added %s to bag", object.name))
+    tool.logger(string.format("Added %s to bag", object.name))
 
 end
 
@@ -860,7 +857,7 @@ function bag.remove (bag_name, thing_name)
     for i, item in pairs(inv) do
         if (item.name == thing_name) then
             table.remove(inv, i)
-            ooze.append(string.format("Removed %s", thing_name))
+            tool.logger(string.format("Removed %s", thing_name))
             event.bag_updated(bag_name, thing_name)
         end
     end
@@ -990,7 +987,7 @@ function chain.begin (name)
     if not _current then
         _current = {name=name, actions={}}
         chain.list[name] = _current
-        ooze.append(string.format("created chain %q", name))
+        tool.logger(string.format("created chain %q", name))
     end
 
     chain.capture = _current
@@ -1086,14 +1083,14 @@ function chain.update ()
 
             -- run the action once only
             if not command.ran then
-                --ooze.append (string.format("running chain command"))
+                --tool.logger (string.format("running chain command"))
                 command.ran = true
                 command.func(unpack(command.parameters))
             end
 
             -- remove expired actions from this chain
             if command.expired(unpack(command.parameters)) then
-                --ooze.append (string.format("chain action expired"))
+                --tool.logger (string.format("chain action expired"))
                 table.remove(chain.actions, 1)
             end
 
@@ -1114,7 +1111,7 @@ end
 function chain.wait (seconds)
 
     if chain.capture then
-        --ooze.append (string.format("waiting %ds", seconds))
+        --tool.logger (string.format("waiting %ds", seconds))
         chain.add(
             function() end,
             {seconds},
@@ -1196,7 +1193,7 @@ end
 function event.draw_speech (actor_name, words)
 
     local y = 0
-    local w = love.graphics.getWidth() / draw_scale
+    local w = love.graphics.getWidth() / slime.draw_scale
     local _actor = actor.get(actor_name)
 
     love.graphics.setFont(setting["speech_font"])
@@ -1395,7 +1392,7 @@ function cursor.set (data)
 
     cursor.current = data
 
-    ooze.append(string.format("set cursor %q", data.name))
+    tool.logger(string.format("set cursor %q", data.name))
 
 end
 
@@ -1600,6 +1597,8 @@ end
 --
 -- @local
 function floor.nearest_walkable_point (point)
+
+    -- TODO: rewrite this method. fan out until an open point is found.
 
     -- Get the dimensions of the walkable floor map.
     local width, height = floor.size()
@@ -1834,566 +1833,6 @@ function layer.image_from_mask (source, mask)
 
     return love.graphics.newImage(layerData)
 
-end
-
-
-
--- _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
---   ___   ___ _______
---  / _ \ / _ \_  / _ \
--- | (_) | (_) / /  __/
---  \___/ \___/___\___|
---
--- Provides helpful debug information while building your game.
-
--- components inside ooze:
-
-ooze.floor = {}
-
--- Logs events
-ooze.logger = { }
-
--- Outlines stage elements
-ooze.outliner = { }
-
--- Handles the trigger area
-ooze.trigger = { }
-
--- Handles viewing animated sprites
-ooze.spriteview = { }
-
--- Provides a reusable menu system
-ooze.menu = { }
-
-
---- Clear and reset debug variables.
-function ooze.clear ()
-
-    ooze.trigger.init()
-    ooze.logger.init()
-    ooze.outliner.init()
-    ooze.spriteview.init()     -- incomplete and not listed in available states
-    ooze.menu.init()
-
-    -- list available ooze states
-    ooze.states = { nil, ooze.logger, ooze.outliner }
-    ooze.index = 1
-
-    ooze.load_menu()
-
-end
-
-
---- Append to the log.
---
--- @local
-function ooze.append (text)
-
-    ooze.logger.append(text)
-
-end
-
-
---- Draw the debug overlay.
-function ooze.draw (scale)
-
-    -- drawing enabled ooze updates
-    ooze.enabled = true
-
-    ooze.trigger.draw(scale)
-    ooze.menu.draw()
-
-    if ooze.states[ooze.index] then
-        ooze.states[ooze.index].draw(scale)
-    end
-
-end
-
-
-function ooze.mousemoved (x, y, dx, dy, istouch)
-
-    ooze.menu.mousemoved(x, y, dx, dy, istouch)
-
-end
-
-function ooze.mousepressed (x, y, button, istouch, presses)
-
-    -- test if the trigger zone was clicked
-    if ooze.trigger.mousepressed(x, y) then
-
-        -- move to the next state
-        ooze.index = ooze.index + 1
-
-        -- wrap states
-        if ooze.index > #ooze.states then
-            ooze.index = 1
-        end
-
-        -- load new menu options
-        ooze.load_menu()
-
-        return true
-    end
-
-    -- pass this event through to the current state
-    local state = ooze.states[ooze.index]
-    if state and state.mousepressed then
-        local handled = state.mousepressed(x, y, button, istouch, presses)
-        -- handled events are eaten up
-        if handled == true then
-            return handled
-        end
-    end
-
-end
-
-
---- Loads the menu options for the state.
---
--- @local
-function ooze.load_menu ()
-
-    local state = ooze.states[ooze.index]
-    if state and state.build_menu then
-        ooze.menu.set(state.build_menu())
-    else
-        ooze.menu.clear()
-    end
-
-end
-
-function ooze.update (dt)
-
-    ooze.menu.update(dt)
-
-end
-
-function ooze.wheelmoved (x, y)
-
-    ooze.menu.wheelmoved(x, y)
-
-end
-
-function ooze.floor.draw (scale)
-    if floor.is_set () then
-        if not floor.floor_image then
-            floor.floor_image = love.graphics.newImage(floor.data)
-        end
-        love.graphics.push()
-        love.graphics.scale(scale)
-        love.graphics.setColor(1, 1, 1, .2)
-        love.graphics.draw(floor.floor_image)
-        love.graphics.pop()
-    end
-end
-
---                       _
---   ___   ___ _______  | | ___   __ _  __ _  ___ _ __
---  / _ \ / _ \_  / _ \ | |/ _ \ / _` |/ _` |/ _ \ '__|
--- | (_) | (_) / /  __/ | | (_) | (_| | (_| |  __/ |
---  \___/ \___/___\___| |_|\___/ \__, |\__, |\___|_|
---                               |___/ |___/
---
-
-function ooze.logger.init ()
-
-    ooze.logger.log = { }
-
-    -- debug border
-    ooze.logger.padding = 10
-    ooze.logger.width, ooze.logger.height = love.graphics.getDimensions()
-    ooze.logger.width = ooze.logger.width - (ooze.logger.padding * 2)
-    ooze.logger.height = ooze.logger.height - (ooze.logger.padding * 2)
-
-    -- the font for printing debug texts
-    ooze.logger.font = love.graphics.newFont(12)
-    ooze.logger.color = {0, 1, 0}
-
-end
-
-function ooze.logger.append (text)
-
-    table.insert(ooze.logger.log, text)
-
-    -- cull the log
-    if (#ooze.logger.log > 20) then
-        table.remove(ooze.logger.log, 1)
-    end
-
-end
-
-function ooze.logger.draw (scale)
-
-    love.graphics.setColor(ooze.logger.color)
-    love.graphics.setFont(ooze.logger.font)
-
-    -- print fps
-    love.graphics.printf(
-        string.format("%d fps", love.timer.getFPS()),
-        ooze.logger.padding, ooze.logger.padding, ooze.logger.width, "center")
-
-    -- print background info
-    if (background.index and background.timer) then
-        love.graphics.printf(
-            string.format("background #%d showing for %.1f",
-            background.index, background.timer),
-            ooze.logger.padding, ooze.logger.padding, ooze.logger.width, "right")
-    end
-
-    -- print log
-    for i, n in ipairs(ooze.logger.log) do
-        love.graphics.setColor({0, 0, 0})
-        love.graphics.print(n, ooze.logger.padding + 1, ooze.logger.padding + 1 + (16 * i))
-        love.graphics.setColor(ooze.logger.color)
-        love.graphics.print(n, ooze.logger.padding, ooze.logger.padding + (16 * i))
-    end
-
-end
-
-
---                                   _   _ _
---   ___   ___ _______    ___  _   _| |_| (_)_ __   ___ _ __
---  / _ \ / _ \_  / _ \  / _ \| | | | __| | | '_ \ / _ \ '__|
--- | (_) | (_) / /  __/ | (_) | |_| | |_| | | | | |  __/ |
---  \___/ \___/___\___|  \___/ \__,_|\__|_|_|_| |_|\___|_|
---
-
-function ooze.outliner.init ()
-
-    ooze.outliner.width, ooze.outliner.height = love.graphics.getDimensions()
-
-    ooze.outliner.hotspotColor = {1, 1, 0, 0.8}  -- yellow
-    ooze.outliner.actorColor = {0, 0, 1, 0.8}    -- blue
-
-    -- list of colors we can cycle through so each layer has it's own.
-    ooze.outliner.layerColors = {
-        {1, 0, 0, 0.5},     -- red
-        {0, 1, 0, 0.5},     -- green
-        {0.5, 0, 1, 0.5},   -- purple
-        {1, 0, 1, 0.5},     -- magenta
-    }
-
-end
-
-function ooze.outliner.draw (scale)
-
-    -- draw object outlines to scale
-    love.graphics.push()
-    love.graphics.scale(scale)
-
-    -- outline hotspots
-    love.graphics.setColor(ooze.outliner.hotspotColor)
-    for ihotspot, hotspot in pairs(hotspot.list) do
-        love.graphics.rectangle("line", hotspot.x, hotspot.y, hotspot.w, hotspot.h)
-    end
-
-    -- track layer counter
-    local layerCounter = 1
-
-    -- outline actors
-    for _, actor in ipairs(actor.list) do
-        if actor._is_actor then
-            love.graphics.setColor(ooze.outliner.actorColor)
-            -- TODO calculate draw position in actor:update
-            love.graphics.rectangle("line", actor._drawx, actor._drawy, actor.width, actor.height)
-            love.graphics.circle("line", actor.x, actor.y, 1, 6)
-        elseif actor._is_layer then
-            -- draw baselines for layers
-            local layerColorIndex = math.max(1, layerCounter % (#ooze.outliner.layerColors + 1))
-            love.graphics.setColor(ooze.outliner.layerColors[layerColorIndex])
-            love.graphics.draw(actor.image)
-            love.graphics.line(0, actor.baseline, ooze.outliner.width, actor.baseline)
-            layerCounter = layerCounter + 1
-        end
-    end
-
-    love.graphics.pop()
-
-end
-
-function ooze.outliner.build_menu ()
-
-    return {
-
-    }
-
-end
-
-
---                       _        _
---   ___   ___ _______  | |_ _ __(_) __ _  __ _  ___ _ __
---  / _ \ / _ \_  / _ \ | __| '__| |/ _` |/ _` |/ _ \ '__|
--- | (_) | (_) / /  __/ | |_| |  | | (_| | (_| |  __/ |
---  \___/ \___/___\___|  \__|_|  |_|\__, |\__, |\___|_|
---                                  |___/ |___/
-
-function ooze.trigger.init ()
-
-    ooze.trigger.width, ooze.trigger.height = love.graphics.getDimensions()
-    ooze.trigger.borderColor = {0, 1, 0}
-    ooze.trigger.triggerColor = {0, 1, 0, 0.42}
-
-    -- radius of the trigger area in the screen corner
-    ooze.trigger.triggerSize = 20
-
-    ooze.trigger.triggerX = 0
-    ooze.trigger.triggerY = ooze.trigger.height
-
-end
-
-function ooze.trigger.draw (scale)
-
-    local self = ooze.trigger
-    love.graphics.setColor(self.borderColor)
-    love.graphics.rectangle("line", 0, 0, self.width, self.height)
-    love.graphics.setColor(self.triggerColor)
-    love.graphics.circle("fill", self.triggerX, self.triggerY, self.triggerSize)
-
-end
-
-function ooze.trigger.mousepressed (x, y, button, istouch, presses)
-
-    -- check distance to the trigger zone.
-    local dist = tool.distance(x, y, ooze.trigger.triggerX, ooze.trigger.triggerY)
-    return dist < ooze.trigger.triggerSize
-
-end
-
-
---                                      _ _               _
---   ___   ___ _______   ___ _ __  _ __(_) |_ ___  __   _(_) _____      __
---  / _ \ / _ \_  / _ \ / __| '_ \| '__| | __/ _ \ \ \ / / |/ _ \ \ /\ / /
--- | (_) | (_) / /  __/ \__ \ |_) | |  | | ||  __/  \ V /| |  __/\ V  V /
---  \___/ \___/___\___| |___/ .__/|_|  |_|\__\___|   \_/ |_|\___| \_/\_/
---                          |_|
-
-function ooze.spriteview.init ()
-
-end
-
-function ooze.spriteview.draw (scale)
-    love.graphics.rectangle("fill", 0, 0, 100, 100)
-end
-
-function ooze.spriteview.mousepressed(x, y, button, istouch, presses)
-    return true
-end
-
-
-
-
---   ___   ___ _______   _ __ ___   ___ _ __  _   _
---  / _ \ / _ \_  / _ \ | '_ ` _ \ / _ \ '_ \| | | |
--- | (_) | (_) / /  __/ | | | | | |  __/ | | | |_| |
---  \___/ \___/___\___| |_| |_| |_|\___|_| |_|\__,_|
-
---- Initialize the ooze menu.
-function ooze.menu.init (options)
-
-    -- the radius of the wheel
-    ooze.menu.r = 100
-
-    -- seconds to wait before fading out
-    ooze.menu.displayFor = 2
-
-    -- angle facing north
-    ooze.menu.north = 270
-
-    ooze.menu.screenWidth, ooze.menu.screenHeight = love.graphics.getDimensions()
-
-    -- start invisible
-    ooze.menu.opacity = { dt = ooze.menu.displayFor, amount = 0 }
-
-end
-
---- Clear the ooze menu.
-function ooze.menu.clear ()
-
-    ooze.menu.modes = nil
-
-end
-
---- Set the ooze menu options.
--- @tparam table options
-function ooze.menu.set (options)
-
-    -- the menu options
-    ooze.menu.modes = {
-        "add",
-        "alter",
-        "delete",
-        "name",
-        "copy",
-        "paste",
-        "grid"
-    }
-
-    -- angle step size divided evenly between all modes
-    ooze.menu.step = math.floor(360 / #ooze.menu.modes)
-
-    -- set the first mode
-    ooze.menu.mode = ooze.menu.modes[1]
-
-    -- precalculate starting positions
-    ooze.menu.points = { }
-    for n, mode in ipairs(ooze.menu.modes) do
-        -- mind we store point angles in degrees!
-        local factor = n - 1
-        local itemAngle = ooze.menu.north + (factor * ooze.menu.step)
-        ooze.menu.points[mode] = {
-            goal = itemAngle,
-            actual = itemAngle,
-            dt = 1,
-            scale = 1
-        }
-    end
-
-    -- set invisible
-    ooze.menu.opacity = { dt = ooze.menu.displayFor, amount = 0 }
-    ooze.menu.x, ooze.menu.y = love.mouse.getPosition()
-
-end
-
-function ooze.menu.update (dt)
-
-    if not ooze.menu.modes then
-        return
-    end
-
-    -- update actual angles to match goal angles
-    for key, point in pairs(ooze.menu.points) do
-
-        point.dt = math.min(1, point.dt + dt)
-        point.actual = tool.lerp(point.actual, point.goal, point.dt)
-
-        -- adjust scale
-        if key == ooze.menu.mode then
-            point.scale = math.min(1, point.scale + dt)
-        else
-            point.scale = math.max(0.5, point.scale - dt)
-        end
-
-    end
-
-    -- update opacity
-    ooze.menu.opacity.dt = ooze.menu.opacity.dt + dt
-    if ooze.menu.opacity.dt > ooze.menu.displayFor then
-        -- decrease
-        ooze.menu.opacity.amount = math.max(0, ooze.menu.opacity.amount - dt * 2)
-    elseif ooze.menu.opacity.amount < 1 then
-        -- increase
-        ooze.menu.opacity.amount = math.min(1, ooze.menu.opacity.amount + dt * 2)
-    end
-
-end
-
-function ooze.menu.draw ()
-
-    if not ooze.menu.modes then
-        return
-    end
-
-    --~ -- show the current mode as an icon always on-screen
-    --~ local icon = ooze.menu.icons[ooze.menu.mode]
-    --~ if icon then
-        --~ love.graphics.setColor (1, 1, 1, 0.4)
-        --~ love.graphics.draw (icon, 0, 0, 0, 0.5, 0.5)
-    --~ end
-
-    -- skip drawing further, since we are now invisible
-    if ooze.menu.opacity.amount == 0 then
-        return
-    end
-
-    -- fill background
-    love.graphics.setColor({0, 0, 0, math.min(ooze.menu.opacity.amount, 0.5) })
-    love.graphics.circle("fill", ooze.menu.x, ooze.menu.y, ooze.menu.r * 1.2)
-
-    -- draw circumference
-    --love.graphics.setColor (1, 1, 1, ooze.menu.opacity.amount * 0.1)
-    --love.graphics.circle ("line", ooze.menu.x, ooze.menu.y, ooze.menu.r)
-
-    -- draw each mode at the actual angle
-    for key, point in pairs(ooze.menu.points) do
-
-        -- convert the angle to radians before plotting
-        local angle = math.rad(point.actual)
-        local nx, ny = tool.point_on_circle(ooze.menu.x, ooze.menu.y, ooze.menu.r, angle)
-
-        --~ -- fade the icon color into existence
-        --~ local keycolor = ooze.menu.colors[key] or colors.white
-        --~ local r, g, b = unpack (keycolor)
-        --~ love.graphics.setColor (r, g, b, ooze.menu.opacity.amount)
-
-        --~ -- draw the icon
-        --~ if ooze.menu.icons[key] then
-            --~ love.graphics.draw (ooze.menu.icons[key], nx, ny, 0, point.scale, point.scale, 32, 32)
-        --~ end
-
-        love.graphics.setColor({1, 1, 1})
-        love.graphics.printf(key, nx, ny, ooze.menu.r * 1, "left")
-
-    end
-
-    -- print the menu mode as centered text
-    --love.graphics.setFont (fonts.medium)
-    love.graphics.setColor({1, 1, 1, ooze.menu.opacity.amount })
-    love.graphics.printf(ooze.menu.mode, ooze.menu.x - ooze.menu.r, ooze.menu.y - 40, ooze.menu.r * 2, "center")
-
-end
-
-function ooze.menu.mousemoved (x, y, dx, dy, istouch)
-    -- clamp the menu to the screen
-    ooze.menu.x = tool.clamp(x, ooze.menu.r, ooze.menu.screenWidth - ooze.menu.r)
-    ooze.menu.y = tool.clamp(y, ooze.menu.r, ooze.menu.screenHeight - ooze.menu.r)
-end
-
-function ooze.menu.mousepressed (x, y, button, istouch, presses)
-    if ooze.menu.mode == "copy" then
-        local dump = require("dump")
-        local ser = dump.tostring(frames.db)
-        love.system.setClipboardText(ser)
-        print(ser)
-    elseif ooze.menu.mode == "paste" then
-        local contents = "return " .. love.system.getClipboardText()
-        local loaded = loadstring(contents)
-        if type(loaded) == "function" then
-            frames.db = loaded()
-        else
-            print("Content is not lua string")
-        end
-    end
-end
-
-function ooze.menu.wheelmoved (x, y)
-
-    -- prevent cycling on show
-    if ooze.menu.opacity.amount == 0 then
-        ooze.menu.opacity.dt = 1
-        return
-    end
-
-    if y then
-        for key, point in pairs(ooze.menu.points) do
-            -- move the goal angle
-            point.goal = (point.goal + ooze.menu.step * y)
-            -- reset the angle movement
-            point.dt = 0
-            -- the distance between the goal and the north point
-            -- determines the current mode, it can also vary up to
-            -- 12 degrees (depending how many modes you have, ala step size)
-            local diff = math.abs((point.goal % 360) - ooze.menu.north)
-            if diff < 13 then
-                -- store the north facing mode
-                ooze.menu.mode = key
-                -- store the point of reference
-                --ooze.menu.point = point
-            end
-        end
-
-        -- keep opacity steady while scrolling the wheel
-        ooze.menu.opacity.dt = 0
-    end
 end
 
 
@@ -2722,7 +2161,7 @@ function speech.say (actor_name, text)
 
     -- intercept chaining
     if chain.capture then
-        ooze.append(string.format("chaining %s say", actor_name))
+        tool.logger(string.format("chaining %s say", actor_name))
         chain.add(speech.say,
                     {actor_name, text},
                     -- expires when actor is not talking
@@ -2734,7 +2173,7 @@ function speech.say (actor_name, text)
     end
 
     if (not actor.get(actor_name)) then
-        ooze.append("Speech failed: No actor named " .. actor_name)
+        tool.logger("Speech failed: No actor named " .. actor_name)
         return
     end
 
@@ -2851,7 +2290,7 @@ end
 -- walkable floors, walk-behind layers, hotspots, speeches.
 function slime.clear ()
 
-    draw_scale = 1
+    slime.draw_scale = 1
     actor.clear()
     background.clear()
     chain.clear()
@@ -2871,7 +2310,6 @@ function slime.reset ()
     bag.clear()
     setting.clear()
     cache.clear()
-    ooze.clear()
 
 end
 
@@ -2897,9 +2335,9 @@ end
 function slime.draw (scale)
 
     -- draw to scale
-    draw_scale = scale or 1
+    slime.draw_scale = scale or 1
     love.graphics.push()
-    love.graphics.scale(scale)
+    love.graphics.scale(slime.draw_scale)
 
     love.graphics.setColor(1, 1, 1)
     background.draw()
@@ -3007,7 +2445,7 @@ function slime.interact (x, y)
     end
 
     for i, object in pairs(objects) do
-        ooze.append(cursorname .. " on " .. object.name)
+        tool.logger(cursorname .. " on " .. object.name)
         event.interact(cursorname, object, x, y)
     end
 
@@ -3181,6 +2619,10 @@ function tool.lerp (a, b, amount)
     return a + (b - a) * tool.clamp(amount, 0, 1)
 end
 
+function tool.logger ()
+
+end
+
 --- Constrain a point to a circle.
 -- Given a radius and angle, get a point on the circumference of a circle.
 -- https://wesleywerner.github.io/harness/doc/modules/trig.html#module:pointOnCircle
@@ -3219,8 +2661,8 @@ end
 function tool.scale_point (x, y)
 
     -- adjust to scale
-    x = math.floor(x / draw_scale)
-    y = math.floor(y / draw_scale)
+    x = math.floor(x / slime.draw_scale)
+    y = math.floor(y / slime.draw_scale)
     return x, y
 
 end
@@ -3241,10 +2683,10 @@ slime.cache = cache
 slime.chain = chain
 slime.cursor = cursor
 slime.hotspot = hotspot
-slime.ooze = ooze
 slime.event = event
 slime.floor = floor
 slime.layer = layer
 slime.setting = setting
 slime.speech = speech
+slime.tool = tool
 return slime
