@@ -250,7 +250,17 @@ function hook.mousepressed (x, y, button, istouch, presses)
 end
 
 function hook.update (dt)
+
     hook.update_ref(dt)
+
+    if view.ui.on then
+        view.ui.for_each_visible(function(view)
+            if view.update then
+                view.update(dt)
+            end
+        end)
+    end
+
 end
 
 function hook.wheelmoved (x, y)
@@ -310,7 +320,10 @@ function view.floor.draw ()
         love.graphics.draw(view.floor.image)
     end
 
+
+    -- Draw paint tool
     if view.floor.alt_mode then
+        -- Enter native resolution
         love.graphics.push()
         love.graphics.origin()
         love.graphics.setColor(WHITE)
@@ -323,6 +336,12 @@ function view.floor.draw ()
         love.graphics.pop()
     end
 
+    -- Plot actor paths
+    love.graphics.setColor(WHITE)
+    for name, points in pairs(view.floor.points) do
+        love.graphics.points(points)
+    end
+
 end
 
 function view.floor.init ()
@@ -330,7 +349,14 @@ function view.floor.init ()
     -- Allow alternate mode
     view.floor.has_alt_mode = true
 
+    -- Store the pain brush position
     view.floor.brush_pos = {x=0, y=0}
+
+    -- Timer to update actor path points
+    view.floor.update_to = 1
+
+    -- Store path points
+    view.floor.points = {}
 
     -- Create floor edit brushes
     local _small = 8
@@ -397,6 +423,30 @@ function view.floor.paint (brush)
     if ooze.slime.floor.is_set() then
         ooze.slime.floor.data:paste(brush, x, y, 0, 0, view.floor.brush_size9, view.floor.brush_size)
         view.floor.image = love.graphics.newImage(ooze.slime.floor.data)
+    end
+
+end
+
+function view.floor.update (dt)
+
+    -- Check for actor paths and build a point list to plot the path.
+    view.floor.update_to = view.floor.update_to - dt
+
+    if view.floor.update_to < 0 then
+        view.floor.update_to = 1
+        -- Convert each actor's path to a point list
+        for _, actor in ipairs(ooze.slime.actor.list) do
+            if actor.name and actor.path then
+                local points = {}
+                for n = #actor.path, 1, -1 do
+                    table.insert(points, actor.path[n].x)
+                    table.insert(points, actor.path[n].y)
+                end
+                view.floor.points[actor.name] = points
+            elseif actor.name then
+                view.floor.points[actor.name] = nil
+            end
+        end
     end
 
 end
