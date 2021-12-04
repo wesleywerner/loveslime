@@ -41,6 +41,7 @@ local MAGENTA = {1, 0, 1}
 local PURPLE = {0.5, 0, 1}
 local RED = {1, 0, 0}
 local YELLOW = {1, 1, 0}
+local WHITE = {1, 1, 1}
 
 -- View colors
 local UI_COLOR = GREEN
@@ -309,6 +310,19 @@ function view.floor.draw ()
         love.graphics.draw(view.floor.image)
     end
 
+    if view.floor.alt_mode then
+        love.graphics.push()
+        love.graphics.origin()
+        love.graphics.setColor(WHITE)
+        love.graphics.rectangle(
+                                "line",
+                                view.floor.brush_pos.x,
+                                view.floor.brush_pos.y,
+                                view.floor.brush_size * ooze.slime.draw_scale,
+                                view.floor.brush_size * ooze.slime.draw_scale)
+        love.graphics.pop()
+    end
+
 end
 
 function view.floor.init ()
@@ -316,16 +330,19 @@ function view.floor.init ()
     -- Allow alternate mode
     view.floor.has_alt_mode = true
 
+    view.floor.brush_pos = {x=0, y=0}
+
     -- Create floor edit brushes
-    local _small = 3
-    view.floor.small_brush = love.image.newImageData(_small, _small)
-    view.floor.small_clear = love.image.newImageData(_small, _small)
+    local _small = 8
+    view.floor.brush_size = _small - 1
+    view.floor.brush = love.image.newImageData(_small, _small)
+    view.floor.clear = love.image.newImageData(_small, _small)
 
     -- Fill brushes with pixels
     for _y = 0, _small -1 do
         for _x = 0, _small -1 do
-            view.floor.small_clear:setPixel(_x, _y, 0, 0, 0, 0)
-            view.floor.small_brush:setPixel(_x, _y, 1, 1, 1, 1)
+            view.floor.clear:setPixel(_x, _y, 0, 0, 0, 0)
+            view.floor.brush:setPixel(_x, _y, 1, 1, 1, 1)
         end
     end
 
@@ -348,10 +365,12 @@ end
 function view.floor.mousemoved (x, y)
 
     if view.floor.alt_mode then
+        view.floor.brush_pos.x = x - (view.floor.brush_size * ooze.slime.draw_scale / 2)
+        view.floor.brush_pos.y = y - (view.floor.brush_size * ooze.slime.draw_scale / 2)
         if love.mouse.isDown(1) then
-            view.floor.paint(x, y, view.floor.small_brush)
+            view.floor.paint(view.floor.brush)
         elseif love.mouse.isDown(2) then
-            view.floor.paint(x, y, view.floor.small_clear)
+            view.floor.paint(view.floor.clear)
         end
         return true
     end
@@ -362,21 +381,21 @@ function view.floor.mousepressed (x, y, button)
 
     if view.floor.alt_mode then
         if button == 1 then
-            view.floor.paint(x, y, view.floor.small_brush)
-        else
-            view.floor.paint(x, y, view.floor.small_clear)
+            view.floor.paint(view.floor.brush)
+        elseif button == 2 then
+            view.floor.paint(view.floor.clear)
         end
         return true
     end
 
 end
 
-function view.floor.paint (x, y, brush)
+function view.floor.paint (brush)
 
+    local x, y = view.floor.brush_pos.x, view.floor.brush_pos.y
     x, y = ooze.slime.tool.scale_point(x, y)
     if ooze.slime.floor.is_set() then
-        ooze.slime.floor.data:paste(brush, x, y, 0, 0, 9, 9)
-        --ooze.slime.floor.data:setPixel(x, y, 1, 1, 1, 1)
+        ooze.slime.floor.data:paste(brush, x, y, 0, 0, view.floor.brush_size9, view.floor.brush_size)
         view.floor.image = love.graphics.newImage(ooze.slime.floor.data)
     end
 
