@@ -2619,7 +2619,7 @@ function tool.lerp (a, b, amount)
     return a + (b - a) * tool.clamp(amount, 0, 1)
 end
 
-function tool.logger ()
+function tool.logger (format_string, ...)
 
 end
 

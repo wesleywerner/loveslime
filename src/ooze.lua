@@ -31,21 +31,25 @@ local ooze = {
     ]]
 }
 
--- Constants
+-- Color constants
 local BLACK = {0, 0, 0}
+local BLACK_TRANS = {0, 0, 0, 0.4}
+local BLUE = {0, 0, 1}
+local CYAN = {0, 1, 1}
+local GREEN = {0, 1, 0}
+local MAGENTA = {1, 0, 1}
+local PURPLE = {0.5, 0, 1}
 local RED = {1, 0, 0}
--- TODO define colors
-local UI_COLOR = {0, 1, 0} -- green
-local HOTSPOT_COLOR = {1, 1, 0} -- yellow
-local ACTOR_COLOR = {0, 0, 1} -- blue
-local FEET_COLOR = {0, 1, 1} -- cyan
-local LAYER_COLORS = {
-                        {1, 0, 0, 0.5},     -- red
-                        {0, 1, 0, 0.5},     -- green
-                        {0.5, 0, 1, 0.5},   -- purple
-                        {1, 0, 1, 0.5},     -- magenta
-                    }
+local YELLOW = {1, 1, 0}
 
+-- View colors
+local UI_COLOR = GREEN
+local HOTSPOT_COLOR = YELLOW
+local ACTOR_COLOR = BLUE
+local FEET_COLOR = CYAN
+local LAYER_COLORS = { RED, PURPLE, CYAN, MAGENTA, BLUE, YELLOW }
+
+local LOG_ITEMS_MAX = 200
 
 -- Default hotkeys
 local hotkeys = {
@@ -118,8 +122,8 @@ function hook.init ()
     end
     if type(love.wheelmoved) == "function" then
         hook.wheelmoved_ref = love.wheelmoved
-        love.wheelmoved = hook.wheelmoved
     end
+    love.wheelmoved = hook.wheelmoved
 
     -- SLIME reference getter
     return function(ref)
@@ -249,7 +253,21 @@ function hook.update (dt)
 end
 
 function hook.wheelmoved (x, y)
-    hook.wheelmoved_ref(x, y)
+
+    local _intercepted = false
+
+    if view.ui.on then
+        view.ui.for_each_visible(function(view)
+            if view.wheelmoved then
+                _intercepted = view.wheelmoved(x, y)
+            end
+        end)
+    end
+
+    if hook.wheelmoved_ref and not _intercepted then
+        hook.wheelmoved_ref(x, y)
+    end
+
 end
 
 --        _                              _
@@ -460,7 +478,105 @@ end
 --                                    |___/
 --
 
+function view.log.append (format_string, ...)
+
+    table.insert(view.log.db, string.format(format_string, ...))
+
+    -- cull
+    while #view.log.db > LOG_ITEMS_MAX do
+        table.remove(view.log.db, 1)
+    end
+
+    -- auto scroll (if the scroll is already at the bottom of max visible)
+    if math.abs(#view.log.db - view.log.scroll - view.log.max_visible) < 2 then
+        view.log.scroll = math.max(0, #view.log.db - view.log.max_visible)
+    end
+
+end
+
 function view.log.draw ()
+
+    -- Reset scaling for the log
+    love.graphics.push()
+    love.graphics.origin()
+
+    -- background
+    love.graphics.setColor(BLACK_TRANS)
+    love.graphics.rectangle("fill", view.log.x, view.log.y, view.log.w, view.log.h)
+
+    love.graphics.setFont(view.log.font)
+    love.graphics.setColor(UI_COLOR)
+
+    local offset = 0
+    local count = #view.log.db
+
+    -- Print each of the possible lines
+    for index = 1, view.log.max_visible do
+
+        local pos = index + view.log.scroll
+
+        -- It exceeds the number of logs
+        if pos > count then
+            break
+        end
+
+        love.graphics.print(
+                            view.log.db[pos],
+                            view.log.x,
+                            view.log.y + offset)
+
+        -- Jump to next line position
+        offset = offset + view.log.font_h
+
+    end
+
+    if view.log.more_indicator then
+        love.graphics.print(
+                        "-more-",
+                        view.log.x,
+                        view.log.h - view.log.y)
+    end
+
+    love.graphics.pop()
+
+end
+
+function view.log.init ()
+
+    -- Hook into the slime logger
+    ooze.slime.tool.logger = view.log.append
+
+    -- Storage
+    view.log.db = {}
+
+    -- Calc view bounds
+    local padding = 20
+    view.log.x = padding
+    view.log.y = padding
+    view.log.w = math.floor(WIN_WIDTH / 4)
+    view.log.h = WIN_HEIGHT - padding
+
+    -- Set font
+    view.log.font = view.ui.small_font
+    view.log.font_h = view.log.font:getHeight("X")
+
+    -- Calc items visible given font size
+    view.log.max_visible = math.floor((view.log.h - view.log.y) / view.log.font_h) - 1
+
+    -- Track log scroll with mouse wheel
+    view.log.scroll = 0
+
+end
+
+function view.log.wheelmoved (x, y, dx, dy)
+
+    local speed = math.max(-3, math.min(3, y * 3))
+
+    -- Positive values indicate upward movement
+    view.log.scroll = math.min(math.max(0, view.log.scroll - speed), #view.log.db)
+
+    -- Determine if the scroll hides items from the bottom
+    view.log.more_indicator = #view.log.db - view.log.scroll - view.log.max_visible > 0
 
 end
 
@@ -545,7 +661,7 @@ function view.ui.init ()
     view.ui.w = WIN_WIDTH - border * 2
     view.ui.h = WIN_HEIGHT - border * 2
 
-    view.ui.small_font = love.graphics.newFont(8)
+    view.ui.small_font = love.graphics.newFont(10)
     view.ui.font = love.graphics.newFont(16)
 
     local _label_h = view.ui.font:getHeight("OOZE")
